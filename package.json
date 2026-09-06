@@ -1,0 +1,24 @@
+{
+  "name": "terraguardian",
+  "private": true,
+  "version": "0.0.0",
+  "description": "TerraGuardian AI — From Warning to Action",
+  "workspaces": [
+    "apps/operations-centre",
+    "apps/terra-guardian-safe"
+  ],
+  "scripts": {
+    "dev:ops": "npm -w apps/operations-centre run dev",
+    "dev:safe": "npm -w apps/terra-guardian-safe run dev",
+    "build:ops": "npm -w apps/operations-centre run build",
+    "build:safe": "npm -w apps/terra-guardian-safe run build",
+    "test:ops": "npm -w apps/operations-centre run test",
+    "test:safe": "npm -w apps/terra-guardian-safe run test",
+    "test:e2e": "npx playwright test",
+    "lint:ops": "npm -w apps/operations-centre run lint",
+    "lint:safe": "npm -w apps/terra-guardian-safe run lint"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,0 +1,61 @@
+# ============================================================
+# TerraGuardian AI — .gitignore
+# ============================================================
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ---------- Node / Frontend ----------
+node_modules/
+.npm
+.pnp.*
+*.tsbuildinfo
+dist/
+.vite/
+
+# ---------- Environment ----------
+.env
+.env.local
+.env.*.local
+
+# ---------- IDE ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ---------- Docker ----------
+docker-compose.override.yml
+
+# ---------- OS ----------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ---------- Playwright ----------
+test-results/
+playwright-report/
+
+# ---------- Misc ----------
+*.log
+*.pid
+*.seed

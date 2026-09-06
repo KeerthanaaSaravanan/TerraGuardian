@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: terraguardian-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: terraguardian
+      POSTGRES_USER: terraguardian
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terraguardian -d terraguardian"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: terraguardian-api
+    restart: unless-stopped
+    environment:
+      TERRAGUARDIAN_ENV: development
+      DATABASE_URL: postgresql+asyncpg://terraguardian:changeme@postgres:5432/terraguardian
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  operations-centre:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+      args:
+        APP_PATH: apps/operations-centre
+    container_name: terraguardian-operations-centre
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+  safe:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+      args:
+        APP_PATH: apps/terra-guardian-safe
+    container_name: terraguardian-safe
+    restart: unless-stopped
+    ports:
+      - "5174:5174"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
