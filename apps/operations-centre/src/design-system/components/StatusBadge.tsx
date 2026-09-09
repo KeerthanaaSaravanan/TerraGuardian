@@ -18,7 +18,8 @@ const formatLabel = (key: string): string =>
  */
 export const StatusBadge: FC<StatusBadgeProps> = ({ statusKey, label }) => {
   const colour = status[statusKey];
-  const displayLabel = label ?? formatLabel(statusKey);
+  const displayLabel = label ?? formatLabel(String(statusKey));
+
 
   return (
     <span

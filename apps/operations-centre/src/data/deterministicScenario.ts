@@ -119,7 +119,7 @@ export const OTHER_NER_INCIDENTS: DemoIncident[] = [
 
 export interface EvidenceItem {
   id: string;
-  sourceType: "WEATHER" | "SATELLITE" | "TERRAIN" | "HISTORICAL" | "FIELD";
+  sourceType: "WEATHER" | "SATELLITE" | "TERRAIN" | "HISTORICAL" | "FIELD" | "CITIZEN";
   sourceName: string;
   observation: string;
   metric: string;
@@ -133,46 +133,46 @@ export const INITIAL_EVIDENCE: EvidenceItem[] = [
   {
     id: "EVD-01",
     sourceType: "WEATHER",
-    sourceName: "IMD AWS Bhalukpong Station (#428)",
-    observation: "Extreme Cumulative Precipitation Exceeded",
+    sourceName: "IMD-Style Rainfall Observation (Bhalukpong AWS #428)",
+    observation: "Extreme Cumulative Precipitation Exceeded (Demo Fixture)",
     metric: "184.6 mm / 24h",
     reliability: "HIGH",
-    freshness: "12 mins ago",
+    freshness: "12 mins ago (Simulated)",
     status: "CONFIRMING",
-    details: "Rainfall rate peaked at 28.4 mm/hr between 04:00-06:00 IST. Threshold for slope saturation (120mm) exceeded by 153%.",
+    details: "Simulated AWS telemetry: Rainfall rate peaked at 28.4 mm/hr between 04:00-06:00 IST. Threshold for slope saturation (120mm) exceeded by 153%.",
   },
   {
     id: "EVD-02",
     sourceType: "SATELLITE",
-    sourceName: "Sentinel-2 MSI Optical / Sentinel-1 SAR",
-    observation: "Optical Obscured by Monsoon Cloud Cover; SAR Ambiguous",
+    sourceName: "Satellite-Derived Observation (Sentinel-2 / Sentinel-1 SAR)",
+    observation: "Optical Obscured by Cloud; SAR Backscatter Anomaly (Demo Fixture)",
     metric: "88% Cloud Cover",
     reliability: "MODERATE",
-    freshness: "3 hours ago",
+    freshness: "3 hours ago (Simulated)",
     status: "INCONCLUSIVE",
-    details: "Dense monsoon stratus prevented multispectral scar detection. Sentinel-1 SAR backscatter shows 3.2 dB surface roughness anomaly along cut face, but coherence is degraded by torrential rainfall.",
+    details: "Monsoon stratus cloud obstruction simulated. Synthetic aperture radar backscatter indicates 3.2 dB surface roughness anomaly along cut face with rain noise.",
   },
   {
     id: "EVD-03",
     sourceType: "TERRAIN",
-    sourceName: "Geological Survey of India (GSI) NLSM",
-    observation: "High Hazard Debris Flow Geomorphology",
+    sourceName: "Geological Context (GSI NLSM Geomorphology Baseline)",
+    observation: "High Hazard Debris Flow Geomorphology (Reference Basemap)",
     metric: "Slope Angle: 44.2°",
     reliability: "HIGH",
     freshness: "Static Basemap (2024)",
     status: "CONFIRMING",
-    details: "Lithology: Highly fractured Daling-Buxa formation mica-schist with deep colluvium overburden. Known chronic slip zone during active monsoon.",
+    details: "Lithology: Highly fractured Daling-Buxa formation mica-schist with deep colluvium overburden. Chronic slip zone during active monsoon.",
   },
   {
     id: "EVD-04",
     sourceType: "HISTORICAL",
-    sourceName: "Border Roads Organisation (BRO) Vartak Log",
-    observation: "Recurrent Slide Vulnerability at KM-42 Culvert",
+    sourceName: "Historical Record (BRO Project Vartak Highway Log)",
+    observation: "Recurrent Slide Vulnerability at KM-42 (Archived Record)",
     metric: "3 Events (2021-2024)",
     reliability: "HIGH",
     freshness: "Archived Record",
     status: "CONFIRMING",
-    details: "Culvert #42/2 previously blocked in July 2023 causing road shoulder collapse. Structural toe-wall repair completed November 2023.",
+    details: "Historical incident log: Culvert #42/2 blocked in July 2023 causing road shoulder collapse. Structural toe-wall repair completed November 2023.",
   },
 ];
 

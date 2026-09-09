@@ -1,85 +1,53 @@
-"""Risk and Confidence domain models.
+"""Risk, Confidence, and Residual Risk domain models.
 
-CRITICAL RULE: RISK ≠ CONFIDENCE
-
-Risk represents the assessed level of danger.
-Confidence represents how certain we are about that assessment.
-
-These are independent quantities. A HIGH RISK + LOW CONFIDENCE situation
-requires field verification, not an automatic response.
+CRITICAL INVARIANTS:
+1. RISK ≠ CONFIDENCE (Danger severity is independent of evidential certainty).
+2. ACTION CONFIRMED ≠ HAZARD RESOLVED (Residual risk must be assessed before resolution).
 """
 
 from __future__ import annotations
 
-import enum
 import uuid
 from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field
 
-
-class RiskLevel(str, enum.Enum):
-    """Assessed risk level."""
-
-    CRITICAL = "CRITICAL"
-    HIGH = "HIGH"
-    MODERATE = "MODERATE"
-    LOW = "LOW"
-    NEGLIGIBLE = "NEGLIGIBLE"
-    UNKNOWN = "UNKNOWN"
-
-
-class ConfidenceLevel(str, enum.Enum):
-    """Confidence in the assessment."""
-
-    VERY_HIGH = "VERY_HIGH"    # Multiple agreeing authoritative sources
-    HIGH = "HIGH"              # Strong evidence agreement
-    MODERATE = "MODERATE"      # Partial evidence, some gaps
-    LOW = "LOW"                # Limited evidence, possible conflicts
-    VERY_LOW = "VERY_LOW"      # Insufficient evidence
-    UNASSESSED = "UNASSESSED"  # Not yet evaluated
+from app.domain.enums import ConfidenceLevel, RiskLevel
 
 
 class RiskAssessment(BaseModel):
-    """An independent risk assessment for an incident.
-
-    Risk level is separate from confidence. Do not conflate them.
-    """
+    """An independent physical hazard danger assessment."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     incident_id: uuid.UUID
 
     risk_level: RiskLevel
     risk_score: Optional[float] = Field(
-        default=None, ge=0.0, le=1.0,
-        description="Numerical risk score (0-1) if computed.",
+        default=None, ge=0.0, le=100.0,
+        description="Numerical risk score (0-100).",
     )
     risk_factors: list[str] = Field(default_factory=list)
     assessed_at: datetime = Field(default_factory=datetime.utcnow)
-    assessed_by: str = "system"  # system, model name, or user ID
+    assessed_by: str = "system"
     methodology: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
 
 class ConfidenceAssessment(BaseModel):
-    """An independent confidence assessment for an incident.
-
-    Confidence is driven by evidence quality, freshness, agreement,
-    missing sources, and conflicts. Never fabricate confidence.
-    """
+    """An independent evidential certainty assessment."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     incident_id: uuid.UUID
 
     confidence_level: ConfidenceLevel
     confidence_score: Optional[float] = Field(
-        default=None, ge=0.0, le=1.0,
-        description="Numerical confidence score (0-1) if computed.",
+        default=None, ge=0.0, le=100.0,
+        description="Numerical confidence score (0-100).",
     )
 
-    # Evidence analysis
+    # Evidence synthesis details
     evidence_count: int = 0
     agreeing_sources: int = 0
     conflicting_sources: int = 0
@@ -88,5 +56,27 @@ class ConfidenceAssessment(BaseModel):
 
     assessed_at: datetime = Field(default_factory=datetime.utcnow)
     rationale: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class ResidualRisk(BaseModel):
+    """Residual hazard danger remaining after protective human response is deployed.
+    
+    ACTION CONFIRMED ≠ HAZARD RESOLVED
+    Even when human exposure drops to zero via roadblocks, residual slope risk
+    must remain tracked until physical stabilization is complete.
+    """
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    incident_id: uuid.UUID
+
+    residual_risk_level: RiskLevel
+    residual_risk_score: float = Field(ge=0.0, le=100.0)
+    civilian_exposure_mitigated: bool = True
+    active_hazard_volume_remaining_m3: Optional[float] = None
+    structural_stability_status: str = "UNSTABILIZED"
+    assessed_at: datetime = Field(default_factory=datetime.utcnow)
+    evaluator_notes: Optional[str] = None
 
     model_config = {"from_attributes": True}

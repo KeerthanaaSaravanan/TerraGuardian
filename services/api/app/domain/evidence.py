@@ -1,85 +1,129 @@
-"""Evidence domain models.
+"""Evidence and Observation domain models.
 
-Evidence may originate from authoritative sources, weather, satellite,
-terrain, sensors, citizen observations, field observations, historical
-data, or system-generated model outputs.
+INVARIANT:
+CITIZEN OBSERVATION ≠ AUTHORITATIVE CONFIRMATION
+Citizen evidence can contribute to multi-source synthesis, but MUST be capable
+of remaining UNVERIFIED until physical ground truth or calibrated instruments confirm it.
 """
 
 from __future__ import annotations
 
-import enum
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-
-class EvidenceSource(str, enum.Enum):
-    """Origin category of evidence."""
-
-    AUTHORITATIVE = "AUTHORITATIVE"  # GSI, NDMA, etc.
-    WEATHER = "WEATHER"              # IMD, MOSDAC
-    SATELLITE = "SATELLITE"          # Copernicus, Sentinel, NRSC
-    TERRAIN = "TERRAIN"              # DEM, geological surveys
-    SENSOR = "SENSOR"                # IoT, field instruments
-    CITIZEN = "CITIZEN"              # TerraGuardian Safe submissions
-    FIELD = "FIELD"                  # Field team observations
-    HISTORICAL = "HISTORICAL"        # Past incident data
-    MODEL = "MODEL"                  # System-generated predictions
+from app.domain.enums import (
+    EvidenceInterpretation,
+    EvidenceProcessingStatus,
+    EvidenceSource,
+)
 
 
-class ProcessingStatus(str, enum.Enum):
-    """Evidence processing pipeline status."""
-
-    RECEIVED = "RECEIVED"
-    VALIDATING = "VALIDATING"
-    VALIDATED = "VALIDATED"
-    REJECTED = "REJECTED"
-    NORMALIZED = "NORMALIZED"
-    GEOREFERENCED = "GEOREFERENCED"
-    PUBLISHED = "PUBLISHED"
-
-
-class Evidence(BaseModel):
-    """A discrete piece of evidence contributing to incident assessment.
-
-    Every evidence object tracks its source, provenance, freshness,
-    and contribution confidence independently.
-    """
+class Observation(BaseModel):
+    """Raw ingestion observation from any source (citizen, sensor, API)."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    incident_id: Optional[uuid.UUID] = None
-
     source: EvidenceSource
-    source_name: str  # e.g. "IMD Rainfall Station Shillong"
-    evidence_type: str  # e.g. "rainfall_measurement", "satellite_image", "citizen_photo"
-
-    # Temporal
+    source_name: str
     observed_at: datetime
     received_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Location (WGS84)
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    altitude_m: Optional[float] = None
+    accuracy_m: Optional[float] = None
+
+    # Content
+    raw_payload: dict[str, Any] = Field(default_factory=dict)
+    media_url: Optional[str] = None
+    reporter_note: Optional[str] = None
+    is_simulated: bool = False
+
+    model_config = {"from_attributes": True}
+
+
+class EvidenceConflict(BaseModel):
+    """Represents a detected contradiction or divergence between evidence sources.
+    
+    e.g., Extreme rainfall telemetry vs 88% cloud-obscured optical satellite.
+    """
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    evidence_a_id: uuid.UUID
+    evidence_b_id: uuid.UUID
+    conflict_type: str  # e.g., "OPTICAL_CLOUD_OBSCURATION", "MAGNITUDE_DISCREPANCY"
+    description: str
+    resolution_strategy: str = "FIELD_VERIFICATION_REQUIRED"
+    resolved: bool = False
+    resolved_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class Evidence(BaseModel):
+    """A discrete piece of reconciled evidence contributing to incident assessment.
+
+    Every evidence object tracks its source, provenance, freshness,
+    interpretation status, and contribution confidence independently.
+    """
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    incident_id: Optional[uuid.UUID] = None
+    observation_id: Optional[uuid.UUID] = None
+
+    source: EvidenceSource
+    source_name: str  # e.g. "IMD AWS #428"
+    evidence_type: str  # e.g. "rainfall_measurement", "citizen_photo"
+
+    # Core observation summary & metrics
+    observation: str
+    metric: str
+    reliability: str = "HIGH"  # HIGH | MODERATE | LOW
+
+    # Temporal & Spatial
+    observed_at: datetime
+    received_at: datetime = Field(default_factory=datetime.utcnow)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
     # Provenance
-    provenance: Optional[str] = None  # How this evidence was obtained
-    original_reference: Optional[str] = None  # URL, file path, or ID
+    provenance: Optional[str] = None
+    original_reference: Optional[str] = None
+    is_simulated: bool = False
 
-    # Quality
-    freshness_seconds: Optional[int] = None  # Age of observation
+    # Processing & Interpretation
+    freshness_seconds: Optional[int] = None
     confidence_contribution: Optional[float] = Field(
         default=None, ge=0.0, le=1.0,
         description="How much this evidence contributes to overall confidence (0-1).",
     )
+    processing_status: EvidenceProcessingStatus = EvidenceProcessingStatus.RECEIVED
+    interpretation: EvidenceInterpretation = EvidenceInterpretation.UNVERIFIED
+    details: Optional[str] = None
+    raw_data: Optional[dict[str, Any]] = None
 
-    # Processing
-    processing_status: ProcessingStatus = ProcessingStatus.RECEIVED
-    processing_notes: Optional[str] = None
+    model_config = {"from_attributes": True}
 
-    # Content
-    summary: Optional[str] = None
-    raw_data: Optional[dict] = None  # Original payload (type-dependent)
+
+class VerificationObservation(BaseModel):
+    """Ground truth verification captured on-site by an authorized patrol unit."""
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    verification_task_id: uuid.UUID
+    officer_name: str
+    unit: str
+    callsign: str
+    observed_at: datetime = Field(default_factory=datetime.utcnow)
+    latitude: float
+    longitude: float
+    altitude_str: Optional[str] = None
+    summary: str
+    key_findings: list[str] = Field(default_factory=list)
+    photo_url: Optional[str] = None
+    device_imei: Optional[str] = None
+    cryptographic_hash: Optional[str] = None
 
     model_config = {"from_attributes": True}
