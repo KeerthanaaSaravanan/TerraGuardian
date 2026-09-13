@@ -15,11 +15,30 @@ from app.domain.enums import (
     ActionState,
     ActorRole,
     ConfidenceLevel,
+    EvidenceConflictStatus,
+    EvidenceInterpretation,
+    EvidenceProcessingStatus,
+    EvidenceSource,
     HazardState,
     IncidentStatus,
     PriorityLevel,
     RiskLevel,
 )
+from app.domain.hazard import (
+    BoundedReassessmentRequest,
+    BoundedReassessmentResult,
+    DivergenceRecord,
+    HazardHypothesis,
+    HazardLineageSummary,
+    HazardStateTransitionRequest,
+)
+from app.domain.impact import (
+    ComparativePriorityResult,
+    ImpactAssessment,
+    PriorityAssessment,
+    PriorityRecalculationRequest,
+)
+from app.domain.risk import ModelMetadata, PredictiveRiskAssessment
 from app.services.action_service import ActionService
 from app.services.audit_service import AuditService
 from app.services.evidence_service import EvidenceService
@@ -31,14 +50,68 @@ from app.services.exceptions import (
     PreconditionFailedError,
     UnauthorizedAuthorityError,
 )
+from app.services.hazard_service import HazardService
+from app.services.impact_service import ImpactService
 from app.services.incident_service import IncidentService
+from app.services.predictive_models import SyntheticBenchmarkValidator
+from app.services.predictive_service import PredictiveService
+from app.services.reconciliation_service import ReconciliationService
 from app.services.seed_service import SeedService
 from app.services.state_transition_service import StateTransitionService
 
 router = APIRouter(tags=["incidents"])
 
 
+
 # ── Schemas ──
+
+class EvidenceCreateRequest(BaseModel):
+    """Payload to add a new piece of evidence to an incident."""
+    source: EvidenceSource
+    source_name: str
+    evidence_type: str
+    observation: str
+    metric: str
+    reliability: str = "HIGH"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    provenance: Optional[str] = None
+    original_reference: Optional[str] = None
+    is_simulated: bool = False
+    freshness_seconds: Optional[int] = None
+    confidence_contribution: Optional[float] = None
+    processing_status: EvidenceProcessingStatus = EvidenceProcessingStatus.RECEIVED
+    interpretation: EvidenceInterpretation = EvidenceInterpretation.UNVERIFIED
+    conflict_status: EvidenceConflictStatus = EvidenceConflictStatus.NONE
+    conflict_details: Optional[str] = None
+    details: Optional[str] = None
+    raw_data: Optional[dict[str, Any]] = None
+
+
+class EvidenceUpdateRequest(BaseModel):
+    """Payload to update processing, verification, or conflict status of an evidence item."""
+    actor_role: ActorRole
+    actor_name: str
+    processing_status: Optional[EvidenceProcessingStatus] = None
+    interpretation: Optional[EvidenceInterpretation] = None
+    conflict_status: Optional[EvidenceConflictStatus] = None
+    conflict_details: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class IncidentCreateRequest(BaseModel):
+    """Payload to create a new Incident Twin."""
+    title: str
+    latitude: float
+    longitude: float
+    description: Optional[str] = None
+    location_name: Optional[str] = None
+    incident_type: str = "landslide"
+    corridor_name: Optional[str] = None
+    state: str = "Arunachal Pradesh"
+    district: str = "West Kameng"
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
 
 class IncidentResponse(BaseModel):
     """Authoritative Incident Twin representation."""
@@ -151,8 +224,31 @@ class EvidenceItemResponse(BaseModel):
     confidence_contribution: Optional[float] = None
     processing_status: str
     interpretation: str
+    conflict_status: str = "NONE"
+    conflict_details: Optional[str] = None
     details: Optional[str] = None
     raw_data: Optional[dict[str, Any]] = None
+
+    model_config = {"from_attributes": True}
+
+
+class ReconciliationResponse(BaseModel):
+    """Structured deterministic cross-source evidence reconciliation result."""
+    incident_id: uuid.UUID
+    total_evidence_count: int
+    source_distribution: dict[str, int]
+    verified_count: int
+    unverified_count: int
+    supporting_evidence_ids: list[uuid.UUID]
+    conflicting_evidence_ids: list[uuid.UUID]
+    stale_evidence_ids: list[uuid.UUID]
+    conflict_status: EvidenceConflictStatus
+    conflict_summary: str
+    dominant_signal: str
+    evidence_quality_score: float
+    confidence_contribution_aggregate: float
+    recommended_action: str
+    reconciled_at: datetime
 
     model_config = {"from_attributes": True}
 
@@ -239,6 +335,28 @@ async def list_incidents(
         page=page,
         page_size=page_size,
     )
+
+
+@router.post("/incidents", response_model=IncidentResponse, status_code=status.HTTP_201_CREATED)
+async def create_incident(
+    body: IncidentCreateRequest,
+    session: AsyncSession = Depends(get_db_session),
+) -> IncidentResponse:
+    """Create a new Incident Twin."""
+    service = IncidentService(session)
+    incident = await service.create_incident(
+        title=body.title,
+        latitude=body.latitude,
+        longitude=body.longitude,
+        description=body.description,
+        location_name=body.location_name,
+        incident_type=body.incident_type,
+        corridor_name=body.corridor_name,
+        state=body.state,
+        district=body.district,
+        metadata_json=body.metadata_json,
+    )
+    return IncidentResponse.model_validate(incident)
 
 
 @router.get("/incidents/code/{code}", response_model=IncidentResponse)
@@ -365,6 +483,120 @@ async def get_incident_evidence(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
 
 
+@router.post("/incidents/{incident_id}/evidence", response_model=EvidenceItemResponse, status_code=status.HTTP_201_CREATED)
+async def create_incident_evidence(
+    incident_id: uuid.UUID,
+    body: EvidenceCreateRequest,
+    session: AsyncSession = Depends(get_db_session),
+) -> EvidenceItemResponse:
+    """Add a new piece of evidence to an incident twin with audit logging."""
+    evidence_service = EvidenceService(session)
+    try:
+        evidence = await evidence_service.add_evidence(
+            incident_id=incident_id,
+            source=body.source,
+            source_name=body.source_name,
+            evidence_type=body.evidence_type,
+            observation=body.observation,
+            metric=body.metric,
+            reliability=body.reliability,
+            latitude=body.latitude,
+            longitude=body.longitude,
+            provenance=body.provenance,
+            original_reference=body.original_reference,
+            is_simulated=body.is_simulated,
+            freshness_seconds=body.freshness_seconds,
+            confidence_contribution=body.confidence_contribution,
+            processing_status=body.processing_status,
+            interpretation=body.interpretation,
+            conflict_status=body.conflict_status,
+            conflict_details=body.conflict_details,
+            details=body.details,
+            raw_data=body.raw_data,
+        )
+        return EvidenceItemResponse.model_validate(evidence)
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+
+
+@router.post("/incidents/{incident_id}/reconcile", response_model=ReconciliationResponse)
+async def reconcile_incident_evidence_endpoint(
+    incident_id: uuid.UUID,
+    actor_role: ActorRole = Query(ActorRole.SYSTEM_AI),
+    actor_name: str = Query("TerraGuardian Reconciliation Engine"),
+    session: AsyncSession = Depends(get_db_session),
+) -> ReconciliationResponse:
+    """Execute deterministic multi-source cross-evidence reconciliation and conflict synthesis."""
+    reconciliation_service = ReconciliationService(session)
+    try:
+        summary = await reconciliation_service.reconcile_incident_evidence(
+            incident_id=incident_id,
+            actor_role=actor_role,
+            actor_name=actor_name,
+        )
+        return ReconciliationResponse.model_validate(summary)
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+
+
+@router.get("/incidents/{incident_id}/reconciliation", response_model=ReconciliationResponse)
+async def get_incident_reconciliation_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> ReconciliationResponse:
+    """Retrieve current cross-source evidence reconciliation summary for an incident."""
+    reconciliation_service = ReconciliationService(session)
+    try:
+        summary = await reconciliation_service.reconcile_incident_evidence(
+            incident_id=incident_id,
+            actor_role=ActorRole.SYSTEM_AI,
+            actor_name="Reconciliation Inspector",
+        )
+        return ReconciliationResponse.model_validate(summary)
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+
+
+@router.get("/evidence/{evidence_id}", response_model=EvidenceItemResponse)
+async def get_evidence_by_id_endpoint(
+    evidence_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> EvidenceItemResponse:
+    """Get a discrete evidence item by UUID."""
+    evidence_service = EvidenceService(session)
+    try:
+        evidence = await evidence_service.get_evidence_by_id(evidence_id)
+        return EvidenceItemResponse.model_validate(evidence)
+    except DomainError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+
+
+@router.patch("/evidence/{evidence_id}", response_model=EvidenceItemResponse)
+async def update_evidence_endpoint(
+    evidence_id: uuid.UUID,
+    body: EvidenceUpdateRequest,
+    session: AsyncSession = Depends(get_db_session),
+) -> EvidenceItemResponse:
+    """Update processing, verification, or conflict status of an evidence item."""
+    evidence_service = EvidenceService(session)
+    try:
+        updated = await evidence_service.update_evidence_status(
+            evidence_id=evidence_id,
+            actor_role=body.actor_role,
+            actor_name=body.actor_name,
+            processing_status=body.processing_status,
+            interpretation=body.interpretation,
+            conflict_status=body.conflict_status,
+            conflict_details=body.conflict_details,
+            reason=body.reason,
+        )
+        return EvidenceItemResponse.model_validate(updated)
+    except UnauthorizedAuthorityError as err:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=err.message)
+    except DomainError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+
+
 @router.get("/incidents/{incident_id}/actions", response_model=list[ActionResponse])
 async def get_incident_actions(
     incident_id: uuid.UUID,
@@ -461,6 +693,53 @@ async def confirm_action_evidence(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err.message)
 
 
+@router.post("/incidents/{incident_id}/predict", response_model=PredictiveRiskAssessment, status_code=status.HTTP_200_OK)
+async def predict_incident_risk_endpoint(
+    incident_id: uuid.UUID,
+    actor_role: Optional[ActorRole] = Query(ActorRole.SYSTEM_AI),
+    actor_name: Optional[str] = Query("tg-landslide-baseline-v1"),
+    session: AsyncSession = Depends(get_db_session),
+) -> PredictiveRiskAssessment:
+    """Execute predictive intelligence hazard & confidence assessment over multi-source evidence."""
+    predictive_service = PredictiveService(session)
+    try:
+        assessment = await predictive_service.assess_incident_risk(
+            incident_id=incident_id,
+            actor_role=actor_role.value if isinstance(actor_role, ActorRole) else str(actor_role),
+            actor_name=actor_name or "tg-landslide-baseline-v1",
+        )
+        return assessment
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+    except DomainError as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err.message)
+
+
+@router.get("/incidents/{incident_id}/prediction", response_model=PredictiveRiskAssessment)
+async def get_incident_prediction_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> PredictiveRiskAssessment:
+    """Retrieve the latest predictive risk and evidential confidence assessment."""
+    predictive_service = PredictiveService(session)
+    try:
+        assessment = await predictive_service.get_latest_prediction(incident_id)
+        return assessment
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+@router.get("/models/metadata")
+async def get_models_metadata_endpoint() -> dict[str, Any]:
+    """Retrieve predictive model metadata and benchmark validation metrics."""
+    metadata = ModelMetadata()
+    benchmark_report = SyntheticBenchmarkValidator.evaluate_demonstration_benchmark()
+    return {
+        "active_model": metadata.model_dump(),
+        "benchmark_validation": benchmark_report,
+    }
+
+
 @router.post("/incidents/seed/tg-2048", response_model=IncidentResponse, status_code=status.HTTP_201_CREATED)
 async def seed_tg2048_endpoint(
     force_reset: bool = Query(False),
@@ -470,4 +749,160 @@ async def seed_tg2048_endpoint(
     seed_service = SeedService(session)
     incident = await seed_service.seed_tg_2048(force_reset=force_reset)
     return IncidentResponse.model_validate(incident)
+
+
+# ── Prompt 06: Hazard Evolution, Divergence & Bounded Reassessment ──
+
+@router.get("/incidents/{incident_id}/hypothesis", response_model=HazardHypothesis)
+async def get_hazard_hypothesis_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> HazardHypothesis:
+    """Retrieve the living hazard hypothesis and expected envelope for an incident."""
+    hazard_service = HazardService(session)
+    try:
+        hypothesis = await hazard_service.get_hazard_hypothesis(incident_id)
+        return hypothesis
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+@router.get("/incidents/{incident_id}/divergences", response_model=list[DivergenceRecord])
+async def get_incident_divergences_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> list[DivergenceRecord]:
+    """Retrieve all detected divergences between expected hypothesis and observed reality."""
+    hazard_service = HazardService(session)
+    try:
+        divergences = await hazard_service.detect_divergences(incident_id)
+        return divergences
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+@router.post("/incidents/{incident_id}/reassess", response_model=BoundedReassessmentResult)
+async def perform_bounded_reassessment_endpoint(
+    incident_id: uuid.UUID,
+    body: BoundedReassessmentRequest,
+    session: AsyncSession = Depends(get_db_session),
+) -> BoundedReassessmentResult:
+    """Execute a deterministic bounded hazard reassessment."""
+    hazard_service = HazardService(session)
+    try:
+        result = await hazard_service.perform_bounded_reassessment(incident_id, body)
+        return result
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+
+
+@router.post("/incidents/{incident_id}/hazard-transitions", response_model=IncidentResponse)
+async def transition_hazard_state_endpoint(
+    incident_id: uuid.UUID,
+    body: HazardStateTransitionRequest,
+    session: AsyncSession = Depends(get_db_session),
+) -> IncidentResponse:
+    """Execute and audit a validated physical hazard state transition."""
+    hazard_service = HazardService(session)
+    try:
+        incident = await hazard_service.transition_hazard_state(incident_id, body)
+        return IncidentResponse.model_validate(incident)
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+
+
+@router.get("/incidents/{incident_id}/lineage", response_model=HazardLineageSummary)
+async def get_hazard_lineage_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> HazardLineageSummary:
+    """Retrieve full hazard evolution history and lineage continuity tree."""
+    hazard_service = HazardService(session)
+    try:
+        summary = await hazard_service.get_lineage(incident_id)
+        return summary
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+# ── PROMPT 07: Impact Intelligence & Operational Priority Endpoints ──
+
+@router.get("/incidents/{incident_id}/impact", response_model=ImpactAssessment)
+async def get_incident_impact_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> ImpactAssessment:
+    """Retrieve the downstream consequence, infrastructure, and population exposure assessment."""
+    impact_service = ImpactService(session)
+    try:
+        impact = await impact_service.get_impact_assessment(incident_id)
+        return impact
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+@router.post("/incidents/{incident_id}/impact/recalculate", response_model=ImpactAssessment)
+async def recalculate_incident_impact_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> ImpactAssessment:
+    """Recalculate downstream impact vectors."""
+    impact_service = ImpactService(session)
+    try:
+        impact = await impact_service.get_impact_assessment(incident_id)
+        return impact
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+@router.get("/incidents/{incident_id}/priority", response_model=PriorityAssessment)
+async def get_incident_priority_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> PriorityAssessment:
+    """Retrieve the backend-authoritative operational response priority assessment."""
+    impact_service = ImpactService(session)
+    try:
+        priority = await impact_service.compute_priority(incident_id)
+        return priority
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+@router.post("/incidents/{incident_id}/priority/recalculate", response_model=PriorityAssessment)
+async def recalculate_incident_priority_endpoint(
+    incident_id: uuid.UUID,
+    body: Optional[PriorityRecalculationRequest] = None,
+    session: AsyncSession = Depends(get_db_session),
+) -> PriorityAssessment:
+    """Recalculate operational response priority based on current hazard, exposure, and lifeline context."""
+    impact_service = ImpactService(session)
+    try:
+        priority = await impact_service.compute_priority(incident_id, body)
+        return priority
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+
+
+@router.get("/incidents/{incident_id}/priority/history")
+async def get_incident_priority_history_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> list[dict[str, Any]]:
+    """Reconstruct chronological priority transitions (e.g. P2 -> P1) from append-oriented audit logs."""
+    impact_service = ImpactService(session)
+    return await impact_service.get_priority_history(incident_id)
+
+
+@router.get("/comparative-priority", response_model=ComparativePriorityResult)
+async def get_comparative_priority_endpoint(
+    session: AsyncSession = Depends(get_db_session),
+) -> ComparativePriorityResult:
+    """Demonstrate HAZARD ≠ PRIORITY using two contrasting demonstration incidents."""
+    impact_service = ImpactService(session)
+    return impact_service.get_comparative_priority()
+
+
+
+
 

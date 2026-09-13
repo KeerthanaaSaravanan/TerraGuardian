@@ -15,6 +15,7 @@ from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 from app.domain.enums import (
+    EvidenceConflictStatus,
     EvidenceInterpretation,
     EvidenceProcessingStatus,
     EvidenceSource,
@@ -102,8 +103,36 @@ class Evidence(BaseModel):
     )
     processing_status: EvidenceProcessingStatus = EvidenceProcessingStatus.RECEIVED
     interpretation: EvidenceInterpretation = EvidenceInterpretation.UNVERIFIED
+    conflict_status: EvidenceConflictStatus = EvidenceConflictStatus.NONE
+    conflict_details: Optional[str] = None
     details: Optional[str] = None
     raw_data: Optional[dict[str, Any]] = None
+
+    model_config = {"from_attributes": True}
+
+
+class ReconciliationSummary(BaseModel):
+    """Structured deterministic cross-source evidence reconciliation result.
+    
+    Captures what the multi-source evidence fabric collectively indicates,
+    where uncertainties / conflicts exist, and the recommended operational next step.
+    """
+
+    incident_id: uuid.UUID
+    total_evidence_count: int
+    source_distribution: dict[str, int] = Field(default_factory=dict)
+    verified_count: int
+    unverified_count: int
+    supporting_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
+    conflicting_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
+    stale_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
+    conflict_status: EvidenceConflictStatus = EvidenceConflictStatus.NONE
+    conflict_summary: str
+    dominant_signal: str
+    evidence_quality_score: float = Field(ge=0.0, le=1.0)
+    confidence_contribution_aggregate: float = Field(ge=0.0, le=1.0)
+    recommended_action: str
+    reconciled_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = {"from_attributes": True}
 

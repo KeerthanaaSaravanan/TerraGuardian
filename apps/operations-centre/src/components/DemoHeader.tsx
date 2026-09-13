@@ -4,21 +4,32 @@ import { ThemeToggle } from "./common";
 import { IconChevronRight, IconRotateCcw } from "./icons";
 
 const STEPS: { num: DemoStep; name: string; tag: string }[] = [
-  { num: 1, name: "Command Centre", tag: "NER Grid" },
-  { num: 2, name: "Workspace", tag: "TG-2048" },
-  { num: 3, name: "Evidence", tag: "Risk ≠ Conf" },
-  { num: 4, name: "Impact & Priority", tag: "Hazard ≠ P1" },
-  { num: 5, name: "Field Verification", tag: "Ground Truth" },
-  { num: 6, name: "Authority Decision", tag: "Human Auth" },
-  { num: 7, name: "Action Tracking", tag: "Dispatched" },
-  { num: 8, name: "Action Gap", tag: "Approved ≠ Done" },
-  { num: 9, name: "Confirmation", tag: "Closed-Loop" },
-  { num: 10, name: "Replay & Audit", tag: "Forensics" },
+  { num: 1, name: "Predict", tag: "NER Grid" },
+  { num: 2, name: "Observe", tag: "TG-2048" },
+  { num: 3, name: "Reconcile", tag: "Risk ≠ Conf" },
+  { num: 4, name: "Prioritize", tag: "Impact Cascade" },
+  { num: 5, name: "Ground Truth", tag: "Field Verification" },
+  { num: 6, name: "Authorize", tag: "Human Auth" },
+  { num: 7, name: "Act", tag: "Action Dispatch" },
+  { num: 8, name: "Conformance", tag: "Approved ≠ Done" },
+  { num: 9, name: "Confirm", tag: "Closed-Loop" },
+  { num: 10, name: "Forensics", tag: "Audit Replay" },
 ];
 
 export const DemoHeader: React.FC = () => {
-  const { currentStep, setStep, nextStep, prevStep, resetDemo, incidentStatus, riskLevel, confidenceLevel, priorityLevel } =
-    useDemoScenario();
+  const {
+    currentStep,
+    setStep,
+    nextStep,
+    prevStep,
+    resetDemo,
+    incidentStatus,
+    hazardState,
+    riskLevel,
+    confidenceLevel,
+    priorityLevel,
+    backendStatus,
+  } = useDemoScenario();
 
   return (
     <header className="flex flex-col border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 transition-colors">
@@ -37,6 +48,21 @@ export const DemoHeader: React.FC = () => {
               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 font-semibold">
                 DEMONSTRATION SYSTEM
               </span>
+              {backendStatus === "CONNECTED" ? (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-400 font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  API SYNCED
+                </span>
+              ) : backendStatus === "CONNECTING" ? (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
+                  ... SYNCING
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-400 font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  DEMO ENGINE
+                </span>
+              )}
               <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono hidden xl:inline">
                 CLOSED-LOOP LANDSLIDE INTELLIGENCE (NER)
               </span>
@@ -54,6 +80,9 @@ export const DemoHeader: React.FC = () => {
           <span className="text-slate-300 dark:text-slate-700">|</span>
           <span className="text-slate-500 dark:text-slate-400">STATE:</span>
           <span className="text-emerald-700 dark:text-emerald-400 font-bold">{incidentStatus}</span>
+          <span className="text-slate-300 dark:text-slate-700">|</span>
+          <span className="text-slate-500 dark:text-slate-400">HAZARD:</span>
+          <span className="text-cyan-600 dark:text-cyan-400 font-bold">{hazardState}</span>
           <span className="text-slate-300 dark:text-slate-700">|</span>
           <span className="text-slate-500 dark:text-slate-400">RISK:</span>
           <span className="text-orange-600 dark:text-orange-400 font-bold">{riskLevel}</span>

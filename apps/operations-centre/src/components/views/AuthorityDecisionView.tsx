@@ -186,7 +186,7 @@ export const AuthorityDecisionView: React.FC = () => {
           {/* Interactive Decision Buttons */}
           <div className="pt-4 border-t border-slate-200 dark:border-neutral-800 flex flex-wrap items-center gap-3">
             <button
-              onClick={approveDecision}
+              onClick={() => approveDecision(officerName, authCode)}
               className={`flex-1 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-xs shadow-md transition-all ${
                 authorityDecision === "APPROVED"
                   ? "bg-emerald-600 text-white ring-2 ring-emerald-400"
@@ -198,14 +198,14 @@ export const AuthorityDecisionView: React.FC = () => {
             </button>
 
             <button
-              onClick={modifyDecision}
+              onClick={() => modifyDecision(officerName, "Conditional single-lane detour via Tenga")}
               className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 font-semibold py-3 px-4 rounded-lg text-xs border border-slate-300 dark:border-neutral-700 transition-all"
             >
               MODIFY
             </button>
 
             <button
-              onClick={rejectDecision}
+              onClick={() => rejectDecision(officerName, "Precautionary stand-down ordered")}
               className="bg-slate-100 dark:bg-neutral-900 hover:bg-red-50 dark:hover:bg-red-950/60 text-red-600 dark:text-red-400 font-semibold py-3 px-4 rounded-lg text-xs border border-slate-300 dark:border-neutral-800 hover:border-red-300 dark:hover:border-red-800 transition-all"
             >
               REJECT

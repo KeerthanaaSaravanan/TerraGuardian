@@ -29,7 +29,7 @@ export const ActionTrackingView: React.FC = () => {
             Coordinated Response Matrix for NH-13 Corridor
           </h1>
           <p className="text-xs text-slate-600 dark:text-neutral-400 mt-0.5">
-            Real-time tracking of operational orders dispatched across Border Roads Organisation, State Police, PWD, and DDMA.
+            Operational dispatch tracking across Border Roads Organisation, State Police, PWD, and DDMA.
           </p>
         </div>
 

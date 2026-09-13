@@ -70,13 +70,22 @@ class EvidenceProcessingStatus(str, enum.Enum):
 
 
 class EvidenceInterpretation(str, enum.Enum):
-    """Final evidential interpretation.
+    """Final evidential verification / interpretation status.
     
     Citizen evidence MUST be capable of remaining UNVERIFIED.
     """
     VERIFIED = "VERIFIED"
     UNVERIFIED = "UNVERIFIED"
+    REJECTED = "REJECTED"
     CONFLICTED = "CONFLICTED"
+
+
+class EvidenceConflictStatus(str, enum.Enum):
+    """Cross-source conflict state."""
+    NONE = "NONE"
+    CONFLICTED = "CONFLICTED"
+    PARTIALLY_CONFLICTED = "PARTIALLY_CONFLICTED"
+    RESOLVED = "RESOLVED"
 
 
 class ActionState(str, enum.Enum):
@@ -144,6 +153,9 @@ class AuditEventType(str, enum.Enum):
     INCIDENT_CREATED = "INCIDENT_CREATED"
     EVIDENCE_RECEIVED = "EVIDENCE_RECEIVED"
     EVIDENCE_RECONCILED = "EVIDENCE_RECONCILED"
+    RISK_ASSESSED = "RISK_ASSESSED"
+    IMPACT_ASSESSED = "IMPACT_ASSESSED"
+    PRIORITY_EVALUATED = "PRIORITY_EVALUATED"
     STATE_CHANGED = "STATE_CHANGED"
     DECISION_MADE = "DECISION_MADE"
     ACTION_DISPATCHED = "ACTION_DISPATCHED"
@@ -152,3 +164,4 @@ class AuditEventType(str, enum.Enum):
     DIVERGENCE_DETECTED = "DIVERGENCE_DETECTED"
     REASSESSMENT_PERFORMED = "REASSESSMENT_PERFORMED"
     RESOLUTION_RECORDED = "RESOLUTION_RECORDED"
+

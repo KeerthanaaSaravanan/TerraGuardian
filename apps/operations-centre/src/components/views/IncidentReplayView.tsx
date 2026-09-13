@@ -31,7 +31,7 @@ export const IncidentReplayView: React.FC = () => {
             Deterministic Post-Incident Audit: TG-2048
           </h1>
           <p className="text-xs text-slate-600 dark:text-neutral-400 mt-0.5">
-            Full cryptographic timeline tracing the closed-loop progression from initial sensor detection to verified human resolution.
+            Full append-oriented timeline tracing the closed-loop progression from initial sensor detection to verified human resolution.
           </p>
         </div>
 

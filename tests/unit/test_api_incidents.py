@@ -248,3 +248,160 @@ async def test_action_lifecycle_and_confirmation_endpoints(test_client: AsyncCli
     action_events = [e for e in timeline if e["event_type"] in ("ACTION_UPDATED", "ACTION_CONFIRMED")]
     assert len(action_events) >= 3
 
+
+@pytest.mark.asyncio
+async def test_create_evidence_endpoint(test_client: AsyncClient):
+    """Test adding evidence to an incident with audit tracking."""
+    seed_res = await test_client.post("/api/v1/incidents/seed/tg-2048")
+    incident_id = seed_res.json()["id"]
+
+    add_res = await test_client.post(
+        f"/api/v1/incidents/{incident_id}/evidence",
+        json={
+            "source": "CITIZEN",
+            "source_name": "TerraGuardian Safe Citizen Report #OBS-901",
+            "evidence_type": "citizen_hazard_photo",
+            "observation": "Fresh road shoulder cracking observed after rainfall.",
+            "metric": "Cracking Width: 12cm",
+            "reliability": "MODERATE",
+            "is_simulated": True,
+            "interpretation": "UNVERIFIED",
+            "details": "Submitted via mobile app with verified location telemetry.",
+        },
+    )
+    assert add_res.status_code == 201
+    ev_data = add_res.json()
+    assert ev_data["source"] == "CITIZEN"
+    assert ev_data["interpretation"] == "UNVERIFIED"
+
+    # Verify evidence list now has 5 items
+    evidence_res = await test_client.get(f"/api/v1/incidents/{incident_id}/evidence")
+    assert evidence_res.status_code == 200
+    assert len(evidence_res.json()) == 5
+
+
+@pytest.mark.asyncio
+async def test_authorization_boundary_and_guards(test_client: AsyncClient):
+    """Test server-side authorization guards (missing order code, unauthorized AI)."""
+    seed_res = await test_client.post("/api/v1/incidents/seed/tg-2048")
+    incident_id = seed_res.json()["id"]
+
+    # Transition to VERIFIED then DECISION_REQUIRED
+    await test_client.post(
+        f"/api/v1/incidents/{incident_id}/transitions",
+        json={
+            "target_status": "VERIFIED",
+            "actor_role": "FIELD_VERIFIER",
+            "actor_name": "SI R. Thapa",
+        },
+    )
+    await test_client.post(
+        f"/api/v1/incidents/{incident_id}/transitions",
+        json={
+            "target_status": "DECISION_REQUIRED",
+            "actor_role": "OPERATOR",
+            "actor_name": "Duty Officer",
+        },
+    )
+
+    # 1. AI actor attempting AUTHORIZED -> 403 Forbidden
+    ai_auth_res = await test_client.post(
+        f"/api/v1/incidents/{incident_id}/transitions",
+        json={
+            "target_status": "AUTHORIZED",
+            "actor_role": "SYSTEM_AI",
+            "actor_name": "TerraGuardian Automated Agent",
+            "authority_order_code": "AUTO-ORDER-001",
+        },
+    )
+    assert ai_auth_res.status_code == 403
+    assert "AI/System actors cannot authorize" in ai_auth_res.json()["detail"]
+
+    # 2. Human actor with missing authority_order_code when attempting AUTHORIZED -> 422
+    no_order_res = await test_client.post(
+        f"/api/v1/incidents/{incident_id}/transitions",
+        json={
+            "target_status": "AUTHORIZED",
+            "actor_role": "AUTHORIZED_DECISION_MAKER",
+            "actor_name": "District Magistrate",
+            "reason": "Missing order reference",
+        },
+    )
+    assert no_order_res.status_code == 422
+    assert "Authorization requires an official disaster order reference code" in no_order_res.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_invalid_action_confirmation_invariants(test_client: AsyncClient):
+    """Test that invalid confirmation attempts and illegal action jumps are strictly rejected."""
+    seed_res = await test_client.post("/api/v1/incidents/seed/tg-2048")
+    incident_id = seed_res.json()["id"]
+
+    actions = (await test_client.get(f"/api/v1/incidents/{incident_id}/actions")).json()
+    tsk_02 = next(a for a in actions if a["task_code"] == "TSK-02")
+    action_id = tsk_02["id"]
+
+    # 1. Attempting confirmation with missing required field (location_confirmed) -> 422 Unprocessable Entity
+    missing_field_res = await test_client.post(
+        f"/api/v1/actions/{action_id}/confirmations",
+        json={
+            "confirming_officer": "Officer Test",
+            "confirming_agency": "Police",
+            "confirmation_notes": "Missing location",
+        },
+    )
+    assert missing_field_res.status_code == 422
+
+    # 2. Attempting confirmation on non-existent action ID -> 404 Not Found
+    bad_id = str(uuid.uuid4())
+    not_found_conf = await test_client.post(
+        f"/api/v1/actions/{bad_id}/confirmations",
+        json={
+            "confirming_officer": "Officer Test",
+            "confirming_agency": "Police",
+            "location_confirmed": "KM-38 Checkpost",
+            "confirmation_notes": "Confirming non-existent action",
+        },
+    )
+    assert not_found_conf.status_code == 404
+
+    # 3. Illegal backwards transition jump: DISPATCHED -> PROPOSED -> 400 Bad Request
+    illegal_jump = await test_client.post(
+        f"/api/v1/actions/{action_id}/transitions",
+        json={
+            "target_state": "PROPOSED",
+            "actor_role": "OPERATOR",
+            "actor_name": "Duty Officer",
+        },
+    )
+    assert illegal_jump.status_code == 400
+    assert "cannot transition" in illegal_jump.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_refresh_persistence_simulation(test_client: AsyncClient):
+    """Verify that backend state persists across independent requests simulating frontend reload."""
+    # 1. Seed incident
+    seed_res = await test_client.post("/api/v1/incidents/seed/tg-2048")
+    incident_id = seed_res.json()["id"]
+
+    # 2. Mutate state: VERIFYING -> VERIFIED
+    await test_client.post(
+        f"/api/v1/incidents/{incident_id}/transitions",
+        json={
+            "target_status": "VERIFIED",
+            "actor_role": "FIELD_VERIFIER",
+            "actor_name": "SI R. Thapa",
+            "reason": "Verified on ground",
+        },
+    )
+
+    # 3. Independent GET request (simulating page refresh)
+    reload_res = await test_client.get(f"/api/v1/incidents/code/TG-2048")
+    assert reload_res.status_code == 200
+    reloaded_data = reload_res.json()
+    assert reloaded_data["status"] == "VERIFIED"
+    assert reloaded_data["id"] == incident_id
+
+
+

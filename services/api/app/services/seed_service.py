@@ -23,6 +23,7 @@ from app.domain.enums import (
     ActorRole,
     AuditEventType,
     ConfidenceLevel,
+    EvidenceConflictStatus,
     EvidenceInterpretation,
     EvidenceProcessingStatus,
     EvidenceSource,
@@ -112,6 +113,7 @@ class SeedService:
                 confidence_contribution=0.88,
                 processing_status=EvidenceProcessingStatus.RECONCILED.value,
                 interpretation=EvidenceInterpretation.UNVERIFIED.value,
+                conflict_status=EvidenceConflictStatus.NONE.value,
                 details="Rainfall rate peaked at 28.4 mm/hr. Slope saturation threshold exceeded by 153%.",
             ),
             EvidenceModel(
@@ -131,6 +133,8 @@ class SeedService:
                 confidence_contribution=0.45,
                 processing_status=EvidenceProcessingStatus.RECONCILED.value,
                 interpretation=EvidenceInterpretation.CONFLICTED.value,
+                conflict_status=EvidenceConflictStatus.CONFLICTED.value,
+                conflict_details="Optical observation obscured by monsoon cloud cover; radar backscatter noisy.",
                 details="Monsoon stratus cloud obstruction simulated. SAR backscatter indicates 3.2 dB surface roughness anomaly.",
             ),
             EvidenceModel(
@@ -151,6 +155,7 @@ class SeedService:
                 confidence_contribution=0.92,
                 processing_status=EvidenceProcessingStatus.RECONCILED.value,
                 interpretation=EvidenceInterpretation.VERIFIED.value,
+                conflict_status=EvidenceConflictStatus.NONE.value,
                 details="Highly fractured Daling-Buxa formation mica-schist with deep colluvium overburden.",
             ),
             EvidenceModel(
@@ -169,6 +174,7 @@ class SeedService:
                 confidence_contribution=0.90,
                 processing_status=EvidenceProcessingStatus.RECONCILED.value,
                 interpretation=EvidenceInterpretation.VERIFIED.value,
+                conflict_status=EvidenceConflictStatus.NONE.value,
                 details="Culvert #42/2 blocked in July 2023 causing road shoulder collapse. Structural toe-wall repair completed Nov 2023.",
             ),
         ]

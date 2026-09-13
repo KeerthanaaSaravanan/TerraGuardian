@@ -18,6 +18,12 @@ export const IncidentWorkspaceView: React.FC = () => {
   const {
     setStep,
     incidentStatus,
+    hazardState,
+    hazardHypothesis,
+    hazardLineage,
+    reassessmentResult,
+    runHazardReassessment,
+    runPredictiveAssessment,
     riskLevel,
     riskScore,
     confidenceLevel,
@@ -49,7 +55,7 @@ export const IncidentWorkspaceView: React.FC = () => {
             </span>
             <span className="flex items-center gap-1">
               <IconClock className="w-3.5 h-3.5 text-slate-400 dark:text-neutral-500" />
-              Detected: 04:22 IST | Simulated Real-time Telemetry
+              Detected: 04:22 IST | Deterministic Demonstration Telemetry
             </span>
           </div>
         </div>
@@ -259,7 +265,294 @@ export const IncidentWorkspaceView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* PROMPT 05: Predictive Intelligence & Feature Attribution Architecture */}
+      <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-neutral-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="p-1.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400">
+              <IconActivity className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold font-mono text-slate-900 dark:text-white">
+                PREDICTIVE HAZARD & EVIDENTIAL CONFIDENCE ENGINE
+              </h2>
+              <span className="text-[11px] font-mono text-slate-500 dark:text-neutral-400">
+                Interpretable Physics-Informed Logistic Hazard Model (scikit-learn + Slope Mechanics)
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 px-2 py-0.5 rounded font-bold">
+              SYNTHETIC CALIBRATION DEMO
+            </span>
+            <button
+              onClick={() => runPredictiveAssessment()}
+              className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-xs font-mono font-medium px-3 py-1 rounded border border-slate-300 dark:border-neutral-700 transition-colors"
+            >
+              Recalculate Model Inference
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Feature Drivers & Contributions (7 cols) */}
+          <div className="lg:col-span-7 flex flex-col gap-3">
+            <span className="text-xs font-mono font-bold text-slate-700 dark:text-neutral-300">
+              PRIMARY HAZARD DRIVERS (TRACEABLE LOG-ODDS ATTRIBUTION)
+            </span>
+            <div className="flex flex-col gap-2">
+              <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-900 dark:text-white">Antecedent Cumulative Rainfall (7-day IMD)</span>
+                  <span className="font-mono text-red-600 dark:text-red-400 font-bold">184.6 mm (40.8% weight)</span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-neutral-800 h-2 rounded-full mt-2 overflow-hidden">
+                  <div className="bg-red-500 h-2 rounded-full" style={{ width: "40.8%" }} />
+                </div>
+                <span className="text-[11px] text-slate-500 dark:text-neutral-400 mt-1 block">
+                  Extreme hydrometeorological saturation exceeding 120mm failure threshold.
+                </span>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-900 dark:text-white">Terrain Slope Angle (SRTM DEM 30m)</span>
+                  <span className="font-mono text-orange-600 dark:text-orange-400 font-bold">44.2° (34.2% weight)</span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-neutral-800 h-2 rounded-full mt-2 overflow-hidden">
+                  <div className="bg-orange-500 h-2 rounded-full" style={{ width: "34.2%" }} />
+                </div>
+                <span className="text-[11px] text-slate-500 dark:text-neutral-400 mt-1 block">
+                  Critical gravitational shear stress on steep colluvial escarpment.
+                </span>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-900 dark:text-white">Lithological Susceptibility (GSI NLSM)</span>
+                  <span className="font-mono text-amber-600 dark:text-amber-400 font-bold">Zone IV (18.5% weight)</span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-neutral-800 h-2 rounded-full mt-2 overflow-hidden">
+                  <div className="bg-amber-500 h-2 rounded-full" style={{ width: "18.5%" }} />
+                </div>
+                <span className="text-[11px] text-slate-500 dark:text-neutral-400 mt-1 block">
+                  Highly weathered mica schist and fractured phyllite bedrock prone to planar sliding.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Model Quality & Validation Metrics (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col gap-3">
+            <span className="text-xs font-mono font-bold text-slate-700 dark:text-neutral-300">
+              DATA COMPLETENESS & BENCHMARK VALIDATION
+            </span>
+            <div className="bg-slate-50 dark:bg-neutral-950 p-3.5 rounded-lg border border-slate-200 dark:border-neutral-800 flex flex-col gap-2.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Feature Completeness:</span>
+                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">78% (7 of 9 vectors)</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Optical Cloud Obscuration:</span>
+                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">88.0% (Reduced confidence)</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Validation Protocol:</span>
+                <span className="font-mono text-slate-800 dark:text-neutral-200">5-Fold Spatial Group Holdout</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Synthetic Brier Score:</span>
+                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">0.114 (Calibrated)</span>
+              </div>
+              <div className="pt-2 border-t border-slate-200 dark:border-neutral-800 text-[11px] text-slate-500 dark:text-neutral-400 leading-snug">
+                <strong>Scientific Transparency:</strong> Evaluated on synthetic North Eastern Region corridor holdout splits. No real-world production accuracy claims made prior to physical sensor calibration.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* PROMPT 06: Living Hazard Evolution, Divergence Detection & Bounded Reassessment */}
+      <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-neutral-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="p-1.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+              <IconActivity className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold font-mono text-slate-900 dark:text-white flex items-center gap-2">
+                <span>LIVING HAZARD EVOLUTION & FORENSIC REASSESSMENT</span>
+                <span className="bg-purple-600 text-white text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                  PROMPT 06
+                </span>
+              </h2>
+              <span className="text-[11px] font-mono text-slate-500 dark:text-neutral-400">
+                Continuous reconciliation of expected hypothesis vs observed reality across 4 independent dimensions
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => runHazardReassessment()}
+              className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-mono font-bold px-3.5 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5"
+            >
+              <span>Trigger Bounded Reassessment</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Independent Dimensions Banner */}
+        <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800">
+            <span className="text-[10px] font-mono text-slate-500 dark:text-neutral-500 font-bold block">1. LIFECYCLE STATE</span>
+            <span className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-1 block">
+              {incidentStatus}
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-neutral-400">Authority workflow lifecycle</span>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-purple-500/40 dark:border-purple-800/60">
+            <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 font-bold block">2. PHYSICAL HAZARD STATE</span>
+            <span className="text-xs font-mono font-bold text-purple-700 dark:text-purple-300 mt-1 block">
+              {hazardHypothesis?.current_state || hazardState || "DELAYED"}
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-neutral-400">Independent physical reality</span>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800">
+            <span className="text-[10px] font-mono text-slate-500 dark:text-neutral-500 font-bold block">3. EVIDENCE STATE</span>
+            <span className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-1 block">
+              RECONCILED
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-neutral-400">Multi-source fabric status</span>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800">
+            <span className="text-[10px] font-mono text-slate-500 dark:text-neutral-500 font-bold block">4. ACTION STATE</span>
+            <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">
+              PHYSICALLY_CONFIRMED
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-neutral-400">Barricade verified on ground</span>
+          </div>
+        </div>
+
+        {/* Invariant Truth Banners */}
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] font-mono">
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 p-2.5 rounded text-amber-900 dark:text-amber-200">
+            <strong>EVENT ABSENCE ≠ HAZARD RESOLUTION:</strong> Non-occurrence in 04:00-06:00 IST window causes state to become DELAYED, maintaining safety perimeter.
+          </div>
+          <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-800/60 p-2.5 rounded text-blue-900 dark:text-blue-200">
+            <strong>ACTION CONFIRMED ≠ RESOLUTION:</strong> Physical barricade confirmation does not resolve underlying 184mm hydrostatic pore pressure.
+          </div>
+          <div className="bg-purple-50 dark:bg-purple-950/40 border border-purple-300 dark:border-purple-800/60 p-2.5 rounded text-purple-900 dark:text-purple-200">
+            <strong>DIVERGENCE → REASSESSMENT:</strong> Temporal & spatial envelope discrepancies trigger bounded recalculation, not arbitrary escalation.
+          </div>
+        </div>
+
+        {/* Expected vs Observed Divergence Details & Lineage */}
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Left: Living Hypothesis & Divergence Monitor (7 cols) */}
+          <div className="lg:col-span-7 flex flex-col gap-3">
+            <span className="text-xs font-mono font-bold text-slate-700 dark:text-neutral-300">
+              EXPECTED HYPOTHESIS VS OBSERVED REALITY
+            </span>
+
+            <div className="bg-slate-50 dark:bg-neutral-950 p-3.5 rounded-lg border border-slate-200 dark:border-neutral-800 flex flex-col gap-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Living Hypothesis ID:</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">
+                  {hazardHypothesis?.id || "HYP-TG-2048-01"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Forensic Lineage ID:</span>
+                <span className="font-mono font-bold text-purple-600 dark:text-purple-400">
+                  {hazardHypothesis?.lineage_id || hazardLineage?.lineage_id || "HL-TG-2048-01"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Expected Spatial Envelope:</span>
+                <span className="font-mono text-slate-800 dark:text-neutral-200">
+                  27.084° N, 92.568° E (Corridor KM-42 ± 250m)
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Expected Failure Window:</span>
+                <span className="font-mono text-slate-800 dark:text-neutral-200">
+                  04:00 - 06:00 IST (Elapsed without cataclysmic rupture)
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Continuity Assessment:</span>
+                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  {reassessmentResult?.continuity_supported ?? true ? "SUPPORTED (Hydrostatic pressure sustained)" : "DISCONTINUOUS"}
+                </span>
+              </div>
+            </div>
+
+            {/* Divergence Alert Box */}
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 p-3.5 rounded-lg flex flex-col gap-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                  <IconAlertTriangle className="w-4 h-4 text-amber-600" />
+                  DETECTED DIVERGENCE: TEMPORAL (MODERATE)
+                </span>
+                <span className="text-[10px] font-mono bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 px-1.5 py-0.5 rounded font-bold">
+                  REASSESSED AS DELAYED
+                </span>
+              </div>
+              <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                Expected failure window (04:00-06:00 IST) elapsed without catastrophic slope rupture. Hydrostatic pore pressure remains at 184mm critical saturation. Slope is retained in <strong>DELAYED</strong> state rather than premature false clearance.
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Bounded Reassessment Result & Lineage Tree (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col gap-3">
+            <span className="text-xs font-mono font-bold text-slate-700 dark:text-neutral-300">
+              BOUNDED REASSESSMENT & AUDITED GUIDANCE
+            </span>
+
+            <div className="bg-slate-50 dark:bg-neutral-950 p-3.5 rounded-lg border border-slate-200 dark:border-neutral-800 flex flex-col gap-2.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Target Hazard State:</span>
+                <span className="font-mono font-bold text-purple-600 dark:text-purple-400">
+                  {reassessmentResult?.updated_hazard_state || "DELAYED"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Lineage Decision:</span>
+                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                  {reassessmentResult?.lineage_decision || "UPDATE"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-neutral-400">Updated Risk / Confidence:</span>
+                <span className="font-mono text-slate-800 dark:text-neutral-200">
+                  {reassessmentResult?.updated_risk_level || "HIGH"} ({reassessmentResult ? Math.round(reassessmentResult.updated_risk_score) : 84}/100) / {reassessmentResult?.updated_confidence_level || "MODERATE"} ({reassessmentResult ? Math.round(reassessmentResult.updated_confidence_score) : 62}/100)
+                </span>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200 dark:border-neutral-800">
+                <span className="text-[10px] font-mono text-slate-500 dark:text-neutral-400 block font-bold">OPERATIONAL GUIDANCE:</span>
+                <p className="text-xs text-slate-700 dark:text-neutral-300 mt-1 leading-snug">
+                  {reassessmentResult?.operational_guidance ||
+                    "Maintain KM-42 physical barricade and vehicular traffic halt. Deploy geotechnical patrol with inclinometers before any clearance authorization."}
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between text-[11px] font-mono text-slate-500 dark:text-neutral-400">
+                <span>Lineage Depth: {hazardLineage?.total_reassessments_performed || 1} iterations</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Audit Event Logged</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
+
 

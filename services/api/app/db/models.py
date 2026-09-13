@@ -120,6 +120,8 @@ class EvidenceModel(Base):
     confidence_contribution: Mapped[float | None] = mapped_column(Float, nullable=True)
     processing_status: Mapped[str] = mapped_column(String(32), default="RECEIVED", nullable=False)
     interpretation: Mapped[str] = mapped_column(String(32), default="UNVERIFIED", nullable=False)
+    conflict_status: Mapped[str] = mapped_column(String(32), default="NONE", nullable=False)
+    conflict_details: Mapped[str | None] = mapped_column(Text, nullable=True)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
@@ -242,9 +244,19 @@ class ReassessmentModel(Base):
     updated_hazard_state: Mapped[str] = mapped_column(String(32), nullable=False)
     updated_risk_level: Mapped[str] = mapped_column(String(32), nullable=False)
     updated_risk_score: Mapped[float] = mapped_column(Float, nullable=False)
+    updated_confidence_level: Mapped[str] = mapped_column(String(32), default="MODERATE", nullable=False)
+    updated_confidence_score: Mapped[float] = mapped_column(Float, default=50.0, nullable=False)
+
+    divergence_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    continuity_supported: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    lineage_id: Mapped[str] = mapped_column(String(64), default="HL-TG-2048-01", nullable=False)
+    lineage_decision: Mapped[str] = mapped_column(String(64), default="CONTINUE_SAME_LINEAGE", nullable=False)
 
     rationale: Mapped[str] = mapped_column(Text, nullable=False)
+    operational_guidance: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payload_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     reassessed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     reassessed_by: Mapped[str] = mapped_column(String(255), default="system", nullable=False)
 
     incident: Mapped[IncidentModel] = relationship("IncidentModel", back_populates="reassessments")
+

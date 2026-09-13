@@ -102,16 +102,20 @@ def test_hazard_does_not_equal_priority():
     priority_eval = PriorityAssessment(
         incident_id=incident_id,
         priority_level=PriorityLevel.P1_CRITICAL,
-        priority_score=94.0,
-        hazard_score_component=86.0,
-        exposure_component=92.0,
-        criticality_component=98.0,
-        isolation_multiplier=1.5,
-        rationale="Sole heavy freight route to Tawang district; 1,420 downstream villagers in runout zone.",
+        priority_score=89.7,
+        hazard_risk_input=86.0,
+        hazard_confidence_input=89.0,
+        exposure_score=90.5,
+        criticality_score=95.0,
+        connectivity_penalty_score=92.0,
+        response_difficulty_score=80.0,
+        operational_rationale="Sole heavy freight route to Tawang district; 1,420 downstream villagers in runout zone.",
     )
 
     assert priority_eval.priority_level == PriorityLevel.P1_CRITICAL
-    assert priority_eval.isolation_multiplier == 1.5
+    assert priority_eval.priority_score == 89.7
+    assert priority_eval.hazard_risk_input == 86.0
+    assert priority_eval.exposure_score == 90.5
 
 
 def test_citizen_evidence_can_remain_unverified():

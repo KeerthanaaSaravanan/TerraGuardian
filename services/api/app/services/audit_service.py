@@ -32,7 +32,7 @@ class AuditService:
         payload: dict[str, Any] | None = None,
         created_at: datetime | None = None,
     ) -> AuditEventModel:
-        """Record an immutable audit event."""
+        """Record an append-oriented relational database audit event."""
         event = AuditEventModel(
             id=uuid.uuid4(),
             incident_id=incident_id,

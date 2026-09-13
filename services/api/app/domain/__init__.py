@@ -22,9 +22,15 @@ from app.domain.evidence import (
     Observation,
     VerificationObservation,
 )
-from app.domain.impact import (
+from app.domain.hazard import (
     HazardHypothesis,
+    HazardLineageSummary,
+)
+from app.domain.impact import (
+    ComparativePriorityResult,
+    CorridorConnectivity,
     ImpactAssessment,
+    ImpactNode,
     ImpactNodeModel,
     PriorityAssessment,
 )

@@ -78,3 +78,37 @@ class IncidentService:
         items = list(result.scalars().all())
 
         return items, total
+
+    async def create_incident(
+        self,
+        title: str,
+        latitude: float,
+        longitude: float,
+        description: str | None = None,
+        location_name: str | None = None,
+        incident_type: str = "landslide",
+        corridor_name: str | None = None,
+        state: str = "Arunachal Pradesh",
+        district: str = "West Kameng",
+        metadata_json: dict | None = None,
+    ) -> IncidentModel:
+        """Create a new Incident Twin."""
+        code_suffix = uuid.uuid4().hex[:4].upper()
+        incident = IncidentModel(
+            id=uuid.uuid4(),
+            code=f"TG-{code_suffix}",
+            title=title,
+            description=description,
+            latitude=latitude,
+            longitude=longitude,
+            location_name=location_name,
+            incident_type=incident_type,
+            corridor_name=corridor_name,
+            state=state,
+            district=district,
+            metadata_json=metadata_json or {},
+        )
+        self.session.add(incident)
+        await self.session.flush()
+        return incident
+
