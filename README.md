@@ -28,7 +28,7 @@
 
 <br>
 
-**[ INSERT FINAL VERIFIED PRODUCT SCREENSHOT / GIF HERE ]**
+<img width="1122" height="663" alt="TerraGuardian pptx" src="https://github.com/user-attachments/assets/c787c9fc-8432-4ccf-970b-dbf9659036c4" />
 
 <br>
 
@@ -210,12 +210,13 @@ TerraGuardian deliberately keeps operational concepts separate.
 
 ### System Architecture
 *Figure 1 — Master Operational Architecture: How TerraGuardian connects existing hazard intelligence to evidence, decision, action, outcome and continuous reassessment.*
-
+<img width="1965" height="803" alt="TerraGuardian AI Operational Intelligence Architecture" src="https://github.com/user-attachments/assets/20cfda56-e0df-459c-8ce8-008c112bef5a" />
 
 
 ### Technical Deployment & Integration Architecture
 *Figure 2 — Technical Deployment & Integration Architecture: How the platform is structured internally, isolated at AI/data/security boundaries, connected through adapters/APIs, and progressively deployed from prototype to validated operational integration.*
 
+![Uploading TerraGuardian AI Technical Deployment Architecture.png…]()
 
 
 ### ARCHITECTURE PRINCIPLE
