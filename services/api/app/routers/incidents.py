@@ -62,6 +62,8 @@ from app.services.auth_service import (
     require_field_verifier,
     require_operator,
 )
+from app.domain.outcome import OutcomeAssessment, OutcomeEvaluationRequest
+from app.services.outcome_service import OutcomeService
 from app.services.state_transition_service import StateTransitionService
 
 router = APIRouter(tags=["incidents"])
@@ -523,6 +525,8 @@ async def create_incident_evidence(
         return EvidenceItemResponse.model_validate(evidence)
     except IncidentNotFoundError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+    except DomainError as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err.message)
 
 
 @router.post("/incidents/{incident_id}/reconcile", response_model=ReconciliationResponse)
@@ -832,6 +836,58 @@ async def get_hazard_lineage_endpoint(
     try:
         summary = await hazard_service.get_lineage(incident_id)
         return summary
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+# ── PROMPT 03: Intervention-Conditioned Hazard Outcome Engine Endpoints ──
+
+@router.post("/incidents/{incident_id}/outcome/evaluate", response_model=OutcomeAssessment)
+async def evaluate_incident_outcome_endpoint(
+    incident_id: uuid.UUID,
+    body: Optional[OutcomeEvaluationRequest] = None,
+    session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_operator),
+) -> OutcomeAssessment:
+    """Evaluate and record authoritative intervention-conditioned outcome."""
+    outcome_service = OutcomeService(session)
+    try:
+        assessment = await outcome_service.evaluate_outcome(incident_id, body)
+        return assessment
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+    except Exception as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+
+
+@router.get("/incidents/{incident_id}/outcome", response_model=Optional[OutcomeAssessment])
+async def get_incident_outcome_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_authenticated_user),
+) -> Optional[OutcomeAssessment]:
+    """Retrieve the latest evaluated outcome assessment for an incident."""
+    outcome_service = OutcomeService(session)
+    outcome = await outcome_service.get_latest_outcome(incident_id)
+    if not outcome:
+        try:
+            outcome = await outcome_service.evaluate_outcome(incident_id)
+        except IncidentNotFoundError as err:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+    return outcome
+
+
+@router.get("/incidents/{incident_id}/reassessments", response_model=list[dict[str, Any]])
+async def list_incident_reassessments_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_authenticated_user),
+) -> list[dict[str, Any]]:
+    """Retrieve full history of bounded reassessments for an incident."""
+    hazard_service = HazardService(session)
+    try:
+        hypothesis = await hazard_service.get_hazard_hypothesis(incident_id)
+        return hypothesis.evolution_history
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
 

@@ -351,6 +351,18 @@ class HazardService:
                 "or debris clearance evidence. EVENT ABSENCE ≠ HAZARD RESOLUTION."
             )
 
+        # SAFETY RULE: FALSE_ALARM cannot be reached from event absence without adequate observation
+        if target_state == HazardState.FALSE_ALARM:
+            from app.services.outcome_service import OutcomeService
+            from app.domain.outcome import ObservationAdequacy, OutcomeType
+            outcome_svc = OutcomeService(self.session)
+            outcome = await outcome_svc.evaluate_outcome(incident_id)
+            if outcome.observation_adequacy != ObservationAdequacy.ADEQUATE or outcome.outcome_type == OutcomeType.OBSERVATION_GAP:
+                raise ValueError(
+                    "FALSE_ALARM REJECTED: Event absence without verified, multi-modal ground inspection cannot declare a false alarm. "
+                    "Inadequate observation creates an OBSERVATION_GAP, not a false prediction."
+                )
+
         # SAFETY RULE: ACTION CONFIRMED ≠ HAZARD RESOLUTION
         # (Even if all actions are PHYSICALLY_CONFIRMED, hazard state remains ACTIVE or DELAYED until physical stabilization)
 
@@ -522,6 +534,18 @@ class HazardService:
             )
             if not has_evidence and not request.resolution_evidence_id:
                 raise ValueError("RESOLUTION REJECTED: Affirmative geotechnical stabilization evidence required.")
+
+        # Safety rule: FALSE_ALARM cannot be reached merely from event absence without adequate observation
+        if target_state == HazardState.FALSE_ALARM:
+            from app.services.outcome_service import OutcomeService
+            from app.domain.outcome import ObservationAdequacy, OutcomeType
+            outcome_svc = OutcomeService(self.session)
+            outcome = await outcome_svc.evaluate_outcome(incident_id)
+            if outcome.observation_adequacy != ObservationAdequacy.ADEQUATE or outcome.outcome_type == OutcomeType.OBSERVATION_GAP:
+                raise ValueError(
+                    "FALSE_ALARM REJECTED: Event absence without verified, multi-modal ground inspection cannot declare a false alarm. "
+                    "Inadequate observation creates an OBSERVATION_GAP, not a false prediction."
+                )
 
         prev_state_str = incident.hazard_state
         incident.hazard_state = target_state.value

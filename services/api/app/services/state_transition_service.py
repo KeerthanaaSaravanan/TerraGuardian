@@ -134,6 +134,18 @@ class StateTransitionService:
                     "before an incident can be resolved. Submit and verify field patrol evidence first."
                 )
 
+            # 3f. Outcome Engine Closure Verification
+            # An unmitigated outcome (OBSERVATION_GAP, RESIDUAL_HAZARD, INTERVENTION_CONDITIONED_NON_EVENT)
+            # strictly forbids closure without verified stabilization.
+            from app.services.outcome_service import OutcomeService
+            outcome_svc = OutcomeService(self.session)
+            latest_outcome = await outcome_svc.get_latest_outcome(incident_id)
+            if latest_outcome and not latest_outcome.closure_permitted:
+                raise PreconditionFailedError(
+                    f"Closure blocked by Outcome Engine: Current outcome is '{latest_outcome.outcome_type.value}'. "
+                    "EVENT ABSENCE ≠ HAZARD RESOLUTION. Incident cannot be closed without verified geotechnical stabilization."
+                )
+
         # 4. Mutate State
         previous_status_val = incident.status
         incident.status = target_status.value

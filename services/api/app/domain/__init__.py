@@ -39,6 +39,15 @@ from app.domain.incident import (
     IncidentTwin,
     is_valid_transition,
 )
+from app.domain.outcome import (
+    InterventionContextState,
+    ObservationAdequacy,
+    OutcomeAssessment,
+    OutcomeEvaluationRequest,
+    OutcomeType,
+    SpatialDivergenceContext,
+    haversine_distance_meters,
+)
 from app.domain.reassessment import (
     Divergence,
     Outcome,
@@ -85,5 +94,12 @@ __all__ = [
     "Divergence",
     "Reassessment",
     "Outcome",
+    "OutcomeType",
+    "InterventionContextState",
+    "ObservationAdequacy",
+    "SpatialDivergenceContext",
+    "OutcomeAssessment",
+    "OutcomeEvaluationRequest",
+    "haversine_distance_meters",
     "AuditEvent",
 ]

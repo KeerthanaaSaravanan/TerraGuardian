@@ -18,6 +18,7 @@ from app.domain.enums import (
     EvidenceProcessingStatus,
     EvidenceSource,
 )
+from app.domain.outcome import haversine_distance_meters
 from app.services.audit_service import AuditService
 from app.services.exceptions import (
     DomainError,
@@ -83,6 +84,18 @@ class EvidenceService:
     ) -> EvidenceModel:
         """Add a discrete piece of evidence to an incident with safety boundary enforcement and audit tracking."""
         incident = await self.incident_service.get_by_id(incident_id)
+
+        # ── SPATIAL BOUNDARY VALIDATION ──
+        # Evidence with coordinates must fall within the maximum supported spatial scope (10.0 km).
+        # Unrelated distant evidence cannot silently attach to the incident.
+        if latitude is not None and longitude is not None:
+            dist_m = haversine_distance_meters(incident.latitude, incident.longitude, latitude, longitude)
+            if dist_m > 10000.0:  # 10 km
+                raise DomainError(
+                    f"Spatial boundary rejection: Evidence location ({latitude:.4f}, {longitude:.4f}) is "
+                    f"{dist_m / 1000.0:.1f}km away from incident centroid ({incident.latitude:.4f}, {incident.longitude:.4f}), "
+                    f"exceeding maximum supported incident scope of 10.0km. Unrelated distant evidence cannot silently attach to incident {incident.code}."
+                )
 
         # ── PUBLIC SAFETY BOUNDARY ENFORCEMENT ──
         # Citizen observations MUST enter the operational fabric as UNVERIFIED.

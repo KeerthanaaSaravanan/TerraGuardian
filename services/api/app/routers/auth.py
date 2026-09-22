@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db.models import UserModel
 from app.db.session import get_db_session
 from app.services.auth_service import (
@@ -84,11 +85,16 @@ async def get_current_user_profile(
     return UserResponse.model_validate(current_user)
 
 
-@router.post("/seed-demo-users", response_model=list[UserResponse], status_code=status.HTTP_201_CREATED)
+@router.post("/seed-demo-users", response_model=list[UserResponse], status_code=status.HTTP_200_OK)
 async def seed_demo_users_endpoint(
     session: AsyncSession = Depends(get_db_session),
 ) -> list[UserResponse]:
     """Seed or update deterministic demonstration accounts (LOCAL / DEMO ONLY)."""
+    if settings.environment == "production":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Demo user seeding is strictly prohibited in production environments.",
+        )
     auth_service = AuthService(session)
     users = await auth_service.seed_demo_users()
     return [UserResponse.model_validate(u) for u in users]

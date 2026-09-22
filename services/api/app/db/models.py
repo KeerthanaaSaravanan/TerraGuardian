@@ -89,6 +89,9 @@ class IncidentModel(Base):
     reassessments: Mapped[list[ReassessmentModel]] = relationship(
         "ReassessmentModel", back_populates="incident", cascade="all, delete-orphan"
     )
+    outcomes: Mapped[list[OutcomeModel]] = relationship(
+        "OutcomeModel", back_populates="incident", cascade="all, delete-orphan", order_by="OutcomeModel.evaluated_at.desc()"
+    )
 
 
 class EvidenceModel(Base):
@@ -280,4 +283,36 @@ class UserModel(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
+
+
+class OutcomeModel(Base):
+    """Authoritative persistent record of an outcome evaluation."""
+
+    __tablename__ = "outcomes"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    incident_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("incidents.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+
+    outcome_type: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    intervention_state: Mapped[str] = mapped_column(String(64), nullable=False)
+    observation_adequacy: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    causal_claim_established: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    closure_permitted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    reassessment_required: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    recommended_hazard_state: Mapped[str] = mapped_column(String(32), nullable=False)
+
+    spatial_divergence_meters: Mapped[float | None] = mapped_column(Float, nullable=True)
+    within_supported_scope: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_summary: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    payload_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+    evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    evaluated_by: Mapped[str] = mapped_column(String(255), default="OutcomeEngine", nullable=False)
+
+    incident: Mapped[IncidentModel] = relationship("IncidentModel", back_populates="outcomes")
 
