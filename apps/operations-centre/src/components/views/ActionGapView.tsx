@@ -34,7 +34,7 @@ export const ActionGapView: React.FC = () => {
           <div className="flex items-center gap-2 font-mono text-xs text-slate-500 dark:text-neutral-400">
             <span>STEP 8 OF 10</span>
             <span>•</span>
-            <span className="text-red-600 dark:text-red-400 font-bold">AUTONOMOUS CONFORMANCE & GAP WATCHDOG</span>
+            <span className="text-red-600 dark:text-red-400 font-bold">AUTOMATED CONFORMANCE & GAP WATCHDOG</span>
           </div>
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
             Operational Response Conformance Monitoring

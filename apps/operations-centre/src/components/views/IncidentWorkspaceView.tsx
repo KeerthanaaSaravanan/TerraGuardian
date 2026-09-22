@@ -359,11 +359,11 @@ export const IncidentWorkspaceView: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 dark:text-neutral-400">Validation Protocol:</span>
-                <span className="font-mono text-slate-800 dark:text-neutral-200">5-Fold Spatial Group Holdout</span>
+                <span className="font-mono text-slate-800 dark:text-neutral-200">Synthetic 5-Fold Corridor Holdout</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 dark:text-neutral-400">Synthetic Brier Score:</span>
-                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">0.114 (Calibrated)</span>
+                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">0.114 (Synthetic Benchmark)</span>
               </div>
               <div className="pt-2 border-t border-slate-200 dark:border-neutral-800 text-[11px] text-slate-500 dark:text-neutral-400 leading-snug">
                 <strong>Scientific Transparency:</strong> Evaluated on synthetic North Eastern Region corridor holdout splits. No real-world production accuracy claims made prior to physical sensor calibration.

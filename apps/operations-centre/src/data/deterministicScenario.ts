@@ -397,7 +397,7 @@ export const REPLAY_TIMELINE_STEPS: TimelineMilestone[] = [
     badge: "AUDIT ALERT",
     badgeColor: "#EF4444",
     description: "Traffic Police Checkpoint KM-38 did not confirm physical barricade. Operational alert triggered. Approved action ≠ Completed action.",
-    actor: "Autonomous Conformance Watchdog",
+    actor: "Automated Conformance Watchdog",
   },
   {
     step: 10,

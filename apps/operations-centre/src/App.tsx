@@ -228,7 +228,7 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
                 <strong>TerraGuardian Safe</strong> is the mobile-first citizen PWA companion. While the Operations Centre handles multi-agency command, Safe provides localized alerts, camera-based hazard reporting, and offline-first safety advisories.
               </p>
               <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800 font-mono text-[11px] space-y-1">
-                <div>• Autonomous offline-first queue (IndexedDB)</div>
+                <div>• Client-side offline queue (IndexedDB)</div>
                 <div>• On-device EXIF & geolocation verification</div>
                 <div>• Direct feed into Incident Twin evidence pipeline</div>
               </div>
