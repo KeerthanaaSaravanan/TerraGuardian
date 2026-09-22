@@ -443,24 +443,26 @@ DEMONSTRATION-READY
 
 Claims are not upgraded without evidence.
 
-TerraGuardian's intelligence stack combines executable risk and confidence models with evidence, consequence, decision and outcome reasoning—keeping uncertainty explicit throughout the incident lifecycle.
-
-| Intelligence Capability | Status |
+| Capability | Current status |
 |---|---|
-| Landslide Risk Model | **IMPLEMENTED · VERIFIED** |
-| Evidence Confidence Model | **IMPLEMENTED · VERIFIED** |
-| Feature Engineering & Hazard Signals | **IMPLEMENTED · VERIFIED** |
-| Multi-Source Evidence Reconciliation | **IMPLEMENTED · VERIFIED** |
-| Hazard Divergence Intelligence | **IMPLEMENTED · VERIFIED** |
-| Consequence Propagation | **IMPLEMENTED · VERIFIED** |
-| Operational Priority Intelligence | **IMPLEMENTED · VERIFIED** |
-| Decision-Support Reasoning | **IMPLEMENTED · VERIFIED** |
-| Intervention-Conditioned Outcome Interpretation | **IMPLEMENTED · VERIFIED** |
-| Observation-Gap & Residual-Hazard Reasoning | **IMPLEMENTED · VERIFIED** |
-| Continuous Reassessment Engine | **IMPLEMENTED · VERIFIED** |
-| Explainable Intelligence Outputs | **IMPLEMENTED · VERIFIED** |
-
-The intelligence layer is designed for traceability: every assessment is grounded in evidence, uncertainty and deterministic operational rules before reaching human-authorized action.
+| Persistent Incident Twin | IMPLEMENTED |
+| Server-enforced incident lifecycle | IMPLEMENTED |
+| Evidence reconciliation | IMPLEMENTED |
+| Citizen-evidence safety boundary | IMPLEMENTED |
+| Risk + confidence baseline | IMPLEMENTED |
+| Impact / priority | IMPLEMENTED |
+| Human authorization | IMPLEMENTED |
+| Reassessment | IMPLEMENTED |
+| Deterministic / interpretable intelligence baseline | IMPLEMENTED |
+| Intervention context | IMPLEMENTED |
+| Observed-outcome integration | IMPLEMENTED |
+| Evidentiary closure gate | IMPLEMENTED |
+| Full action-confirmation enforcement | IMPLEMENTED |
+| Live government integrations | NOT CLAIMED |
+| Production ML accuracy | NOT CLAIMED |
+| Production RBAC / IAM | NOT CLAIMED |
+| Cryptographically immutable audit | NOT CLAIMED |
+| Full offline-first operation | NOT CLAIMED |
 
 <br>
 
