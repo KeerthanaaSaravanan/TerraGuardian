@@ -16,8 +16,6 @@
 
 <br><br>
 
-[Architecture](#architecture) · [Research](#research) · [Engineering](#engineering-truth) · [Demonstration](#demonstration) · [Run](#run)
-
 </div>
 
 ---
