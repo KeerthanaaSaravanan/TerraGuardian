@@ -1,15 +1,15 @@
 <div align="center">
 
 # TERRAGUARDIAN AI
+
+### FROM WARNING TO VERIFIED RESPONSE
+
+**Landslide Operational Intelligence for the North Eastern Region of India**
 <br>
 
 > ## A warning starts an incident. It does not end one.
 
 <br>
-
-### FROM WARNING TO VERIFIED RESPONSE
-
-**Landslide Operational Intelligence for the North Eastern Region of India**
 
 **SIH26001** · **MDoNER** · **Disaster Management** · **Software**
 
