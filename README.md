@@ -1,126 +1,63 @@
-# TerraGuardian AI
+<div align="center">
 
-> **FROM WARNING TO ACTION**
+# TERRAGUARDIAN AI
 
-AI-powered closed-loop landslide risk and response intelligence for the North Eastern Region of India.
+### FROM WARNING TO VERIFIED RESPONSE
+
+**Landslide Operational Intelligence for the North Eastern Region of India**
+
+[![SIH26001](https://img.shields.io/badge/SIH-26001-1f6feb?style=for-the-badge)](#)
+[![Domain](https://img.shields.io/badge/Domain-Disaster%20Management-2ea043?style=for-the-badge)](#)
+[![Platform](https://img.shields.io/badge/Platform-Software-8250df?style=for-the-badge)](#)
+[![Status](https://img.shields.io/badge/Status-Research%20Prototype-orange?style=for-the-badge)](#)
+
+**A warning starts an incident. It does not end one.**
+
+[Architecture](#architecture) ·
+[Research](#research) ·
+[Engineering](#engineering-truth) ·
+[Demonstration](#demonstration)
+
+</div>
 
 ---
 
-## What is TerraGuardian?
+## At a Glance
 
-TerraGuardian is an operational intelligence and coordination layer that connects hazard intelligence to action:
-
-**Sense → Reconcile → Verify → Understand → Prioritize → Decide → Act → Confirm → Learn**
-
-It does **not** replace authoritative systems (GSI, IMD, NRSC/NDEM, NDMA). It integrates their outputs into a unified operational picture with human-in-the-loop safety-critical decision-making.
-
-## Two User Experiences
-
-| Experience | Platform | Users |
-|---|---|---|
-| **Operations Centre** | Desktop web | Authorities, disaster-management teams, field coordinators |
-| **TerraGuardian Safe** | Mobile PWA | Citizens |
-
-## Repository Structure
-
-```
-TerraGuardian/
-├── apps/
-│   ├── operations-centre/    # Desktop Operations Centre (React/TypeScript/Vite)
-│   └── terra-guardian-safe/  # Citizen PWA (React/TypeScript/Vite)
-├── services/
-│   └── api/                  # Backend API (Python/FastAPI)
-├── intelligence/
-│   ├── risk/                 # Risk assessment modules
-│   ├── evidence/             # Evidence processing
-│   ├── impact/               # Impact analysis
-│   ├── priority/             # Prioritization logic
-│   ├── vision/               # Image/vision analysis
-│   └── agents/               # Bounded reasoning agents
-├── data/
-│   ├── connectors/           # External data source adapters
-│   ├── ingestion/            # Data ingestion pipelines
-│   └── fixtures/             # Test/demo data fixtures
-├── gis/                      # GIS utilities
-├── ml/                       # ML models and training
-├── database/                 # Schema, migrations, spatial
-├── tests/                    # Test suites
-├── assets/                   # Brand, reference UI, icons
-├── docs/                     # Engineering documentation
-└── docker/                   # Docker configurations
-```
-
-## Technology Stack
-
-| Layer | Technology |
+| | TerraGuardian |
 |---|---|
-| Frontend | React, TypeScript, Vite, Tailwind CSS |
-| Maps | MapLibre GL JS |
-| Backend | Python, FastAPI, Pydantic v2 |
-| Database | PostgreSQL + PostGIS |
-| GIS | GeoPandas, Shapely, Rasterio, GDAL |
-| ML | scikit-learn (initially) |
-| Testing | pytest, Vitest, Playwright |
-| DevOps | Docker, Docker Compose, Git |
+| **Problem** | Operational continuity after a hazard warning |
+| **Core model** | Hazard → Evidence → Decision → Action → Outcome → Reassessment |
+| **Contribution** | Intervention-Conditioned Hazard Outcome Interpretation |
+| **Deployment philosophy** | Connect existing systems — don't replace them |
+| **Governance** | AI assists · Rules constrain · Humans authorize |
+| **Primary domain** | Landslide risk & response |
+| **Region** | North Eastern Region of India |
 
-## Quick Start
+---
 
-### Prerequisites
+# The Problem
 
-- Node.js ≥ 20
-- Python ≥ 3.11
-- PostgreSQL 16 + PostGIS 3.4 (for full backend)
-- Docker & Docker Compose (optional)
+Most hazard systems answer:
 
-### Backend
+> **What may happen?**
 
-```bash
-cd services/api
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# Linux/macOS
-source .venv/bin/activate
+Operational teams then have to answer:
 
-pip install -e ".[dev]"
-uvicorn app.main:app --reload
-```
+> **What should happen next — and what can we legitimately conclude afterward?**
 
-### Frontend — Operations Centre
+The difficult case is:
 
-```bash
-npm install          # from repo root (installs all workspaces)
-npm run dev:ops      # starts Operations Centre on localhost:5173
-```
-
-### Frontend — TerraGuardian Safe
-
-```bash
-npm run dev:safe     # starts Safe on localhost:5174
-```
-
-### Tests
-
-```bash
-# Backend
-cd services/api && python -m pytest ../../tests/ -v
-
-# Frontend
-npm run test:ops
-npm run test:safe
-
-# E2E
-npm run test:e2e
-```
-
-## Documentation
-
-Engineering documentation is maintained in [`docs/`](./docs/). Start with the [Engineering Constitution](./docs/00-engineering-constitution.md).
-
-## License
-
-TBD — Internal / SIH 2026
-
-## Status
-
-**Phase 0** — Engineering foundation established. No production features implemented yet.
+```text
+             WARNING
+                │
+                ▼
+          INTERVENTION
+                │
+                ▼
+       NO OBSERVED EVENT
+                │
+       ┌────────┼────────┐
+       ▼        ▼        ▼
+    MODEL    ALTERED   EVIDENCE
+     ERROR?  OUTCOME?    GAP?
