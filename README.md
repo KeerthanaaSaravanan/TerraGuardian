@@ -24,8 +24,8 @@
 ### TERRAGUARDIAN OPERATIONS CENTRE
 
 <br>
+<img width="1045" height="618" alt="TerraGuardian pptx (1)" src="https://github.com/user-attachments/assets/d1cdb26b-4c35-4f32-8593-9cc5ce5829da" />
 
-<img width="1122" height="663" alt="TerraGuardian pptx" src="https://github.com/user-attachments/assets/c787c9fc-8432-4ccf-970b-dbf9659036c4" />
 
 <br>
 
