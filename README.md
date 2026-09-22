@@ -216,7 +216,7 @@ TerraGuardian deliberately keeps operational concepts separate.
 ### Technical Deployment & Integration Architecture
 *Figure 2 — Technical Deployment & Integration Architecture: How the platform is structured internally, isolated at AI/data/security boundaries, connected through adapters/APIs, and progressively deployed from prototype to validated operational integration.*
 
-![Uploading TerraGuardian AI Technical Deployment Architecture.png…]()
+<img width="2105" height="1090" alt="TerraGuardian AI Technical Deployment Architecture" src="https://github.com/user-attachments/assets/b236a668-5f86-42c1-9a09-a11eaf240322" />
 
 
 ### ARCHITECTURE PRINCIPLE
