@@ -24,8 +24,7 @@
 ### TERRAGUARDIAN OPERATIONS CENTRE
 
 <br>
-<img width="1045" height="618" alt="TerraGuardian pptx (1)" src="https://github.com/user-attachments/assets/d1cdb26b-4c35-4f32-8593-9cc5ce5829da" />
-
+<img width="1536" height="1024" alt="ChatGPT Image Sep 22, 2026, 09_11_36 PM" src="https://github.com/user-attachments/assets/770a9856-6a0e-448c-bd37-9cc45c353412" />
 
 <br>
 
