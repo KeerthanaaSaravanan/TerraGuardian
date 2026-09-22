@@ -32,7 +32,8 @@ export type DemoStep =
   | 7 // Act / Action Tracking ("Was the decision executed?")
   | 8 // Conformance / Action Gap ("Action Gap Detected: Approved action ≠ Completed action")
   | 9 // Confirm / Closed-Loop ("Response Closed-Loop Confirmed")
-  | 10; // Forensics / Incident Replay ("What actually happened?")
+  | 10 // Forensics / Incident Replay ("What actually happened?")
+  | 11; // Living Incident / Golden Demo ("SAME INCIDENT. NEW EVIDENCE. REASSESS.")
 
 export type BackendSyncStatus = "CONNECTING" | "CONNECTED" | "OFFLINE_FALLBACK";
 

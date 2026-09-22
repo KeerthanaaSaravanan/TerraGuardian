@@ -13,6 +13,9 @@ import { ActionTrackingView } from "./components/views/ActionTrackingView";
 import { ActionGapView } from "./components/views/ActionGapView";
 import { ConfirmationView } from "./components/views/ConfirmationView";
 import { IncidentReplayView } from "./components/views/IncidentReplayView";
+import { GoldenDemoView } from "./components/views/GoldenDemoView";
+import { LoginView } from "./components/auth/LoginView";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import {
   PublicLandingView,
   PublicAccessView,
@@ -139,6 +142,18 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
             >
               <IconClock className="w-5 h-5" />
             </button>
+
+            <button
+              onClick={() => setStep(11)}
+              title="Step 11: Living Incident & Reassessment (Golden Demo)"
+              className={`p-2.5 rounded-lg transition-all ${
+                currentStep === 11
+                  ? "bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700/60 shadow-sm animate-pulse"
+                  : "hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <IconShieldCheck className="w-5 h-5 text-amber-500" />
+            </button>
           </nav>
         </div>
 
@@ -182,6 +197,7 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
           {currentStep === 8 && <ActionGapView />}
           {currentStep === 9 && <ConfirmationView />}
           {currentStep === 10 && <IncidentReplayView />}
+          {currentStep === 11 && <GoldenDemoView />}
         </main>
       </div>
 
@@ -299,22 +315,59 @@ const PublicWorkflow: React.FC<{ onSwitchToOperator: () => void; onGoToEvidenceR
 
 const AppCore: React.FC = () => {
   const [appMode, setAppMode] = useState<AppMode>("public");
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const { isAuthorityUser } = useAuth();
   const { setStep } = useDemoScenario();
 
   const handleGoToEvidenceReconciliation = () => {
-    setAppMode("operator");
-    setStep(3); // Jump right into Step 3: Evidence Reconciliation to see the fused citizen report
+    if (isAuthorityUser) {
+      setAppMode("operator");
+      setStep(3); // Jump right into Step 3: Evidence Reconciliation to see the fused citizen report
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleSwitchToOperator = () => {
+    if (isAuthorityUser) {
+      setAppMode("operator");
+    } else {
+      setShowLoginModal(true);
+    }
   };
 
   return (
     <>
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="relative max-w-lg w-full">
+            <LoginView
+              onSuccess={() => {
+                setShowLoginModal(false);
+                setAppMode("operator");
+              }}
+              onCancel={() => setShowLoginModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {appMode === "public" ? (
         <PublicWorkflow
-          onSwitchToOperator={() => setAppMode("operator")}
+          onSwitchToOperator={handleSwitchToOperator}
           onGoToEvidenceReconciliation={handleGoToEvidenceReconciliation}
         />
-      ) : (
+      ) : isAuthorityUser ? (
         <OperatorWorkflow onSwitchToPublic={() => setAppMode("public")} />
+      ) : (
+        <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
+          <div className="max-w-lg w-full">
+            <LoginView
+              onSuccess={() => setAppMode("operator")}
+              onCancel={() => setAppMode("public")}
+            />
+          </div>
+        </div>
       )}
     </>
   );
@@ -323,11 +376,13 @@ const AppCore: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <DemoScenarioProvider>
-        <PublicReportProvider>
-          <AppCore />
-        </PublicReportProvider>
-      </DemoScenarioProvider>
+      <AuthProvider>
+        <DemoScenarioProvider>
+          <PublicReportProvider>
+            <AppCore />
+          </PublicReportProvider>
+        </DemoScenarioProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 };

@@ -234,7 +234,13 @@ export type ConfidenceLevel = (typeof CONFIDENCE_LEVELS)[number];
 export const PRIORITY_LEVELS = ["P1_CRITICAL", "P2_HIGH", "P3_MODERATE", "P4_LOW"] as const;
 export type PriorityLevel = (typeof PRIORITY_LEVELS)[number];
 
-export const ACTOR_ROLES = ["SYSTEM_AI", "FIELD_VERIFIER", "OPERATOR", "AUTHORIZED_DECISION_MAKER"] as const;
+export const ACTOR_ROLES = [
+  "PUBLIC_CITIZEN",
+  "SYSTEM_AI",
+  "FIELD_VERIFIER",
+  "OPERATOR",
+  "AUTHORIZED_DECISION_MAKER",
+] as const;
 export type ActorRole = (typeof ACTOR_ROLES)[number];
 
 export interface AuditEvent {
@@ -557,6 +563,92 @@ export interface ComparativePriorityResult {
   data_classification?: string;
 }
 
+// ── 7. Authentication & User Profile Types (Prompt 02) ──
 
+export interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+  full_name: string;
+  role: ActorRole;
+  agency?: string | null;
+  badge_number?: string | null;
+  is_active: boolean;
+}
 
+export interface AuthTokenResponse {
+  access_token: string;
+  token_type: string;
+  user: UserProfile;
+}
 
+export interface LoginPayload {
+  username: string;
+  password: string;
+}
+
+// ── 8. Outcome Engine & Living Incident Types (Prompt 03) ──
+
+export const OUTCOME_TYPES = [
+  "EVENT_OBSERVED",
+  "NON_EVENT_OBSERVED",
+  "INTERVENTION_CONDITIONED_NON_EVENT",
+  "OBSERVATION_GAP",
+  "RESIDUAL_HAZARD",
+  "CONFLICTED",
+  "UNRESOLVED",
+] as const;
+export type OutcomeType = (typeof OUTCOME_TYPES)[number];
+
+export const INTERVENTION_CONTEXT_STATES = [
+  "NO_INTERVENTION",
+  "INTERVENTION_PROPOSED",
+  "INTERVENTION_DISPATCHED_UNCONFIRMED",
+  "INTERVENTION_CONFIRMED",
+] as const;
+export type InterventionContextState = (typeof INTERVENTION_CONTEXT_STATES)[number];
+
+export const OBSERVATION_ADEQUACIES = [
+  "ADEQUATE",
+  "INADEQUATE_OBSCURATION",
+  "INADEQUATE_WINDOW",
+  "INADEQUATE_COVERAGE",
+  "INADEQUATE_CONFLICTED",
+] as const;
+export type ObservationAdequacy = (typeof OBSERVATION_ADEQUACIES)[number];
+
+export interface SpatialDivergenceContext {
+  original_latitude: number;
+  original_longitude: number;
+  observed_latitude?: number | null;
+  observed_longitude?: number | null;
+  distance_meters?: number | null;
+  within_supported_scope: boolean;
+  spatial_scope_threshold_meters: number;
+  corridor_alignment_notes?: string | null;
+}
+
+export interface OutcomeAssessment {
+  id: string;
+  incident_id: string;
+  outcome_type: OutcomeType;
+  intervention_state: InterventionContextState;
+  observation_adequacy: ObservationAdequacy;
+  causal_claim_established: boolean;
+  closure_permitted: boolean;
+  reassessment_required: boolean;
+  recommended_hazard_state: HazardState;
+  spatial_divergence?: SpatialDivergenceContext | null;
+  explanation: string;
+  evidence_summary: Record<string, unknown>;
+  evaluated_at: string;
+  evaluated_by: string;
+}
+
+export interface OutcomeEvaluationPayload {
+  actor_role?: ActorRole;
+  actor_name?: string;
+  observed_latitude?: number | null;
+  observed_longitude?: number | null;
+  observation_notes?: string | null;
+}

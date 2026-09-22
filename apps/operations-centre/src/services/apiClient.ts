@@ -10,6 +10,7 @@ import {
   ActionState,
   ActorRole,
   AuditEvent,
+  AuthTokenResponse,
   EvidenceConflictStatus,
   EvidenceInterpretation,
   EvidenceItem,
@@ -17,12 +18,42 @@ import {
   EvidenceSource,
   IncidentStatus,
   IncidentTwin,
+  LoginPayload,
   OperationalAction,
+  OutcomeAssessment,
+  OutcomeEvaluationPayload,
   PredictiveRiskAssessment,
   ReconciliationSummary,
+  UserProfile,
 } from "../types/incident";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
+
+let currentAuthToken: string | null =
+  typeof window !== "undefined" ? localStorage.getItem("tg_auth_token") : null;
+
+export function setAuthToken(token: string | null) {
+  currentAuthToken = token;
+  if (typeof window !== "undefined") {
+    if (token) {
+      localStorage.setItem("tg_auth_token", token);
+    } else {
+      localStorage.removeItem("tg_auth_token");
+    }
+  }
+}
+
+export function getAuthToken(): string | null {
+  return currentAuthToken;
+}
+
+function authHeaders(custom: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { ...custom };
+  if (currentAuthToken) {
+    headers["Authorization"] = `Bearer ${currentAuthToken}`;
+  }
+  return headers;
+}
 
 export interface TransitionRequestPayload {
   target_status: IncidentStatus;
@@ -334,10 +365,66 @@ export const apiClient = {
 
   /** Retrieve chronological priority history from append-oriented audit logs */
   async getIncidentPriorityHistory(id: string): Promise<import("../types/incident").PriorityHistoryItem[]> {
-    const res = await fetch(`${API_BASE_URL}/incidents/${id}/priority/history`);
+    const res = await fetch(`${API_BASE_URL}/incidents/${id}/priority/history`, {
+      headers: authHeaders(),
+    });
     return handleResponse<import("../types/incident").PriorityHistoryItem[]>(res);
   },
+
+  // ── Authentication Endpoints (Prompt 02) ──
+
+  /** Authenticate user with username/email and password */
+  async login(payload: LoginPayload): Promise<AuthTokenResponse> {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<AuthTokenResponse>(res);
+  },
+
+  /** Fetch current authenticated user's server-derived profile */
+  async getCurrentUser(): Promise<UserProfile> {
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: authHeaders(),
+    });
+    return handleResponse<UserProfile>(res);
+  },
+
+  /** Seed deterministic demo accounts (LOCAL / DEMO ONLY) */
+  async seedDemoUsers(): Promise<UserProfile[]> {
+    const res = await fetch(`${API_BASE_URL}/auth/seed-demo-users`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    return handleResponse<UserProfile[]>(res);
+  },
+
+  // ── Outcome Engine Endpoints (Prompt 03) ──
+
+  /** Evaluate authoritative intervention-conditioned outcome */
+  async evaluateOutcome(id: string, payload?: OutcomeEvaluationPayload): Promise<OutcomeAssessment> {
+    const res = await fetch(`${API_BASE_URL}/incidents/${id}/outcome/evaluate`, {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(payload || {}),
+    });
+    return handleResponse<OutcomeAssessment>(res);
+  },
+
+  /** Retrieve current or latest evaluated outcome */
+  async getIncidentOutcome(id: string): Promise<OutcomeAssessment> {
+    const res = await fetch(`${API_BASE_URL}/incidents/${id}/outcome`, {
+      headers: authHeaders(),
+    });
+    return handleResponse<OutcomeAssessment>(res);
+  },
+
+  /** Retrieve full history of bounded reassessments */
+  async getIncidentReassessments(id: string): Promise<Record<string, unknown>[]> {
+    const res = await fetch(`${API_BASE_URL}/incidents/${id}/reassessments`, {
+      headers: authHeaders(),
+    });
+    return handleResponse<Record<string, unknown>[]>(res);
+  },
 };
-
-
-
