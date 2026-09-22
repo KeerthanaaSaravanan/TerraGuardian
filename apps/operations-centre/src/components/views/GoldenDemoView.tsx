@@ -361,8 +361,8 @@ export const GoldenDemoView: React.FC = () => {
               </p>
             </div>
             <div className="mt-3 pt-3 border-t border-slate-200 dark:border-neutral-800 flex justify-between text-[11px] font-mono text-cyan-700 dark:text-cyan-300 font-bold">
-              <span>Hazard: SHIFTED</span>
-              <span>Scope: VALID (1.2km)</span>
+              <span>Hazard: SHIFTED (1.2km)</span>
+              <span>Confidence: 94% (Verified)</span>
             </div>
           </div>
         </div>

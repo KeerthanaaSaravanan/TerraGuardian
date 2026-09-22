@@ -29,6 +29,7 @@ export const DemoHeader: React.FC = () => {
     hazardState,
     riskLevel,
     confidenceLevel,
+    confidenceScore,
     priorityLevel,
     backendStatus,
   } = useDemoScenario();
@@ -92,7 +93,7 @@ export const DemoHeader: React.FC = () => {
           <span className="text-orange-600 dark:text-orange-400 font-bold">{riskLevel}</span>
           <span className="text-slate-300 dark:text-slate-700">|</span>
           <span className="text-slate-500 dark:text-slate-400">CONFIDENCE:</span>
-          <span className="text-amber-600 dark:text-amber-400 font-bold">{confidenceLevel}</span>
+          <span className="text-amber-600 dark:text-amber-400 font-bold">{confidenceLevel} ({confidenceScore}%)</span>
           <span className="text-slate-300 dark:text-slate-700">|</span>
           <span className="text-slate-500 dark:text-slate-400">PRIORITY:</span>
           <span className="text-red-600 dark:text-red-400 font-bold">{priorityLevel}</span>

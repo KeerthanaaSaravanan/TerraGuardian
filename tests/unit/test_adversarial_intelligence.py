@@ -7,8 +7,8 @@ Verifies the 12 core safety principles and edge-case boundaries of the intellige
 4. Intervention + no event does NOT become causal prevention (causal_claim_established = False).
 5. Conflicting evidence remains CONFLICTED until resolved by ground truth.
 6. Stale evidence (>7d) is flagged and not treated as fresh telemetry.
-7. New nearby evidence (<=2km) triggers bounded reassessment of the SAME incident.
-8. Distant evidence (>2km) is rejected from silent attachment.
+7. New nearby evidence (<=5km corridor envelope, e.g. 1.2km) triggers bounded reassessment of the SAME incident.
+8. Distant evidence (>5km) is rejected from silent attachment.
 9. Approved action does NOT equal confirmed execution (APPROVED ≠ COMPLETED).
 10. Confirmed execution does NOT equal hazard resolution.
 11. Missing observation remains OBSERVATION_GAP / UNRESOLVED.
@@ -301,7 +301,7 @@ async def test_stale_evidence_flagged(db_session: AsyncSession):
     assert ev_stale.id in summary.stale_evidence_ids
 
 
-# ── 7. New Nearby Evidence (<=2km) reassesses the SAME incident ──
+# ── 7. New Nearby Evidence (<=5km corridor scope, e.g. 1.2km) reassesses SAME incident ──
 
 @pytest.mark.asyncio
 async def test_nearby_divergence_reassesses_same_incident(db_session: AsyncSession):
@@ -325,7 +325,7 @@ async def test_nearby_divergence_reassesses_same_incident(db_session: AsyncSessi
     outcome = await outcome_svc.evaluate_outcome(
         incident.id,
         observed_latitude=27.094,
-        observed_longitude=27.094 and 92.571,
+        observed_longitude=92.571,
     )
 
     assert outcome.spatial_divergence is not None
@@ -334,7 +334,7 @@ async def test_nearby_divergence_reassesses_same_incident(db_session: AsyncSessi
     assert outcome.incident_id == incident.id
 
 
-# ── 8. Distant Evidence (>2km) rejects silent attachment ──
+# ── 8. Distant Evidence (>5km corridor threshold) rejects silent attachment ──
 
 @pytest.mark.asyncio
 async def test_distant_evidence_rejects_silent_attachment(db_session: AsyncSession):
@@ -361,7 +361,7 @@ async def test_distant_evidence_rejects_silent_attachment(db_session: AsyncSessi
 
     assert outcome.spatial_divergence is not None
     assert outcome.spatial_divergence.within_supported_scope is False
-    assert outcome.spatial_divergence.distance_meters > 2000.0
+    assert outcome.spatial_divergence.distance_meters > 5000.0
 
 
 # ── 9. Approved Action does NOT equal Confirmed Execution ──
