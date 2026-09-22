@@ -213,6 +213,75 @@ export const AuthorityDecisionView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Decision Intelligence & Next-Best-Information (Prompt 05) */}
+      <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-col gap-4 font-mono text-xs">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold">
+              NBI
+            </span>
+            <span className="font-bold text-sm text-slate-900 dark:text-white">
+              DECISION INTELLIGENCE: NEXT-BEST-INFORMATION MATRIX
+            </span>
+          </div>
+          <span className="text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded font-bold border border-emerald-300 dark:border-emerald-700">
+            UNCERTAINTY REDUCTION ENGINE
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-slate-50 dark:bg-neutral-950 p-3.5 rounded-lg border border-slate-200 dark:border-neutral-800 flex flex-col justify-between gap-2">
+            <div>
+              <div className="flex items-center justify-between font-bold text-xs text-slate-900 dark:text-white mb-1">
+                <span>1. Ground Truth Inspection</span>
+                <span className="text-emerald-600 dark:text-emerald-400 text-[10px]">+35% Conf. Gain</span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-neutral-400 font-sans leading-relaxed">
+                Dispatch SDRF ground patrol to inspect KM-42 toe sloughing and confirm carriageway encroachment.
+              </p>
+            </div>
+            <div className="text-[10px] text-slate-500 dark:text-neutral-500 font-mono pt-2 border-t border-slate-200 dark:border-neutral-800">
+              Target: FIELD_PATROL • Authority: Operator Dispatch
+            </div>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-neutral-950 p-3.5 rounded-lg border border-slate-200 dark:border-neutral-800 flex flex-col justify-between gap-2">
+            <div>
+              <div className="flex items-center justify-between font-bold text-xs text-slate-900 dark:text-white mb-1">
+                <span>2. SAR Radar Coherence</span>
+                <span className="text-emerald-600 dark:text-emerald-400 text-[10px]">+15% Conf. Gain</span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-neutral-400 font-sans leading-relaxed">
+                Acquire Sentinel-1 InSAR radar pass to penetrate 88% monsoon cloud cover and measure shear strain.
+              </p>
+            </div>
+            <div className="text-[10px] text-slate-500 dark:text-neutral-500 font-mono pt-2 border-t border-slate-200 dark:border-neutral-800">
+              Target: SATELLITE_RADAR • Authority: Automated Ingestion
+            </div>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-neutral-950 p-3.5 rounded-lg border border-slate-200 dark:border-neutral-800 flex flex-col justify-between gap-2">
+            <div>
+              <div className="flex items-center justify-between font-bold text-xs text-slate-900 dark:text-white mb-1">
+                <span>3. Precautionary Diversion</span>
+                <span className="text-amber-600 dark:text-amber-400 text-[10px]">CORRIDOR SAFETY</span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-neutral-400 font-sans leading-relaxed">
+                Enforce traffic stoppage at KM-38 checkpost to prevent civilian vehicles from entering the active slope zone.
+              </p>
+            </div>
+            <div className="text-[10px] text-slate-500 dark:text-neutral-500 font-mono pt-2 border-t border-slate-200 dark:border-neutral-800">
+              Target: TRAFFIC_POLICE • Authority: District Magistrate Sign-off
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-neutral-400 font-mono">
+          <span>Governance Principle: <strong>AI ASSISTS REASONING • RULES GOVERN STATE TRANSITIONS • HUMANS AUTHORIZE ACTIONS</strong></span>
+          <span className="text-emerald-600 dark:text-emerald-400 font-bold">SEC 34 DM ACT 2005 COMPLIANT</span>
+        </div>
+      </div>
     </div>
   );
 };

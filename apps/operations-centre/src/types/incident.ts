@@ -652,3 +652,45 @@ export interface OutcomeEvaluationPayload {
   observed_longitude?: number | null;
   observation_notes?: string | null;
 }
+
+// ── 9. Decision Intelligence & Next-Best-Information Types (Prompt 05) ──
+
+export interface NextBestInformationItem {
+  id: string;
+  action_type: string;
+  priority: "HIGH" | "MEDIUM" | "LOW" | string;
+  target_modality: string;
+  title: string;
+  rationale: string;
+  expected_confidence_delta: number;
+  authority_required: boolean;
+  status: string;
+}
+
+export interface DecisionSupportAssessment {
+  id: string;
+  incident_id: string;
+  current_status: IncidentStatus | string;
+  current_hazard_state: HazardState | string;
+  risk_score: number;
+  confidence_score: number;
+  priority_level: PriorityLevel | string;
+  governing_safety_rules: string[];
+  recommended_operational_options: Array<{
+    option_id: string;
+    title: string;
+    action_type: string;
+    authority_required: boolean;
+    statutory_authority: string;
+    rationale: string;
+    status: string;
+  }>;
+  next_best_information: NextBestInformationItem[];
+  active_divergences: string[];
+  outcome_summary?: string | null;
+  closure_readiness: boolean;
+  closure_blockers: string[];
+  assessed_at: string;
+  assessed_by: string;
+}
+

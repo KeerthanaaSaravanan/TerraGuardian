@@ -10,10 +10,13 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-# Add services/api to sys.path
-api_path = Path(__file__).resolve().parent.parent / "services" / "api"
+# Add services/api and workspace root to sys.path
+root_path = Path(__file__).resolve().parent.parent
+api_path = root_path / "services" / "api"
 if str(api_path) not in sys.path:
     sys.path.insert(0, str(api_path))
+if str(root_path) not in sys.path:
+    sys.path.insert(0, str(root_path))
 
 # Set test environment
 os.environ["TERRAGUARDIAN_ENV"] = "test"

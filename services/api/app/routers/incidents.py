@@ -63,7 +63,9 @@ from app.services.auth_service import (
     require_operator,
 )
 from app.domain.outcome import OutcomeAssessment, OutcomeEvaluationRequest
+from app.domain.decision import DecisionSupportAssessment
 from app.services.outcome_service import OutcomeService
+from app.services.decision_intelligence import DecisionIntelligenceService
 from app.services.state_transition_service import StateTransitionService
 
 router = APIRouter(tags=["incidents"])
@@ -968,6 +970,19 @@ async def get_comparative_priority_endpoint(
     """Demonstrate HAZARD ≠ PRIORITY using two contrasting demonstration incidents."""
     impact_service = ImpactService(session)
     return impact_service.get_comparative_priority()
+
+
+@router.get("/incidents/{incident_id}/decision-support", response_model=DecisionSupportAssessment)
+async def get_incident_decision_support_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> DecisionSupportAssessment:
+    """Evaluate authoritative decision support, governing safety rules, and Next-Best-Information."""
+    decision_svc = DecisionIntelligenceService(session)
+    try:
+        return await decision_svc.evaluate_decision_support(incident_id)
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
 
 
 

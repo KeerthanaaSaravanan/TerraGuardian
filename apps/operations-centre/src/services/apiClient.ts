@@ -18,6 +18,7 @@ import {
   EvidenceSource,
   IncidentStatus,
   IncidentTwin,
+  DecisionSupportAssessment,
   LoginPayload,
   OperationalAction,
   OutcomeAssessment,
@@ -427,4 +428,15 @@ export const apiClient = {
     });
     return handleResponse<Record<string, unknown>[]>(res);
   },
+
+  // ── Decision Intelligence & Next-Best-Information (Prompt 05) ──
+
+  /** Retrieve authoritative decision support, governing rules, and Next-Best-Information */
+  async getDecisionSupport(id: string): Promise<DecisionSupportAssessment> {
+    const res = await fetch(`${API_BASE_URL}/incidents/${id}/decision-support`, {
+      headers: authHeaders(),
+    });
+    return handleResponse<DecisionSupportAssessment>(res);
+  },
 };
+

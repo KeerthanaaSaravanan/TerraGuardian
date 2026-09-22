@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDemoScenario } from "../../context/DemoScenarioContext";
 import { useAuth } from "../../context/AuthContext";
 import { apiClient } from "../../services/apiClient";
-import { OutcomeAssessment, OutcomeType } from "../../types/incident";
+import { OutcomeAssessment, OutcomeType, DecisionSupportAssessment, NextBestInformationItem } from "../../types/incident";
 import {
   IconRadar,
   IconMapPin,
@@ -37,6 +37,7 @@ export const GoldenDemoView: React.FC = () => {
 
   const [activePhase, setActivePhase] = useState<GoldenTimelinePhase>("T1_OBSERVATION");
   const [outcomeData, setOutcomeData] = useState<OutcomeAssessment | null>(null);
+  const [decisionSupport, setDecisionSupport] = useState<DecisionSupportAssessment | null>(null);
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [closureAttemptResult, setClosureAttemptResult] = useState<{
     blocked: boolean;
@@ -46,7 +47,7 @@ export const GoldenDemoView: React.FC = () => {
 
   // Fetch or evaluate real backend outcome when component mounts or phase changes
   useEffect(() => {
-    const fetchOutcome = async () => {
+    const fetchIntelligence = async () => {
       if (!backendIncidentId) return;
       try {
         const out = await apiClient.getIncidentOutcome(backendIncidentId);
@@ -54,8 +55,14 @@ export const GoldenDemoView: React.FC = () => {
       } catch {
         // Handled gracefully
       }
+      try {
+        const ds = await apiClient.getDecisionSupport(backendIncidentId);
+        if (ds) setDecisionSupport(ds);
+      } catch {
+        // Handled gracefully
+      }
     };
-    fetchOutcome();
+    fetchIntelligence();
   }, [backendIncidentId, activePhase]);
 
   const handleEvaluateOutcome = async (observedLat?: number, observedLon?: number) => {
@@ -453,6 +460,78 @@ export const GoldenDemoView: React.FC = () => {
               <div>Observed Evidence: 27.094° N, 92.571° E (KM-43.2)</div>
               <div>Calculated Offset: <strong>1,200 meters (1.2 km)</strong></div>
               <div>Boundary Status: <strong>Retained in SAME Incident</strong></div>
+            </div>
+          </div>
+
+          {/* Decision Intelligence & Next-Best-Information (Prompt 05) */}
+          <div className="bg-emerald-50/30 dark:bg-neutral-950 p-4 rounded-xl border border-emerald-300/60 dark:border-neutral-800 flex flex-col gap-3 font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="p-1 rounded bg-emerald-600 text-white font-bold text-[10px]">
+                  NBI
+                </span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  NEXT-BEST-INFORMATION (DECISION INTELLIGENCE)
+                </span>
+              </div>
+              <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded font-bold">
+                DETERMINISTIC ASSIST
+              </span>
+            </div>
+
+            <div className="text-[11px] text-slate-600 dark:text-neutral-400 font-sans leading-relaxed">
+              Targeted information gathering actions prioritizing maximal evidential uncertainty reduction:
+            </div>
+
+            <div className="space-y-2">
+              {(decisionSupport?.next_best_information || [
+                {
+                  id: "1",
+                  title: "Dispatch Ground Patrol for Physical Verification",
+                  target_modality: "FIELD_PATROL",
+                  priority: "HIGH",
+                  expected_confidence_delta: 35.0,
+                  rationale: "Physical inspection of cut-slope toe resolves satellite cloud obscuration (confidence +35%).",
+                },
+                {
+                  id: "2",
+                  title: "Acquire Sentinel-1 SAR Radar Interferometry",
+                  target_modality: "SATELLITE_RADAR",
+                  priority: "HIGH",
+                  expected_confidence_delta: 15.0,
+                  rationale: "Synthetic Aperture Radar penetrates 88% monsoon cloud cover to evaluate slope decorrelation.",
+                },
+                {
+                  id: "3",
+                  title: "Extend Observation Window & Drone Slope Survey",
+                  target_modality: "UAV_DRONE_SURVEY",
+                  priority: "HIGH",
+                  expected_confidence_delta: 20.0,
+                  rationale: "Event absence at KM-42 requires extended temporal window and drone scan for shifted tension cracks.",
+                },
+              ]).map((nbi: any, idx: number) => (
+                <div
+                  key={nbi.id || idx}
+                  className="bg-white dark:bg-neutral-900 p-2.5 rounded-lg border border-slate-200 dark:border-neutral-800 flex flex-col gap-1 text-xs"
+                >
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      {nbi.title}
+                    </span>
+                    <span className="text-emerald-600 dark:text-emerald-400 text-[10px]">
+                      +{nbi.expected_confidence_delta}% Conf. Gain
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-neutral-400 font-sans">
+                    {nbi.rationale}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-slate-200 dark:border-neutral-800 text-[10px] text-slate-500 dark:text-neutral-500">
+              Governance Rule: <strong>AI ASSISTS REASONING • RULES GOVERN STATE TRANSITIONS • HUMANS AUTHORIZE ACTIONS</strong>
             </div>
           </div>
         </div>

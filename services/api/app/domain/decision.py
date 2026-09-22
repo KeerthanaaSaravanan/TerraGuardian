@@ -55,3 +55,46 @@ class Decision(BaseModel):
     enacted_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = {"from_attributes": True}
+
+
+class NextBestInformationItem(BaseModel):
+    """Specific information gathering action recommended to reduce evidential uncertainty."""
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    action_type: str
+    priority: str
+    target_modality: str
+    title: str
+    rationale: str
+    expected_confidence_delta: float
+    authority_required: bool = False
+    status: str = "RECOMMENDED"
+
+    model_config = {"from_attributes": True}
+
+
+class DecisionSupportAssessment(BaseModel):
+    """Comprehensive decision support output synthesizing hazard, consequence, uncertainty and NBI."""
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    incident_id: uuid.UUID
+    current_status: str
+    current_hazard_state: str
+    risk_score: float
+    confidence_score: float
+    priority_level: str
+
+    governing_safety_rules: list[str] = Field(default_factory=list)
+    recommended_operational_options: list[dict[str, Any]] = Field(default_factory=list)
+    next_best_information: list[NextBestInformationItem] = Field(default_factory=list)
+
+    active_divergences: list[str] = Field(default_factory=list)
+    outcome_summary: Optional[str] = None
+    closure_readiness: bool = False
+    closure_blockers: list[str] = Field(default_factory=list)
+
+    assessed_at: datetime = Field(default_factory=datetime.utcnow)
+    assessed_by: str = "TerraGuardian Decision Intelligence Engine"
+
+    model_config = {"from_attributes": True}
+
