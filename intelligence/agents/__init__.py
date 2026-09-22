@@ -1,13 +1,25 @@
-# Intelligence — Bounded Reasoning Agents
+"""TerraGuardian Intelligence — Bounded Agent Governance Contracts.
 
-> TerraGuardian AI agent module.
->
-> Agents are primarily deterministic services, workflows, or bounded
-> reasoning components. LLMs are used only where language/vision
-> reasoning adds genuine value.
->
-> Every agent must have: identity, purpose, allowed tools,
-> authority boundary, input/output contracts, provenance,
-> policy constraints, conformance checks.
->
-> Implementation will be added in later phases.
+STATUS: DESIGN / FUTURE
+RUNTIME: NOT ACTIVE
+CURRENT RUNTIME IMPLEMENTATION: Deterministic backend service layer
+
+Defines architectural governance contracts for future bounded reasoning agents.
+Contains ZERO autonomous agents and ZERO runtime execution loops.
+"""
+
+from intelligence.agents.contracts import (
+    AgentIdentityContract,
+    AgentIntentContract,
+    AgentRole,
+    AuthorityScope,
+    ConformanceObservationContract,
+)
+
+__all__ = [
+    "AgentIdentityContract",
+    "AgentIntentContract",
+    "AgentRole",
+    "AuthorityScope",
+    "ConformanceObservationContract",
+]
