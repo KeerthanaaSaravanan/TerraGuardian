@@ -16,11 +16,7 @@
 
 <br><br>
 
-[Architecture](#architecture) ·
-[Research](#research) ·
-[Engineering](#engineering-truth) ·
-[Demonstration](#demonstration) ·
-[Run](#run)
+[Architecture](#architecture) · [Research](#research) · [Engineering](#engineering-truth) · [Demonstration](#demonstration) · [Run](#run)
 
 </div>
 
@@ -30,7 +26,11 @@
 
 ### TERRAGUARDIAN OPERATIONS CENTRE
 
+<br>
+
 **[ INSERT FINAL VERIFIED PRODUCT SCREENSHOT / GIF HERE ]**
+
+<br>
 
 *Incident · Map · Evidence · Risk · Confidence · Priority · Action · Timeline*
 
@@ -59,6 +59,8 @@
 </tr>
 </table>
 
+<br>
+
 It maintains **one evolving, evidence-backed incident state** across:
 
 <div align="center">
@@ -66,6 +68,8 @@ It maintains **one evolving, evidence-backed incident state** across:
 **HAZARD → EVIDENCE → CONSEQUENCE → DECISION → ACTION → CONFIRMATION → OUTCOME → REASSESSMENT**
 
 </div>
+
+<br>
 
 ### GOVERNANCE
 
@@ -78,7 +82,7 @@ It maintains **one evolving, evidence-backed incident state** across:
 ## A WARNING IS NOT THE END OF AN INCIDENT
 
 | **Signal** | **Operational question** |
-|---|---|
+|:---|:---|
 | **Forecast** | What is actually happening? |
 | **Alert** | How certain are we? |
 | **Hazard map** | Who and what is exposed? |
@@ -102,104 +106,112 @@ WARNING
 INTERVENTION
    ↓
 NO OBSERVED EVENT
+```
 
-</div>A non-event does not automatically mean:
+<br>
 
-<div align="center">FALSE ALARM
+A non-event does not automatically mean:
 
-</div>And it does not prove:
+### FALSE ALARM
 
-<div align="center">INTERVENTION PREVENTED THE EVENT
+And it does not prove:
 
-</div>The system must distinguish among:
+### INTERVENTION PREVENTED THE EVENT
 
-<div align="center">Delayed / shifted hazard · Incomplete observation · Successful intervention · Model error · Residual hazard · Unresolved evidence
+<br>
 
-</div>TERRAGUARDIAN
+The system must distinguish among:
 
-<div align="center">DON'T GUESS. REASSESS.
+**Delayed / shifted hazard · Incomplete observation · Successful intervention · Model error · Residual hazard · Unresolved evidence**
+
+<br>
+
+### TERRAGUARDIAN
+
+> ## DON'T GUESS. REASSESS.
 
 </div>
+
 ---
 
-THE OPERATIONAL LOOP
+# THE OPERATIONAL LOOP
 
+```mermaid
 flowchart LR
+    P[Predict] --> E[Evidence]
+    E --> A[Assess]
+    A --> PR[Prioritize]
+    PR --> D[Decide]
+    D --> AU[Authorize]
+    AU --> AC[Act]
+    AC --> C[Confirm]
+    C --> O[Observe]
+    O --> I[Interpret]
+    I --> R[Reassess]
 
-P[Predict] --> E[Evidence]
-E --> A[Assess]
-A --> PR[Prioritize]
-PR --> D[Decide]
-D --> AU[Authorize]
-AU --> AC[Act]
-AC --> C[Confirm]
-C --> O[Observe]
-O --> I[Interpret]
-I --> R[Reassess]
+    R -->|Continue| E
+    R -->|Escalate| D
+    R -->|Closure Assessment| CL[Closure Assessment]
 
-R -->|Continue| E
-R -->|Escalate| D
-R -->|Closure Assessment| CL[Closure Assessment]
+    CL -->|Insufficient Evidence| E
+    CL -->|Sufficient Evidence| RES[Resolved]
+```
 
-CL -->|Insufficient Evidence| E
-CL -->|Sufficient Evidence| RES[Resolved]
+<div align="center">
 
-<div align="center">ONE INCIDENT. ONE OPERATIONAL TRUTH.
+### ONE INCIDENT. ONE OPERATIONAL TRUTH.
 
 The incident remains under reassessment as evidence and reality evolve.
 
 </div>
----
-
-WHAT THE SYSTEM MAINTAINS
-
-State	Preserved operational truth
-
-INCIDENT	Lifecycle · location · current state
-EVIDENCE	Source · time · provenance · freshness · reliability · conflict
-RISK	Hazard likelihood / severity
-CONFIDENCE	Confidence in the assessment
-CONSEQUENCE	Exposure · criticality · response difficulty
-PRIORITY	Operational importance
-DECISION	Recommended next step · rationale
-AUTHORIZATION	Human approval for critical action
-ACTION	Proposed → authorized → executed
-CONFIRMATION	Whether execution was actually confirmed
-OUTCOME	What was observed
-REASSESSMENT	What should happen next
-AUDIT	Structured incident history
-
-
 
 ---
 
-SAFETY SEMANTICS
+## WHAT THE SYSTEM MAINTAINS
+
+| State | Preserved operational truth |
+|:---|:---|
+| **INCIDENT** | Lifecycle · location · current state |
+| **EVIDENCE** | Source · time · provenance · freshness · reliability · conflict |
+| **RISK** | Hazard likelihood / severity |
+| **CONFIDENCE** | Confidence in the assessment |
+| **CONSEQUENCE** | Exposure · criticality · response difficulty |
+| **PRIORITY** | Operational importance |
+| **DECISION** | Recommended next step · rationale |
+| **AUTHORIZATION** | Human approval for critical action |
+| **ACTION** | Proposed → authorized → executed |
+| **CONFIRMATION** | Whether execution was actually confirmed |
+| **OUTCOME** | What was observed |
+| **REASSESSMENT** | What should happen next |
+| **AUDIT** | Structured incident history |
+
+---
+
+# SAFETY SEMANTICS
 
 TerraGuardian deliberately keeps operational concepts separate.
 
-Invariant	Operational meaning
-
-Risk ≠ Confidence	High risk does not mean high certainty
-Hazard ≠ Priority	Hazard severity alone does not determine operational priority
-Recommendation ≠ Authorization	AI recommendation does not authorize critical action
-Approval ≠ Execution	Approval does not prove action occurred
-Execution ≠ Confirmation	Reported execution does not equal verified execution
-Observation ≠ Interpretation	Observation is not automatically a causal conclusion
-Non-event ≠ False Alarm	No observed event does not prove forecast error
-Intervention + Non-event ≠ Proven Prevention	Temporal sequence alone does not establish causality
-Missing Evidence ≠ Hazard Resolution	Lack of evidence is not evidence of safety
-Stale Assessment ≠ Current State	Old intelligence must not silently represent current reality
-
-
+| Invariant | Operational meaning |
+|:---|:---|
+| **Risk ≠ Confidence** | High risk does not mean high certainty |
+| **Hazard ≠ Priority** | Hazard severity alone does not determine operational priority |
+| **Recommendation ≠ Authorization** | AI recommendation does not authorize critical action |
+| **Approval ≠ Execution** | Approval does not prove action occurred |
+| **Execution ≠ Confirmation** | Reported execution does not equal verified execution |
+| **Observation ≠ Interpretation** | Observation is not automatically a causal conclusion |
+| **Non-event ≠ False Alarm** | No observed event does not prove forecast error |
+| **Intervention + Non-event ≠ Proven Prevention** | Temporal sequence alone does not establish causality |
+| **Missing Evidence ≠ Hazard Resolution** | Lack of evidence is not evidence of safety |
+| **Stale Assessment ≠ Current State** | Old intelligence must not silently represent current reality |
 
 ---
 
-ARCHITECTURE
+# ARCHITECTURE
 
-Operational Architecture
+### Operational Architecture
 
+```mermaid
 flowchart TB
-
     S[Hazard Intelligence<br/>Forecasts · Terrain · Rainfall · GIS]
 
     S --> E[Evidence Intelligence<br/>Provenance · Freshness · Reliability · Conflict]
@@ -227,11 +239,12 @@ flowchart TB
 
     CL -->|Insufficient Evidence| IT
     CL -->|Sufficient Evidence| RES[Resolved]
+```
 
-Technical Architecture
+### Technical Architecture
 
+```mermaid
 flowchart LR
-
     UI[React + TypeScript<br/>Operations Centre]
 
     API[FastAPI<br/>Typed API Layer]
@@ -257,25 +270,38 @@ flowchart LR
 
     DOMAIN --> API
     API --> UI
+```
 
-ARCHITECTURE PRINCIPLE
+### ARCHITECTURE PRINCIPLE
 
-<div align="center">Replaceable inputs. Persistent incident state. Bounded intelligence. Human-governed critical transitions.
+<div align="center">
+
+> **Replaceable inputs. Persistent incident state. Bounded intelligence. Human-governed critical transitions.**
 
 </div>
+
 ---
 
-DECISION INTELLIGENCE
+# DECISION INTELLIGENCE
 
 TerraGuardian does not stop at:
 
-<div align="center">“What is the risk?”
+<div align="center">
 
-</div>It asks:
+### “What is the risk?”
 
-<div align="center">“What information or operational step is most valuable next?”
+</div>
 
-</div>RISK
+It asks:
+
+<div align="center">
+
+### “What information or operational step is most valuable next?”
+
+<br>
+
+```text
+RISK
 +
 CONFIDENCE
 +
@@ -288,16 +314,21 @@ EVIDENCE
 MOST INFORMATIVE NEXT STEP
         ↓
 VERIFY · MONITOR · OBSERVE · PREPARE · ACT
+```
+
+<br>
 
 AI reasoning feeds a policy and rule boundary before critical state transitions.
 
+</div>
 
 ---
 
-RESEARCH
+# RESEARCH
 
-FROM RESEARCH → OPERATIONAL GAP → CONTRIBUTION
+### FROM RESEARCH → OPERATIONAL GAP → CONTRIBUTION
 
+```text
 LANDSLIDE WARNING & DECISION RESEARCH
                  ↓
 FORECAST VERIFICATION
@@ -327,43 +358,43 @@ INTERVENTION-CONDITIONED
 HAZARD OUTCOME INTERPRETATION
                  ↓
 OPERATIONAL IMPLEMENTATION
-
-
----
-
-WHAT THE RESEARCH CHANGED
-
-Research area	Engineering consequence
-
-Forecast verification	Living hazard state + divergence reassessment
-Evidence / uncertainty	Evidence-aware state instead of single-source truth
-Active sensing / information value	Select the most informative next operational step
-Incident / digital-twin research	One evolving incident state
-Intervention-aware / counterfactual research	Intervention context + bounded outcome interpretation
-Residual-hazard research	Continued reassessment instead of premature closure
-Indian warning ecosystem	Connect to — not replace — authoritative systems
-
-
+```
 
 ---
 
-THE RESEARCH QUESTION
+### WHAT THE RESEARCH CHANGED
 
-<div align="center">> When a predicted hazard is followed by an intervention and an observed non-event or altered outcome, how should an operational system distinguish model error, successful intervention, delayed/shifted hazard, incomplete observation and unresolved residual risk — without making an unsupported causal claim?
-
-
-
-</div>This question drives the outcome semantics, reassessment workflow and governance boundaries.
-
+| Research area | Engineering consequence |
+|:---|:---|
+| **Forecast verification** | Living hazard state + divergence reassessment |
+| **Evidence / uncertainty** | Evidence-aware state instead of single-source truth |
+| **Active sensing / information value** | Select the most informative next operational step |
+| **Incident / digital-twin research** | One evolving incident state |
+| **Intervention-aware / counterfactual research** | Intervention context + bounded outcome interpretation |
+| **Residual-hazard research** | Continued reassessment instead of premature closure |
+| **Indian warning ecosystem** | Connect to — not replace — authoritative systems |
 
 ---
 
-THE CONTRIBUTION
+### THE RESEARCH QUESTION
 
-INTERVENTION-CONDITIONED HAZARD OUTCOME INTERPRETATION
+<div align="center">
+
+> When a predicted hazard is followed by an intervention and an observed non-event or altered outcome, how should an operational system distinguish model error, successful intervention, delayed/shifted hazard, incomplete observation and unresolved residual risk — without making an unsupported causal claim?
+
+</div>
+
+This question drives the outcome semantics, reassessment workflow and governance boundaries.
+
+---
+
+# THE CONTRIBUTION
+
+### INTERVENTION-CONDITIONED HAZARD OUTCOME INTERPRETATION
 
 TerraGuardian separates:
 
+```text
 WHAT WAS PREDICTED
         ↓
 WHAT INTERVENTION OCCURRED
@@ -375,35 +406,41 @@ WHAT EVIDENCE SUPPORTS
 WHAT REMAINS UNCERTAIN
         ↓
 WHAT SHOULD HAPPEN NEXT
+```
 
-CORE RULE
+### CORE RULE
 
-<div align="center">Observed outcome ≠ automatic causal explanation.
+<div align="center">
 
-The system preserves uncertainty when available evidence cannot justify a stronger conclusion.
+> **Observed outcome ≠ automatic causal explanation.**
+>
+> The system preserves uncertainty when available evidence cannot justify a stronger conclusion.
 
 </div>
+
 ---
 
-RESEARCH BOUNDARY
+### RESEARCH BOUNDARY
 
 TerraGuardian does not claim to invent:
 
-<div align="center">Landslide prediction · Evidence fusion · Active sensing · Value-of-information · Digital twins · Forecast verification · Intervention-aware warning · Residual-hazard assessment · Closed-loop disaster response · GIS / satellite landslide intelligence
+<div align="center">
 
-</div>DEFENSIBLE CONTRIBUTION
+Landslide prediction · Evidence fusion · Active sensing · Value-of-information · Digital twins · Forecast verification · Intervention-aware warning · Residual-hazard assessment · Closed-loop disaster response · GIS / satellite landslide intelligence
+
+</div>
+
+### DEFENSIBLE CONTRIBUTION
 
 > An intervention-conditioned operational synthesis connecting evidence, action, observed outcome and reassessment within one persistent incident lifecycle — while preserving uncertainty instead of forcing premature conclusions.
 
-
-
-
 ---
 
-INDIA / NER POSITIONING
+# INDIA / NER POSITIONING
 
 TerraGuardian is an operational intelligence layer, not a replacement for authoritative warning infrastructure.
 
+```text
 GSI / NLFC
 NDEM / NRSC
 NDMA / SACHET
@@ -430,20 +467,25 @@ STATE / DISTRICT SYSTEMS
                │
                ▼
          Reassessment
+```
 
-CONNECT. DON'T REPLACE.
+<div align="center">
+
+### CONNECT. DON'T REPLACE.
 
 Progressive integration is supported through replaceable data adapters.
 
 No live government integration is claimed unless explicitly implemented and verified.
 
+</div>
 
 ---
 
-ENGINEERING TRUTH
+# ENGINEERING TRUTH
 
 TerraGuardian follows a strict maturity model:
 
+```text
 DESIGNED
    ↓
 IMPLEMENTED
@@ -453,95 +495,102 @@ EXECUTABLE
 VERIFIED
    ↓
 DEMONSTRATION-READY
+```
 
 Claims are not upgraded without evidence.
 
-Capability	Current status
+| Capability | Current status |
+|:---|:---|
+| **Persistent Incident Twin** | `IMPLEMENTED` |
+| **Server-enforced incident lifecycle** | `IMPLEMENTED` |
+| **Evidence reconciliation** | `IMPLEMENTED` |
+| **Citizen-evidence safety boundary** | `IMPLEMENTED` |
+| **Risk + confidence baseline** | `IMPLEMENTED` |
+| **Impact / priority** | `IMPLEMENTED` |
+| **Human authorization** | `IMPLEMENTED` |
+| **Reassessment** | `IMPLEMENTED + TESTED` |
+| **Deterministic / interpretable intelligence baseline** | `IMPLEMENTED / SIMULATED` |
+| **Intervention context** | `DESIGN / PARTIAL` |
+| **Observed-outcome integration** | `PARTIAL` |
+| **Evidentiary closure gate** | `IN PROGRESS` |
+| **Full action-confirmation enforcement** | `IN PROGRESS` |
+| **Live government integrations** | `NOT CLAIMED` |
+| **Production ML accuracy** | `NOT CLAIMED` |
+| **Production RBAC / IAM** | `NOT CLAIMED` |
+| **Cryptographically immutable audit** | `NOT CLAIMED` |
+| **Full offline-first operation** | `NOT CLAIMED` |
 
-Persistent Incident Twin	IMPLEMENTED
-Server-enforced incident lifecycle	IMPLEMENTED
-Evidence reconciliation	IMPLEMENTED
-Citizen-evidence safety boundary	IMPLEMENTED
-Risk + confidence baseline	IMPLEMENTED
-Impact / priority	IMPLEMENTED
-Human authorization	IMPLEMENTED
-Reassessment	IMPLEMENTED + TESTED
-Deterministic / interpretable intelligence baseline	IMPLEMENTED / SIMULATED
-Intervention context	DESIGN / PARTIAL
-Observed-outcome integration	PARTIAL
-Evidentiary closure gate	IN PROGRESS
-Full action-confirmation enforcement	IN PROGRESS
-Live government integrations	NOT CLAIMED
-Production ML accuracy	NOT CLAIMED
-Production RBAC / IAM	NOT CLAIMED
-Cryptographically immutable audit	NOT CLAIMED
-Full offline-first operation	NOT CLAIMED
+<br>
 
+<div align="center">
 
-<div align="center">Sparse-but-true beats impressive-but-false.
+> ### Sparse-but-true beats impressive-but-false.
 
 </div>
+
 ---
 
-VERIFICATION
+# VERIFICATION
 
-BACKEND EVIDENCE
+### BACKEND EVIDENCE
 
-<div align="center">57 / 57 backend tests passing
+<div align="center">
 
-</div>Verified command:
+### 57 / 57 backend tests passing
 
+</div>
+
+Verified command:
+
+```bash
 python3 -m pytest tests/ -v
+```
 
 Current backend verification covers domain and service behavior including:
 
 Incident lifecycle · evidence handling · risk/confidence · impact/priority · authorization · reassessment
 
-VERIFICATION BOUNDARY
+### VERIFICATION BOUNDARY
 
 The following are not represented as production-verified unless separately demonstrated:
 
-PostgreSQL/PostGIS runtime
-
-Docker Compose runtime
-
-Frontend E2E execution
-
-Production authentication / IAM
-
-Live government integrations
-
-Regional ML accuracy
-
-Offline-first operation
-
-Cryptographically immutable audit
-
-
+- PostgreSQL/PostGIS runtime
+- Docker Compose runtime
+- Frontend E2E execution
+- Production authentication / IAM
+- Live government integrations
+- Regional ML accuracy
+- Offline-first operation
+- Cryptographically immutable audit
 
 ---
 
-DEMONSTRATION
+# DEMONSTRATION
 
-THE GOLDEN SCENARIO
+## THE GOLDEN SCENARIO
 
-01 · PREDICT
+### 01 · PREDICT
 
 A hazard signal creates an incident.
 
+```text
 Risk       → assessed
 Confidence → assessed separately
 Location   → mapped
+```
 
-02 · EVIDENCE
+### 02 · EVIDENCE
 
 Additional evidence arrives.
 
+```text
 Source · Timestamp · Location
 Freshness · Reliability · Conflict
+```
 
-03 · PRIORITIZE
+### 03 · PRIORITIZE
 
+```text
 Hazard
 +
 Exposure
@@ -549,17 +598,21 @@ Exposure
 Criticality
 +
 Response Difficulty
+```
 
-04 · DECIDE
+### 04 · DECIDE
 
+```text
 AI reasoning
       ↓
 Policy / Rule validation
       ↓
 Human authorization
+```
 
-05 · ACT
+### 05 · ACT
 
+```text
 PROPOSED
    ↓
 AUTHORIZED
@@ -567,32 +620,41 @@ AUTHORIZED
 EXECUTED
    ↓
 CONFIRMED
+```
 
-06 · REALITY DIVERGES
+### 06 · REALITY DIVERGES
 
 Field observation:
 
-<div align="center">NO LANDSLIDE OBSERVED
+<div align="center">
 
-</div>TerraGuardian does not automatically declare:
+### NO LANDSLIDE OBSERVED
 
-FALSE ALARM
+</div>
+
+TerraGuardian does not automatically declare:
+
+### FALSE ALARM
 
 and does not claim:
 
-PREVENTION PROVEN
+### PREVENTION PROVEN
 
-07 · INTERPRET
+### 07 · INTERPRET
 
-<div align="center">INTERVENTION-CONDITIONED
-NON-EVENT
+<div align="center">
 
-</div>The incident retains:
+### INTERVENTION-CONDITIONED NON-EVENT
+
+</div>
+
+The incident retains:
 
 Intervention context · Observation · Evidence · Uncertainty · Residual questions
 
-08 · REASSESS
+### 08 · REASSESS
 
+```text
 OBSERVE
    ↓
 INTERPRET
@@ -604,25 +666,27 @@ CONTINUE
 ESCALATE
    /
 CLOSURE ASSESSMENT
-
+```
 
 ---
 
-OUTCOME SEMANTICS
+# OUTCOME SEMANTICS
 
-Scenario	Operational interpretation
+| Scenario | Operational interpretation |
+|:---|:---|
+| **Event observed** | `EVENT_OBSERVED` |
+| **No event + intervention** | `INTERVENTION_CONDITIONED_NON_EVENT` |
+| **No event + adequate observation** | `POTENTIAL_FALSE_ALARM_ASSESSMENT` |
+| **No event + insufficient evidence** | `OBSERVATION_GAP` |
+| **Event + remaining hazard** | `RESIDUAL_HAZARD` |
+| **Conflicting evidence** | `CONFLICTED` |
+| **Evidence insufficient for closure** | `UNRESOLVED` |
 
-Event observed	EVENT_OBSERVED
-No event + intervention	INTERVENTION_CONDITIONED_NON_EVENT
-No event + adequate observation	POTENTIAL_FALSE_ALARM_ASSESSMENT
-No event + insufficient evidence	OBSERVATION_GAP
-Event + remaining hazard	RESIDUAL_HAZARD
-Conflicting evidence	CONFLICTED
-Evidence insufficient for closure	UNRESOLVED
+<br>
 
+### CLOSURE IS NOT A SHORTCUT
 
-CLOSURE IS NOT A SHORTCUT
-
+```text
 MONITORING
     ↓
 OUTCOME ASSESSMENT
@@ -636,27 +700,29 @@ AUTHORIZED CLOSURE
 RESOLVED
     ↓
 REVIEWED
-
+```
 
 ---
 
-IMPACT
+# IMPACT
 
-FROM MORE ALERTS TO BETTER OPERATIONAL DECISIONS
+### FROM MORE ALERTS TO BETTER OPERATIONAL DECISIONS
 
-Capability	Operational value
+| Capability | Operational value |
+|:---|:---|
+| **Faster coordination** | Warning → verification → decision → action |
+| **Better prioritization** | Consequence-aware operational focus |
+| **Evidence-aware state** | Freshness, provenance and conflict remain visible |
+| **Verified response** | Authorization → execution → confirmation |
+| **Safer interpretation** | Observation separated from causal conclusion |
+| **Continuous reassessment** | Reality divergence produces the next decision |
+| **Structured history** | Incident state remains reviewable |
 
-Faster coordination	Warning → verification → decision → action
-Better prioritization	Consequence-aware operational focus
-Evidence-aware state	Freshness, provenance and conflict remain visible
-Verified response	Authorization → execution → confirmation
-Safer interpretation	Observation separated from causal conclusion
-Continuous reassessment	Reality divergence produces the next decision
-Structured history	Incident state remains reviewable
+<br>
 
+### OPERATIONAL METRICS
 
-OPERATIONAL METRICS
-
+```text
 WARNING → DECISION TIME
 
 DECISION → ACTION TIME
@@ -668,52 +734,58 @@ EVIDENCE CONFLICT RATE
 REASSESSMENT COMPLETION
 
 CLOSURE EVIDENCE COMPLETENESS
+```
 
 These are proposed operational metrics, not claimed performance results.
 
-
 ---
 
-WHY THE NORTH EAST
+# WHY THE NORTH EAST
 
 The architecture is designed for a regional operational environment where hazard intelligence, field evidence, exposure, response coordination and changing ground conditions must coexist across multiple administrative and technical systems.
 
-<div align="center">REUSABLE CORE
+<div align="center">
+
+```text
+REUSABLE CORE
       +
 REPLACEABLE DATA ADAPTERS
       +
 PROGRESSIVE VALIDATION
       +
 DISTRICT → STATE → NER SCALE
+```
 
-</div>DEPLOYMENT PRINCIPLE
+<br>
 
-<div align="center">Validate first. Delegate authority progressively.
+### DEPLOYMENT PRINCIPLE
+
+> **Validate first. Delegate authority progressively.**
 
 </div>
----
-
-TECHNOLOGY
-
-Layer	Technology
-
-Frontend	React · TypeScript
-API	FastAPI
-Database	PostgreSQL / PostGIS target architecture
-Intelligence	Python
-ML baseline	Deterministic / interpretable prototype
-Geospatial UI	MapLibre
-Validation	Typed APIs · Domain rules
-Testing	Pytest
-Migrations	Alembic
-Architecture	Modular domain services
-
-
 
 ---
 
-REPOSITORY
+# TECHNOLOGY
 
+| Layer | Technology |
+|:---|:---|
+| **Frontend** | React · TypeScript |
+| **API** | FastAPI |
+| **Database** | PostgreSQL / PostGIS target architecture |
+| **Intelligence** | Python |
+| **ML baseline** | Deterministic / interpretable prototype |
+| **Geospatial UI** | MapLibre |
+| **Validation** | Typed APIs · Domain rules |
+| **Testing** | Pytest |
+| **Migrations** | Alembic |
+| **Architecture** | Modular domain services |
+
+---
+
+# REPOSITORY
+
+```text
 TerraGuardian/
 │
 ├── apps/
@@ -740,15 +812,18 @@ TerraGuardian/
 ├── tests/
 ├── docs/
 └── README.md
+```
 
 Repository structure reflects the current prototype architecture. Placeholder modules are not represented as completed intelligence capabilities.
 
-
 ---
 
-ENGINEERING METHOD
+# ENGINEERING METHOD
 
-<div align="center">REQUIREMENT
+<div align="center">
+
+```text
+REQUIREMENT
      ↓
 ARCHITECTURAL DECISION
      ↓
@@ -765,54 +840,48 @@ INTEGRATION
 DEMO VERIFICATION
      ↓
 DOCUMENTATION
+```
 
-</div>ENGINEERING RULES
+</div>
 
-Evidence before conclusion
+### ENGINEERING RULES
 
-Explicit state over implicit assumptions
-
-Human authorization for critical actions
-
-Deterministic rules for critical transitions
-
-AI assists; governance controls
-
-Replaceable source adapters
-
-Persistent incident history
-
-No unsupported causal claims
-
-No automatic closure from absence alone
-
-Documentation follows verification
-
-
+- Evidence before conclusion
+- Explicit state over implicit assumptions
+- Human authorization for critical actions
+- Deterministic rules for critical transitions
+- AI assists; governance controls
+- Replaceable source adapters
+- Persistent incident history
+- No unsupported causal claims
+- No automatic closure from absence alone
+- Documentation follows verification
 
 ---
 
-RUN
+# RUN
 
-Backend verification
+### Backend verification
 
+```bash
 cd services/api
 
 python3 -m pytest tests/ -v
+```
 
 For the complete development environment, follow the repository's verified setup and dependency instructions.
 
 Runtime and deployment commands must remain synchronized with the actual repository configuration.
 
-
 ---
 
-RESEARCH & SUPPORTING MATERIAL
+# RESEARCH & SUPPORTING MATERIAL
 
 The README is intentionally the product and engineering front door.
 
 Detailed material belongs in supporting documentation:
 
+```text
 docs/
 ├── research/
 │   ├── research-matrix
@@ -831,23 +900,26 @@ docs/
 └── demo/
     ├── golden-scenario
     └── walkthrough
-
+```
 
 ---
 
-<div align="center">TERRAGUARDIAN AI
+<div align="center">
 
-FROM WARNING TO VERIFIED RESPONSE
+### TERRAGUARDIAN AI
 
-<br>PREDICT → EVIDENCE → ASSESS → PRIORITIZE → DECIDE → AUTHORIZE → ACT → CONFIRM → OBSERVE → INTERPRET → REASSESS
+### FROM WARNING TO VERIFIED RESPONSE
+
+<br>
+
+PREDICT → EVIDENCE → ASSESS → PRIORITIZE → DECIDE → AUTHORIZE → ACT → CONFIRM → OBSERVE → INTERPRET → REASSESS
 
 <br><br>
 
 > Making uncertainty an operational decision variable.
 
+<br>
 
-
-<br>SIH26001 · MDoNER · Disaster Management · Software
+SIH26001 · MDoNER · Disaster Management · Software
 
 </div>
-```
