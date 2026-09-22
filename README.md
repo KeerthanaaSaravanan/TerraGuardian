@@ -209,68 +209,12 @@ TerraGuardian deliberately keeps operational concepts separate.
 # ARCHITECTURE
 
 ### Operational Architecture
+<img width="1968" height="999" alt="TerraGuardian AI Operational Intelligence Architecture" src="https://github.com/user-attachments/assets/8d680f16-1ed0-4fbc-9a29-0e04845e2db9" />
 
-```mermaid
-flowchart TB
-    S[Hazard Intelligence<br/>Forecasts · Terrain · Rainfall · GIS]
-
-    S --> E[Evidence Intelligence<br/>Provenance · Freshness · Reliability · Conflict]
-
-    E --> IT[INCIDENT TWIN<br/><br/>One evolving operational state]
-
-    IT --> R[Risk + Confidence]
-    IT --> CP[Consequence + Priority]
-    IT --> D[Decision Intelligence]
-
-    D --> G[Policy / Rule Validation]
-    G --> H[Human Authorization]
-
-    H --> A[Action Governance]
-    A --> X[Execution]
-    X --> CF[Confirmation]
-
-    CF --> O[Observation]
-    O --> OUT[Outcome Interpretation]
-    OUT --> RE[Reassessment]
-
-    RE -->|Continue| IT
-    RE -->|Escalate| D
-    RE -->|Closure Assessment| CL[Closure Assessment]
-
-    CL -->|Insufficient Evidence| IT
-    CL -->|Sufficient Evidence| RES[Resolved]
-```
 
 ### Technical Architecture
+<img width="1815" height="619" alt="TerraGuardian AI Operational Intelligence Architecture (1)" src="https://github.com/user-attachments/assets/5eba414d-1ab2-4953-b8d2-e490bde97bf5" />
 
-```mermaid
-flowchart LR
-    UI[React + TypeScript<br/>Operations Centre]
-
-    API[FastAPI<br/>Typed API Layer]
-
-    DOMAIN[Domain Services<br/>Incident · Evidence · Risk<br/>Impact · Priority · Reassessment]
-
-    DB[(PostgreSQL / PostGIS)]
-
-    ML[Python Intelligence<br/>Deterministic / Interpretable Baseline]
-
-    GIS[MapLibre<br/>Geospatial Layer]
-
-    ADAPTERS[Source Adapter Layer<br/>Validate · Normalize · Provenance]
-
-    UI --> API
-    API --> DOMAIN
-
-    ADAPTERS --> DOMAIN
-
-    DOMAIN --> DB
-    DOMAIN --> ML
-    DOMAIN --> GIS
-
-    DOMAIN --> API
-    API --> UI
-```
 
 ### ARCHITECTURE PRINCIPLE
 
