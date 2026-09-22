@@ -1,6 +1,7 @@
 """SQLAlchemy 2.0 ORM models representing the TerraGuardian database schema.
 
 Tables:
+- `users`: User accounts and authoritative role identities
 - `incidents`: Authoritative Incident Twins
 - `evidence`: Multi-source observation evidence fabric
 - `decisions`: Statutory human authority sign-offs
@@ -259,4 +260,24 @@ class ReassessmentModel(Base):
     reassessed_by: Mapped[str] = mapped_column(String(255), default="system", nullable=False)
 
     incident: Mapped[IncidentModel] = relationship("IncidentModel", back_populates="reassessments")
+
+
+class UserModel(Base):
+    """User account model for server-derived authentication and RBAC."""
+
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    username: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[str] = mapped_column(String(64), default="PUBLIC_CITIZEN", index=True, nullable=False)
+    agency: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    badge_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 

@@ -5,10 +5,19 @@ from __future__ import annotations
 import uuid
 from typing import Any, Optional
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import IncidentModel
-from app.domain.enums import ActorRole, AuditEventType, IncidentStatus
+from app.db.models import ActionModel, EvidenceModel, IncidentModel
+from app.domain.enums import (
+    ActionState,
+    ActorRole,
+    AuditEventType,
+    EvidenceConflictStatus,
+    EvidenceInterpretation,
+    EvidenceSource,
+    IncidentStatus,
+)
 from app.domain.incident import is_valid_transition
 from app.services.audit_service import AuditService
 from app.services.exceptions import (
@@ -61,13 +70,69 @@ class StateTransitionService:
                     "Authorization requires an official disaster order reference code."
                 )
 
-        # 3. Precondition for RESOLVED
-        if target_status == IncidentStatus.RESOLVED and current_status != IncidentStatus.MONITORING and current_status != IncidentStatus.REASSESSING:
-            raise InvalidTransitionError(
-                current_state=current_status.value,
-                target_state=target_status.value,
-                reason="Incidents can only transition to RESOLVED from MONITORING or REASSESSING after hazard mitigation.",
+        # 3. Evidentiary Closure Gate (RESOLVED preconditions)
+        if target_status == IncidentStatus.RESOLVED:
+            # 3a. Source-state restriction
+            if current_status not in (IncidentStatus.MONITORING, IncidentStatus.REASSESSING):
+                raise InvalidTransitionError(
+                    current_state=current_status.value,
+                    target_state=target_status.value,
+                    reason="Incidents can only be RESOLVED from MONITORING or REASSESSING after hazard mitigation.",
+                )
+
+            # 3b. Mandatory AUTHORIZED_DECISION_MAKER actor
+            if actor_role != ActorRole.AUTHORIZED_DECISION_MAKER:
+                raise UnauthorizedAuthorityError(
+                    "Closure to RESOLVED requires an AUTHORIZED_DECISION_MAKER (Magistrate/DDMA). "
+                    f"Actor role '{actor_role.value}' is insufficient."
+                )
+
+            # 3c. All dispatched actions must be PHYSICALLY_CONFIRMED
+            active_states = {
+                ActionState.DISPATCHED.value,
+                ActionState.ACKNOWLEDGED.value,
+                ActionState.IN_PROGRESS.value,
+                ActionState.COMPLETED.value,
+            }
+            actions_result = await self.session.execute(
+                select(ActionModel).where(ActionModel.incident_id == incident_id)
             )
+            all_actions = actions_result.scalars().all()
+            unconfirmed = [a for a in all_actions if a.state in active_states]
+            if unconfirmed:
+                codes = ", ".join(a.task_code for a in unconfirmed)
+                raise PreconditionFailedError(
+                    f"Closure blocked: {len(unconfirmed)} action(s) are not yet PHYSICALLY_CONFIRMED: {codes}. "
+                    "All dispatched actions must be confirmed by field personnel before an incident can be resolved."
+                )
+
+            # 3d. No unresolved CONFLICTED evidence
+            evidence_result = await self.session.execute(
+                select(EvidenceModel).where(EvidenceModel.incident_id == incident_id)
+            )
+            all_evidence = evidence_result.scalars().all()
+            conflicted = [
+                e for e in all_evidence
+                if e.conflict_status == EvidenceConflictStatus.CONFLICTED.value
+                and e.interpretation != EvidenceInterpretation.REJECTED.value
+            ]
+            if conflicted:
+                raise PreconditionFailedError(
+                    f"Closure blocked: {len(conflicted)} evidence item(s) have unresolved conflicts. "
+                    "Reconcile all conflicting evidence before resolving the incident."
+                )
+
+            # 3e. At least one VERIFIED FIELD evidence required
+            verified_field = [
+                e for e in all_evidence
+                if e.source == EvidenceSource.FIELD.value
+                and e.interpretation == EvidenceInterpretation.VERIFIED.value
+            ]
+            if not verified_field:
+                raise PreconditionFailedError(
+                    "Closure blocked: At least one FIELD evidence item with interpretation VERIFIED is required "
+                    "before an incident can be resolved. Submit and verify field patrol evidence first."
+                )
 
         # 4. Mutate State
         previous_status_val = incident.status

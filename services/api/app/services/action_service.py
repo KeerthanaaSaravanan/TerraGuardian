@@ -65,6 +65,19 @@ class ActionService:
         action = await self.get_action(action_id)
         current_state = ActionState(action.state)
 
+        # 0. Explicit Confirmation Bypass Guard
+        # PHYSICALLY_CONFIRMED is a protected terminal state reachable ONLY through confirm_action().
+        # Calling update_action_state() with this target is a protocol violation.
+        if target_state == ActionState.PHYSICALLY_CONFIRMED:
+            raise InvalidTransitionError(
+                current_state=current_state.value,
+                target_state=target_state.value,
+                reason=(
+                    "PHYSICALLY_CONFIRMED cannot be set via state transition. "
+                    "Use POST /actions/{action_id}/confirmations with accepted field evidence."
+                ),
+            )
+
         # 1. Transition Validity
         if not is_valid_action_transition(current_state, target_state):
             raise InvalidTransitionError(

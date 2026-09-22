@@ -142,6 +142,7 @@ class ActorRole(str, enum.Enum):
     
     AI/System actors cannot make safety-critical authoritative decisions.
     """
+    PUBLIC_CITIZEN = "PUBLIC_CITIZEN"
     SYSTEM_AI = "SYSTEM_AI"
     FIELD_VERIFIER = "FIELD_VERIFIER"
     OPERATOR = "OPERATOR"

@@ -57,6 +57,11 @@ from app.services.predictive_models import SyntheticBenchmarkValidator
 from app.services.predictive_service import PredictiveService
 from app.services.reconciliation_service import ReconciliationService
 from app.services.seed_service import SeedService
+from app.services.auth_service import (
+    require_authenticated_user,
+    require_field_verifier,
+    require_operator,
+)
 from app.services.state_transition_service import StateTransitionService
 
 router = APIRouter(tags=["incidents"])
@@ -457,6 +462,7 @@ async def get_incident_state(
 async def get_incident_timeline(
     incident_id: uuid.UUID,
     session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_authenticated_user),
 ) -> list[TimelineEventResponse]:
     """Get chronological audit timeline for an incident."""
     incident_service = IncidentService(session)
@@ -616,6 +622,7 @@ async def transition_incident_state(
     incident_id: uuid.UUID,
     body: TransitionRequest,
     session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_operator),
 ) -> IncidentResponse:
     """Execute and audit a validated lifecycle state transition."""
     transition_service = StateTransitionService(session)
@@ -645,6 +652,7 @@ async def transition_action_state(
     action_id: uuid.UUID,
     body: ActionTransitionRequest,
     session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_authenticated_user),
 ) -> ActionResponse:
     """Execute and audit a validated action task state transition."""
     action_service = ActionService(session)
@@ -670,6 +678,7 @@ async def confirm_action_evidence(
     action_id: uuid.UUID,
     body: ActionConfirmationRequest,
     session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_field_verifier),
 ) -> ActionConfirmationResponse:
     """Record accepted confirmation evidence and advance task state to PHYSICALLY_CONFIRMED."""
     action_service = ActionService(session)
@@ -786,6 +795,7 @@ async def perform_bounded_reassessment_endpoint(
     incident_id: uuid.UUID,
     body: BoundedReassessmentRequest,
     session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_operator),
 ) -> BoundedReassessmentResult:
     """Execute a deterministic bounded hazard reassessment."""
     hazard_service = HazardService(session)
@@ -801,6 +811,7 @@ async def transition_hazard_state_endpoint(
     incident_id: uuid.UUID,
     body: HazardStateTransitionRequest,
     session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_operator),
 ) -> IncidentResponse:
     """Execute and audit a validated physical hazard state transition."""
     hazard_service = HazardService(session)

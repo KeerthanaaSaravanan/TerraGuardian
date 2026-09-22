@@ -24,10 +24,10 @@ from app.domain.enums import ActionState
 VALID_ACTION_TRANSITIONS: dict[ActionState, frozenset[ActionState]] = {
     ActionState.PROPOSED: frozenset({ActionState.APPROVED}),
     ActionState.APPROVED: frozenset({ActionState.DISPATCHED}),
-    ActionState.DISPATCHED: frozenset({ActionState.ACKNOWLEDGED, ActionState.IN_PROGRESS, ActionState.COMPLETED, ActionState.PHYSICALLY_CONFIRMED}),
-    ActionState.ACKNOWLEDGED: frozenset({ActionState.IN_PROGRESS, ActionState.COMPLETED, ActionState.PHYSICALLY_CONFIRMED}),
-    ActionState.IN_PROGRESS: frozenset({ActionState.COMPLETED, ActionState.PHYSICALLY_CONFIRMED}),
-    ActionState.COMPLETED: frozenset({ActionState.PHYSICALLY_CONFIRMED}),
+    ActionState.DISPATCHED: frozenset({ActionState.ACKNOWLEDGED, ActionState.IN_PROGRESS, ActionState.COMPLETED}),
+    ActionState.ACKNOWLEDGED: frozenset({ActionState.IN_PROGRESS, ActionState.COMPLETED}),
+    ActionState.IN_PROGRESS: frozenset({ActionState.COMPLETED}),
+    ActionState.COMPLETED: frozenset(),  # Terminal via regular transitions; advance to PHYSICALLY_CONFIRMED only via confirm_action()
     ActionState.PHYSICALLY_CONFIRMED: frozenset(),  # Terminal state
 }
 
