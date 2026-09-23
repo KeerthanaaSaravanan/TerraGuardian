@@ -13,7 +13,7 @@
 
 ---
 
-### 🔗 **Live Operations Centre**: [terraguardian.vercel.app](https://terraguardian.vercel.app/) &nbsp;|&nbsp; 🎥 **Technical Demonstration**: [Watch on YouTube](https://youtu.be/nhXzRiLlDXI)
+### 🔗 **Live Operations Centre**: [terraguardian.vercel.app](https://terraguardian.vercel.app/) &nbsp;|&nbsp; 🎥 **Technical Demonstration**: [Watch on YouTube](https://youtube)
 
 *Smart India Hackathon 2026 · Problem Statement: SIH26001 / PS26001 · Ministry of Development of North Eastern Region (MDoNER) · Disaster Management · Software Track*
 
