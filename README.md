@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/logo.png" alt="TerraGuardian AI Official Logo" width="160" height="auto" style="background-color: #ffffff; border-radius: 20px; padding: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); margin-bottom: 12px; display: inline-block;" />
+
 # TERRAGUARDIAN AI
 ### Landslide Operational Intelligence System
 **From Warning to Verified Response**
@@ -723,11 +725,9 @@ To ensure scientific integrity and prevent claim inflation, TerraGuardian explic
 
 <div align="center">
 
+<img src="docs/assets/logo.png" alt="TerraGuardian AI Official Logo" width="130" height="auto" style="background-color: #ffffff; border-radius: 16px; padding: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); margin-bottom: 10px; display: inline-block;" />
+
 ### TERRAGUARDIAN AI
-<div align="center">
-
-<img src="docs/assets/logo.png" alt="TerraGuardian AI Official Logo" width="130" height="130" style="border-radius: 20px; margin-bottom: 8px;" />
-
 $$\textbf{From Warning to Verified Response}$$
 
 `PREDICT` → `EVIDENCE` → `ASSESS` → `PRIORITIZE` → `DECIDE` → `AUTHORIZE` → `ACT` → `CONFIRM` → `OBSERVE` → `INTERPRET` → `REASSESS`

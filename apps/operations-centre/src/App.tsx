@@ -52,9 +52,9 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
           <div
             onClick={() => setStep(1)}
             title="Command Centre (Step 1)"
-            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl bg-slate-900 border border-slate-700/60 p-1 shadow-lg shadow-emerald-950/20 transition-transform hover:scale-105 overflow-hidden"
+            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-white border border-slate-200 shadow-sm p-1 transition-transform hover:scale-105 overflow-hidden"
           >
-            <img src="/logo.png" alt="TerraGuardian Logo" className="h-full w-full object-contain" />
+            <img src="/logo-shield.png" alt="TerraGuardian Logo" className="h-full w-full object-contain" />
           </div>
 
           {/* Quick-Jump Nav Icons */}
@@ -207,8 +207,8 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
           <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
               <div className="flex items-center gap-2">
-                <span className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-700/60 p-0.5 flex items-center justify-center overflow-hidden shrink-0">
-                  <img src="/logo.png" alt="TerraGuardian Safe Logo" className="h-full w-full object-contain" />
+                <span className="h-9 w-9 rounded-lg bg-white border border-slate-200 p-0.5 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                  <img src="/logo-shield.png" alt="TerraGuardian Safe Logo" className="h-full w-full object-contain" />
                 </span>
                 <div>
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white">TerraGuardian Safe</h3>

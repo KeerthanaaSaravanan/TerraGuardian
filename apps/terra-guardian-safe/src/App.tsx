@@ -14,8 +14,8 @@ export const App: FC = () => {
       {/* Header */}
       <header className="bg-emerald-600 px-4 py-3 text-white">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 border border-emerald-400/40 p-0.5 overflow-hidden shrink-0">
-            <img src="/logo.png" alt="TerraGuardian Logo" className="h-full w-full object-contain" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 p-1 shadow-sm overflow-hidden shrink-0">
+            <img src="/logo-shield.png" alt="TerraGuardian Safe Logo" className="h-full w-full object-contain" />
           </div>
           <div>
             <h1 className="text-lg font-bold leading-tight">TerraGuardian Safe</h1>
