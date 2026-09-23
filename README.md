@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="docs/assets/logo.png" alt="TerraGuardian AI Official Logo" width="130" height="130" style="border-radius: 20px; margin-bottom: 8px;" />
-
 # TERRAGUARDIAN AI
 ### Landslide Operational Intelligence System
 **From Warning to Verified Response**
