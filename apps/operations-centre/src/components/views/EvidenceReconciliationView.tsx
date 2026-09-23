@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDemoScenario } from "../../context/DemoScenarioContext";
 import { usePublicReport } from "../../context/PublicReportContext";
-import { INITIAL_EVIDENCE, EvidenceItem as ScenarioEvidenceItem } from "../../data/deterministicScenario";
+import { INITIAL_EVIDENCE } from "../../data/deterministicScenario";
 import { PrincipleBanner } from "../common";
 import {
   IconCloudRain,
