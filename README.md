@@ -825,6 +825,21 @@ For the complete development environment, follow the repository's verified setup
 
 Runtime and deployment commands must remain synchronized with the actual repository configuration.
 
+## Demo Access Credentials
+
+> TerraGuardian includes seeded demonstration accounts for evaluating role-based workflows locally. These credentials are DEMO / LOCAL ONLY and are not production credentials.
+
+| Role | Username | Password | Purpose |
+|---|---|---|---|
+| Operator | `operator` | `Terra#Op2026` | Operations command workflow |
+| Magistrate | `magistrate` | `Terra#Admin2026` | Authorization / decision-maker workflow |
+| Field Verifier | `patrol` | `Patrol#2026` | Field verification workflow |
+| Citizen | `citizen` | `Citizen#2026` | Public / citizen workflow |
+
+> **DEMO / LOCAL ONLY:** These credentials are intentionally seeded for prototype evaluation and must not be used, reused, or treated as production credentials. Production deployment requires integration with the appropriate secure identity and access-management infrastructure.
+
+Start the application locally, open the Authority Operations Gateway, and use the appropriate demo account above to inspect its role-specific workflow.
+
 ---
 
 # RESEARCH & SUPPORTING MATERIAL
