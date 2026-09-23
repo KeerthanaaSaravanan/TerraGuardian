@@ -73,7 +73,7 @@ export const ConfirmationView: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-neutral-950 p-4 rounded-xl border border-slate-200 dark:border-neutral-800 text-center font-mono min-w-[200px] shadow-xs">
+        <div className="bg-white dark:bg-neutral-950 p-4 rounded-xl border border-slate-200 dark:border-neutral-800 text-center font-mono w-full sm:w-auto sm:min-w-[200px] shadow-xs">
           <div className="text-[10px] text-slate-500 dark:text-neutral-400">CORRIDOR STATUS</div>
           <div className="text-emerald-600 dark:text-emerald-400 font-bold text-base mt-1">TRAFFIC SAFELY DIVERTED</div>
           <div className="text-[10px] text-slate-500 dark:text-neutral-500 mt-0.5">CASUALTY RISK ELIMINATED</div>

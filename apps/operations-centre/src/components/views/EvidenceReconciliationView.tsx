@@ -255,7 +255,7 @@ export const EvidenceReconciliationView: React.FC = () => {
           return (
             <div
               key={item.id}
-              className={`bg-white dark:bg-neutral-900 border rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm transition-all ${
+              className={`bg-white dark:bg-neutral-900 border rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm transition-all min-w-0 ${
                 isConflicted
                   ? "border-amber-400 dark:border-amber-500/50 bg-amber-50/30 dark:bg-amber-950/10"
                   : "border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700"

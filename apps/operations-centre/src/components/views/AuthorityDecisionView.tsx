@@ -65,7 +65,7 @@ export const AuthorityDecisionView: React.FC = () => {
       {/* Main Grid: AI Recommendation vs Human Decision Gate */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: AI Recommendation Card (6 cols) */}
-        <div className="lg:col-span-6 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm">
+        <div className="lg:col-span-6 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm min-w-0">
           <div>
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
               <span className="text-xs font-mono font-bold text-slate-600 dark:text-neutral-400 flex items-center gap-2">
@@ -108,7 +108,7 @@ export const AuthorityDecisionView: React.FC = () => {
         </div>
 
         {/* Right: Human Authority Action Gate (6 cols) */}
-        <div className="lg:col-span-6 bg-white dark:bg-neutral-900 border-2 border-slate-300 dark:border-neutral-700 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm">
+        <div className="lg:col-span-6 bg-white dark:bg-neutral-900 border-2 border-slate-300 dark:border-neutral-700 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm min-w-0">
           <div>
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
               <span className="text-xs font-mono font-bold text-slate-900 dark:text-white flex items-center gap-2">

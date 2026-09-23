@@ -46,7 +46,7 @@ export const CommandCentreView: React.FC = () => {
       {/* Main Grid: Map & Operational Sidebar */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 min-h-[620px]">
         {/* Left Column: Interactive Map (8 cols) */}
-        <div className="xl:col-span-8 flex flex-col gap-3">
+        <div className="xl:col-span-8 flex flex-col gap-3 min-w-0">
           <div className="flex-1 min-h-[480px]">
             <InteractiveMap detailedView={false} />
           </div>
@@ -103,7 +103,7 @@ export const CommandCentreView: React.FC = () => {
         </div>
 
         {/* Right Column: Incident Queue & TG-2048 Highlight (4 cols) */}
-        <div className="xl:col-span-4 flex flex-col gap-4">
+        <div className="xl:col-span-4 flex flex-col gap-4 min-w-0">
           {/* Priority Focus Header */}
           <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 p-4 rounded-xl flex flex-col gap-3 shadow-sm">
             <div className="flex items-center justify-between">

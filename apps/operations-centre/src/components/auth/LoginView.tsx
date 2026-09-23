@@ -90,7 +90,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
                 <span>SERVER-VERIFIED RBAC AUTHENTICATION</span>
               </div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                Operations Sign-In
+                Operations Command Sign-In
               </h1>
               <p className="text-xs text-slate-600 dark:text-neutral-400 mt-1.5 leading-relaxed">
                 Enter your authorized service credentials to access the North Eastern Region command network, authority queues, and incident digital twins.
@@ -140,7 +140,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mt-2 w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="mt-2 w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 {isLoading ? (
                   <>
@@ -168,7 +168,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                   <IconRadio className="w-4 h-4 text-amber-600" />
-                  DEMO / LOCAL ONLY CREDENTIALS
+                  DEMO / LOCAL ONLY PRESETS
                 </span>
                 <span className="bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
                   ONE-CLICK SIGN-IN
@@ -181,21 +181,30 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
               <div className="mt-4 flex flex-col gap-2.5">
                 {DEMO_ACCOUNTS.map((acc) => {
                   const isSelected = selectedDemoUser === acc.username;
+                  const rolePrefix =
+                    acc.username === "operator"
+                      ? "Operator — "
+                      : acc.username === "magistrate"
+                      ? "Magistrate — "
+                      : acc.username === "patrol"
+                      ? "Patrol — "
+                      : "Citizen — ";
+
                   return (
                     <button
                       key={acc.username}
                       type="button"
                       onClick={() => handleSelectDemo(acc.username, acc.passwordHint)}
-                      className={`text-left p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 ${
+                      className={`text-left p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer group ${
                         isSelected
                           ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 ring-1 ring-emerald-500"
                           : "bg-white dark:bg-neutral-900 border-amber-200 dark:border-amber-800/60 hover:border-emerald-400 dark:hover:border-emerald-600 shadow-xs"
                       }`}
                     >
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-xs text-slate-900 dark:text-white">
-                            {acc.fullName}
+                            {rolePrefix}{acc.fullName}
                           </span>
                           <span
                             className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
@@ -211,7 +220,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
                             {acc.role}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 dark:text-neutral-400 font-mono mt-0.5">
+                        <div className="text-[11px] text-slate-500 dark:text-neutral-400 font-mono mt-0.5 truncate">
                           {acc.agency} • Badge: {acc.badgeNumber}
                         </div>
                         <div className="text-[11px] text-slate-600 dark:text-neutral-300 mt-1 leading-snug">
@@ -220,11 +229,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
                       </div>
 
                       <div className="text-right shrink-0 flex flex-col items-end">
-                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800">
+                        <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-100/80 dark:bg-emerald-950/80 px-2 py-1 rounded border border-emerald-300 dark:border-emerald-700/60 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900 transition-colors">
                           Sign In →
                         </span>
                         <span className="text-[9px] font-mono text-slate-400 mt-1">
-                          Pass: {acc.passwordHint}
+                          Role Preset
                         </span>
                       </div>
                     </button>

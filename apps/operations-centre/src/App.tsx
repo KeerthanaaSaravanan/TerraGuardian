@@ -45,7 +45,7 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
   const [showReportModal, setShowReportModal] = useState(false);
 
   return (
-    <div className="flex h-screen w-screen bg-slate-100 dark:bg-neutral-950 text-slate-900 dark:text-neutral-100 overflow-hidden font-sans">
+    <div className="flex h-screen w-full max-w-full bg-slate-100 dark:bg-neutral-950 text-slate-900 dark:text-neutral-100 overflow-hidden font-sans">
       {/* Sleek Government-Grade Rail Sidebar */}
       <aside className="hidden md:flex w-16 flex-col items-center justify-between border-r border-slate-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 py-4 z-40 transition-colors">
         <div className="flex flex-col items-center gap-6">
@@ -183,10 +183,10 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
       </aside>
 
       {/* Main Container */}
-      <div className="flex flex-1 flex-col h-screen overflow-y-auto">
+      <div className="flex flex-1 flex-col h-screen overflow-y-auto overflow-x-hidden min-w-0">
         <DemoHeader />
 
-        <main className="flex-1 pb-10">
+        <main className="flex-1 pb-10 min-w-0 w-full overflow-x-hidden">
           {currentStep === 1 && <CommandCentreView />}
           {currentStep === 2 && <IncidentWorkspaceView />}
           {currentStep === 3 && <EvidenceReconciliationView />}
@@ -315,7 +315,7 @@ const PublicWorkflow: React.FC<{ onSwitchToOperator: () => void; onGoToEvidenceR
 
 const AppCore: React.FC = () => {
   const [appMode, setAppMode] = useState<AppMode>("public");
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingStep, setPendingStep] = useState<number | null>(null);
   const { isAuthorityUser } = useAuth();
   const { setStep } = useDemoScenario();
 
@@ -324,34 +324,17 @@ const AppCore: React.FC = () => {
       setAppMode("operator");
       setStep(3); // Jump right into Step 3: Evidence Reconciliation to see the fused citizen report
     } else {
-      setShowLoginModal(true);
+      setPendingStep(3);
+      setAppMode("operator");
     }
   };
 
   const handleSwitchToOperator = () => {
-    if (isAuthorityUser) {
-      setAppMode("operator");
-    } else {
-      setShowLoginModal(true);
-    }
+    setAppMode("operator");
   };
 
   return (
     <>
-      {showLoginModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="relative max-w-lg w-full">
-            <LoginView
-              onSuccess={() => {
-                setShowLoginModal(false);
-                setAppMode("operator");
-              }}
-              onCancel={() => setShowLoginModal(false)}
-            />
-          </div>
-        </div>
-      )}
-
       {appMode === "public" ? (
         <PublicWorkflow
           onSwitchToOperator={handleSwitchToOperator}
@@ -360,14 +343,19 @@ const AppCore: React.FC = () => {
       ) : isAuthorityUser ? (
         <OperatorWorkflow onSwitchToPublic={() => setAppMode("public")} />
       ) : (
-        <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
-          <div className="max-w-lg w-full">
-            <LoginView
-              onSuccess={() => setAppMode("operator")}
-              onCancel={() => setAppMode("public")}
-            />
-          </div>
-        </div>
+        <LoginView
+          onSuccess={() => {
+            setAppMode("operator");
+            if (pendingStep) {
+              setStep(pendingStep as any);
+              setPendingStep(null);
+            }
+          }}
+          onCancel={() => {
+            setPendingStep(null);
+            setAppMode("public");
+          }}
+        />
       )}
     </>
   );

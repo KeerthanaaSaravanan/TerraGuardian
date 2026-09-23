@@ -37,62 +37,59 @@ export const DemoHeader: React.FC = () => {
   const { user, logout, isAuthorityUser, isPublicUser } = useAuth();
 
   return (
-    <header className="flex flex-col border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 transition-colors">
+    <header className="flex flex-col border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 transition-colors w-full min-w-0">
       {/* Top Identity & Operational Status Bar */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-3 sm:px-5 py-2 border-b border-slate-200/80 dark:border-slate-800/80 min-w-0 gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
           {/* Logo Mark */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 shadow-md shadow-emerald-900/20 text-white font-black text-sm tracking-wider">
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 shadow-md shadow-emerald-900/20 text-white font-black text-xs sm:text-sm tracking-wider">
             TG
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span className="font-bold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white shrink-0">
                 TERRAGUARDIAN AI
               </span>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 font-semibold">
+              <span className="text-[9px] sm:text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 font-semibold shrink-0">
                 DEMONSTRATION SYSTEM
               </span>
               {backendStatus === "CONNECTED" ? (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-400 font-semibold flex items-center gap-1">
+                <span className="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-400 font-semibold flex items-center gap-1 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   API SYNCED
                 </span>
               ) : backendStatus === "CONNECTING" ? (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
+                <span className="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold shrink-0">
                   ... SYNCING
                 </span>
               ) : (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-400 font-semibold flex items-center gap-1">
+                <span className="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-400 font-semibold flex items-center gap-1 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   DEMO ENGINE
                 </span>
               )}
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono hidden xl:inline">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono hidden 2xl:inline truncate">
                 CLOSED-LOOP LANDSLIDE INTELLIGENCE (NER)
               </span>
             </div>
-            <div className="text-[11px] font-mono tracking-wider text-emerald-700 dark:text-emerald-400 font-medium">
+            <div className="text-[10px] sm:text-[11px] font-mono tracking-wider text-emerald-700 dark:text-emerald-400 font-medium truncate">
               FROM WARNING TO ACTION • <span className="opacity-80">MONITORING WATCHES THE HAZARD. TERRAGUARDIAN MANAGES THE INCIDENT.</span>
             </div>
           </div>
         </div>
 
         {/* Central Operational State Strip */}
-        <div className="hidden lg:flex items-center gap-2.5 bg-slate-100 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-800 px-3.5 py-1.5 rounded-lg text-xs font-mono">
+        <div className="hidden xl:flex items-center gap-2 bg-slate-100 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-800 px-3 py-1 rounded-lg text-xs font-mono shrink-0">
           <span className="text-slate-500 dark:text-slate-400">INCIDENT:</span>
           <span className="text-slate-900 dark:text-white font-bold">TG-2048</span>
           <span className="text-slate-300 dark:text-slate-700">|</span>
           <span className="text-slate-500 dark:text-slate-400">STATE:</span>
           <span className="text-emerald-700 dark:text-emerald-400 font-bold">{incidentStatus}</span>
           <span className="text-slate-300 dark:text-slate-700">|</span>
-          <span className="text-slate-500 dark:text-slate-400">HAZARD:</span>
-          <span className="text-cyan-600 dark:text-cyan-400 font-bold">{hazardState}</span>
-          <span className="text-slate-300 dark:text-slate-700">|</span>
           <span className="text-slate-500 dark:text-slate-400">RISK:</span>
           <span className="text-orange-600 dark:text-orange-400 font-bold">{riskLevel}</span>
           <span className="text-slate-300 dark:text-slate-700">|</span>
-          <span className="text-slate-500 dark:text-slate-400">CONFIDENCE:</span>
+          <span className="text-slate-500 dark:text-slate-400">CONF:</span>
           <span className="text-amber-600 dark:text-amber-400 font-bold">{confidenceLevel} ({confidenceScore}%)</span>
           <span className="text-slate-300 dark:text-slate-700">|</span>
           <span className="text-slate-500 dark:text-slate-400">PRIORITY:</span>

@@ -141,7 +141,7 @@ export const IncidentWorkspaceView: React.FC = () => {
       {/* Workspace Details: Affected Assets & Multi-Source Evidence Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: Critical Affected Assets & Lifeline Matrix (6 cols) */}
-        <div className="lg:col-span-6 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 flex flex-col gap-4 shadow-sm">
+        <div className="lg:col-span-6 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 flex flex-col gap-4 shadow-sm min-w-0">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
             <h3 className="text-sm font-bold font-mono text-slate-900 dark:text-white flex items-center gap-2">
               <IconBuilding className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -205,7 +205,7 @@ export const IncidentWorkspaceView: React.FC = () => {
         </div>
 
         {/* Right: Evidence Snapshot & Resolution Path (6 cols) */}
-        <div className="lg:col-span-6 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm">
+        <div className="lg:col-span-6 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm min-w-0">
           <div>
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
               <h3 className="text-sm font-bold font-mono text-slate-900 dark:text-white flex items-center gap-2">
@@ -258,7 +258,7 @@ export const IncidentWorkspaceView: React.FC = () => {
             </div>
             <button
               onClick={() => setStep(3)}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-md whitespace-nowrap shadow-sm"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-md whitespace-nowrap shadow-sm cursor-pointer"
             >
               Step 3: Reconcile →
             </button>
@@ -288,7 +288,7 @@ export const IncidentWorkspaceView: React.FC = () => {
             </span>
             <button
               onClick={() => runPredictiveAssessment()}
-              className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-xs font-mono font-medium px-3 py-1 rounded border border-slate-300 dark:border-neutral-700 transition-colors"
+              className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-xs font-mono font-medium px-3 py-1 rounded border border-slate-300 dark:border-neutral-700 transition-colors cursor-pointer"
             >
               Recalculate Model Inference
             </button>
@@ -297,7 +297,7 @@ export const IncidentWorkspaceView: React.FC = () => {
 
         <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* Feature Drivers & Contributions (7 cols) */}
-          <div className="lg:col-span-7 flex flex-col gap-3">
+          <div className="lg:col-span-7 flex flex-col gap-3 min-w-0">
             <span className="text-xs font-mono font-bold text-slate-700 dark:text-neutral-300">
               PRIMARY HAZARD DRIVERS (TRACEABLE LOG-ODDS ATTRIBUTION)
             </span>
@@ -344,7 +344,7 @@ export const IncidentWorkspaceView: React.FC = () => {
           </div>
 
           {/* Model Quality & Validation Metrics (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col gap-3">
+          <div className="lg:col-span-5 flex flex-col gap-3 min-w-0">
             <span className="text-xs font-mono font-bold text-slate-700 dark:text-neutral-300">
               DATA COMPLETENESS & BENCHMARK VALIDATION
             </span>

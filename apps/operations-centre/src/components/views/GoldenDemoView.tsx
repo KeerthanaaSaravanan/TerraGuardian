@@ -146,7 +146,7 @@ export const GoldenDemoView: React.FC = () => {
 
         {/* The Hard Case Architectural Principle */}
         <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          <div className="lg:col-span-8 flex flex-col gap-3">
+          <div className="lg:col-span-8 flex flex-col gap-3 min-w-0">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold w-fit">
               <IconAlertTriangle className="w-3.5 h-3.5" />
               <span>THE HARD CASE: WARNING → INTERVENTION → NO OBSERVED EVENT</span>
@@ -172,7 +172,7 @@ export const GoldenDemoView: React.FC = () => {
           </div>
 
           {/* Interactive Flow Stepper Mini-Bar */}
-          <div className="lg:col-span-4 bg-neutral-950/80 border border-neutral-800 rounded-xl p-4 flex flex-col gap-3">
+          <div className="lg:col-span-4 bg-neutral-950/80 border border-neutral-800 rounded-xl p-4 flex flex-col gap-3 min-w-0">
             <div className="text-[11px] font-mono text-neutral-400 font-bold uppercase tracking-wider">
               SELECT TIMELINE STAGE:
             </div>

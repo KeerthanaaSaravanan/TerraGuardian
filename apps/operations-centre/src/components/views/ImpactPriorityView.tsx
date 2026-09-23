@@ -278,7 +278,7 @@ export const ImpactPriorityView: React.FC = () => {
       {/* ── 5. Explainability & Decomposed Priority Scoring Panel ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Decomposed Component Weights & Score Calculation */}
-        <div className="lg:col-span-1 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-col justify-between gap-4">
+        <div className="lg:col-span-1 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-col justify-between gap-4 min-w-0">
           <div>
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
               <h3 className="text-sm font-bold font-mono text-slate-900 dark:text-white flex items-center gap-2">
@@ -372,7 +372,7 @@ export const ImpactPriorityView: React.FC = () => {
         </div>
 
         {/* Right: Primary Drivers, Counterfactors, and Operational Rationale */}
-        <div className="lg:col-span-2 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-col justify-between gap-4">
+        <div className="lg:col-span-2 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-col justify-between gap-4 min-w-0">
           <div>
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
               <h3 className="text-sm font-bold font-mono text-slate-900 dark:text-white flex items-center gap-2">
