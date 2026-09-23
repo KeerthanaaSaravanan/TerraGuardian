@@ -24,8 +24,8 @@ export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="h-6 w-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
-            TG
+          <span className="h-7 w-7 rounded-lg bg-slate-900 border border-slate-700/60 p-0.5 flex items-center justify-center overflow-hidden shrink-0">
+            <img src="/logo.png" alt="TerraGuardian Logo" className="h-full w-full object-contain" />
           </span>
           <span className="font-bold text-xs text-slate-900 dark:text-white">Observation Analysis</span>
         </div>

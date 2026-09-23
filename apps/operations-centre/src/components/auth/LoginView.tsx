@@ -48,8 +48,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
       {/* Top Header */}
       <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md px-6 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 font-black text-white shadow-md shadow-emerald-950/20 text-sm">
-            TG
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-0.5 shadow-md shadow-emerald-950/20 overflow-hidden">
+            <img src="/logo.png" alt="TerraGuardian Logo" className="h-full w-full object-contain" />
           </div>
           <div>
             <div className="flex items-center gap-2">

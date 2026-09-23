@@ -43,8 +43,8 @@ export const DemoHeader: React.FC = () => {
         {/* Left: TerraGuardian Identity */}
         <div className="flex items-center gap-2.5 min-w-0 shrink-0">
           {/* Logo Mark */}
-          <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 shadow-md shadow-emerald-900/20 text-white font-black text-xs sm:text-sm tracking-wider">
-            TG
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-0.5 shadow-md shadow-emerald-900/10 overflow-hidden">
+            <img src="/logo.png" alt="TerraGuardian Logo" className="h-full w-full object-contain" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
