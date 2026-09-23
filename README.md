@@ -726,6 +726,10 @@ To ensure scientific integrity and prevent claim inflation, TerraGuardian explic
 <div align="center">
 
 ### TERRAGUARDIAN AI
+<div align="center">
+
+<img src="docs/assets/logo.png" alt="TerraGuardian AI Official Logo" width="130" height="130" style="border-radius: 20px; margin-bottom: 8px;" />
+
 $$\textbf{From Warning to Verified Response}$$
 
 `PREDICT` → `EVIDENCE` → `ASSESS` → `PRIORITIZE` → `DECIDE` → `AUTHORIZE` → `ACT` → `CONFIRM` → `OBSERVE` → `INTERPRET` → `REASSESS`
