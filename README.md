@@ -6,7 +6,6 @@
 ### 🔗 Website: [TerraGuardian](https://terraguardian.vercel.app/)<br/>
 ### 🎥 Demo Video: [Watch on YouTube](https://youtu.be/nhXzRiLlDXI)
 ---
-<br>
 
 *SIH26001 · MDoNER · Disaster Management · Software*
 
