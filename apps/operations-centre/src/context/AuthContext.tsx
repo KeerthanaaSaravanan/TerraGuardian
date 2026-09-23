@@ -62,6 +62,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
 
 interface AuthContextType {
   currentUser: UserProfile | null;
+  user: UserProfile | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -208,6 +209,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider
       value={{
         currentUser,
+        user: currentUser,
         token,
         isAuthenticated,
         isLoading,

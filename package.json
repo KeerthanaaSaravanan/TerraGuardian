@@ -8,6 +8,7 @@
     "apps/terra-guardian-safe"
   ],
   "scripts": {
+    "build": "npm -w apps/operations-centre run build",
     "dev:ops": "npm -w apps/operations-centre run dev",
     "dev:safe": "npm -w apps/terra-guardian-safe run dev",
     "build:ops": "npm -w apps/operations-centre run build",

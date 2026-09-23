@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#059669" />
+  <path d="M16 6L8 10V16C8 21.5 11.4 26.6 16 28C20.6 26.6 24 21.5 24 16V10L16 6Z" fill="#047857" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round" />
+  <text x="16" y="19" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="9" text-anchor="middle" letter-spacing="0.5">TG</text>
+</svg>
