@@ -1,10 +1,13 @@
 <div align="center">
 
 # TERRAGUARDIAN AI
-
 ### FROM WARNING TO VERIFIED RESPONSE
+> **"Landslide Operational Intelligence for the North Eastern Region of India"**
+---
+### 🔗 Website: [TerraGuardian](https://terraguardian.vercel.app/)<br/>
+### 🎥 Demo Video: [Watch on YouTube](https://youtu.be/nhXzRiLlDXI)
+---
 
-**Landslide Operational Intelligence for the North Eastern Region of India**
 <br>
 
 > ## A warning starts an incident. It does not end one.
