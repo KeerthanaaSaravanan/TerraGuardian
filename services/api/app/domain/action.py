@@ -31,10 +31,23 @@ VALID_ACTION_TRANSITIONS: dict[ActionState, frozenset[ActionState]] = {
     ActionState.PHYSICALLY_CONFIRMED: frozenset(),  # Terminal state
 }
 
+# Operational states eligible to receive physical confirmation evidence
+VALID_CONFIRMATION_SOURCE_STATES: frozenset[ActionState] = frozenset({
+    ActionState.DISPATCHED,
+    ActionState.ACKNOWLEDGED,
+    ActionState.IN_PROGRESS,
+    ActionState.COMPLETED,
+})
+
 
 def is_valid_action_transition(current: ActionState, target: ActionState) -> bool:
     """Check whether an action lifecycle transition is permitted."""
     return target in VALID_ACTION_TRANSITIONS.get(current, frozenset())
+
+
+def can_confirm_action(current: ActionState) -> bool:
+    """Check whether an action is in an operational state eligible for physical confirmation."""
+    return current in VALID_CONFIRMATION_SOURCE_STATES
 
 
 class Action(BaseModel):

@@ -35,6 +35,9 @@ from app.domain.enums import (
     IncidentStatus,
 )
 from app.domain.outcome import (
+    EvidenceRelationshipType,
+    HypothesisStatus,
+    HypothesisType,
     InterventionContextState,
     ObservationAdequacy,
     OutcomeType,
@@ -579,3 +582,484 @@ async def test_14_unauthorized_actor_cannot_trigger_reassessment(async_client: A
         json={"notes": "Citizen trying to force reassessment"},
     )
     assert res.status_code == 403
+
+
+# ── TEST 15: Scenario A (True Event) -> Competing Hypotheses & Evidence Bindings ──
+@pytest.mark.asyncio
+async def test_15_scenario_a_competing_hypotheses_and_evidence_bindings(async_client: AsyncClient):
+    """TEST 15 (Scenario A): Verified physical event contradicts H1 (FALSE_ALARM) and H2 (INTERVENTION_NON_EVENT)."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    ev = await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "FIELD",
+            "source_name": "SDRF Ground Patrol #01",
+            "evidence_type": "physical_inspection",
+            "observation": "Active cut-slope toe failure with mud slurry blocking 60% carriageway",
+            "metric": "60% Carriageway Blocked",
+            "reliability": "HIGH",
+            "interpretation": "VERIFIED",
+        },
+    )
+    assert ev.status_code == 201
+    ev_id = ev.json()["id"]
+
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    assert outcome["outcome_type"] == OutcomeType.EVENT_OBSERVED.value
+    hypotheses = {h["hypothesis_type"]: h for h in outcome["competing_hypotheses"]}
+    assert len(hypotheses) == 7
+
+    # H1 FALSE_ALARM must be CONTRADICTED
+    assert hypotheses[HypothesisType.H1_FALSE_ALARM.value]["status"] == HypothesisStatus.CONTRADICTED.value
+    assert ev_id in hypotheses[HypothesisType.H1_FALSE_ALARM.value]["contradicting_evidence_ids"]
+
+    # H2 INTERVENTION_NON_EVENT must be CONTRADICTED
+    assert hypotheses[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value]["status"] == HypothesisStatus.CONTRADICTED.value
+    assert ev_id in hypotheses[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value]["contradicting_evidence_ids"]
+
+    # Check evidence binding structure
+    bindings = hypotheses[HypothesisType.H1_FALSE_ALARM.value]["evidence_bindings"]
+    assert len(bindings) >= 1
+    binding_for_ev = next(b for b in bindings if b["evidence_id"] == ev_id)
+    assert binding_for_ev["relationship"] == EvidenceRelationshipType.CONTRADICTING.value
+    assert len(binding_for_ev["reasoning"]) > 10
+
+
+# ── TEST 16: Scenario B (Ambiguous Non-Event) -> H2 Supported & Causal Uncertainty Preserved ──
+@pytest.mark.asyncio
+async def test_16_scenario_b_intervention_conditioned_non_event(async_client: AsyncClient):
+    """TEST 16 (Scenario B): Intervention confirmed + verified intact slope yields H2 SUPPORTED without causal claim."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    # Add and advance action to COMPLETED
+    act_res = await async_client.post(
+        f"/api/v1/incidents/{inc_id}/actions",
+        json={
+            "task_code": "TSK-DRAIN-02",
+            "agency": "Border Roads Organisation",
+            "title": "Cut-Slope Interceptor Drainage Trench",
+            "description": "Excavate crest diversion trench",
+            "assigned_to": "BRO Task Force",
+        },
+    )
+    act_id = act_res.json()["id"]
+    for st in ["APPROVED", "DISPATCHED", "IN_PROGRESS", "COMPLETED"]:
+        await async_client.post(
+            f"/api/v1/actions/{act_id}/transitions",
+            json={"target_state": st, "actor_role": "OPERATOR", "actor_name": "Duty Officer"},
+        )
+
+    # Physically confirm
+    await async_client.post(
+        f"/api/v1/actions/{act_id}/confirmations",
+        json={
+            "confirming_officer": "Capt. R. Sharma",
+            "confirming_agency": "BRO",
+            "location_confirmed": "KM-42 Crest",
+            "confirmation_notes": "Trench excavated and lined with geotextile sheet.",
+        },
+    )
+
+    # Verified ground check confirms intact slope
+    ev = await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "FIELD",
+            "source_name": "BRO Patrol",
+            "evidence_type": "physical_inspection",
+            "observation": "Slope intact, carriageway clear, 0% obstruction",
+            "metric": "0% Obstruction",
+            "reliability": "HIGH",
+            "interpretation": "VERIFIED",
+        },
+    )
+    ev_id = ev.json()["id"]
+
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    assert outcome["outcome_type"] == OutcomeType.INTERVENTION_CONDITIONED_NON_EVENT.value
+    assert outcome["primary_hypothesis"] == HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value
+    assert outcome["causal_claim_established"] is False
+
+    hypotheses = {h["hypothesis_type"]: h for h in outcome["competing_hypotheses"]}
+    assert hypotheses[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value]["status"] == HypothesisStatus.SUPPORTED.value
+    assert ev_id in hypotheses[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value]["supporting_evidence_ids"]
+
+    # H1 is NOT supported
+    assert hypotheses[HypothesisType.H1_FALSE_ALARM.value]["status"] != HypothesisStatus.SUPPORTED.value
+
+
+# ── TEST 17: Scenario C (Observation Gap) -> H5 Supported & Hypothesis-Separating NBI ──
+@pytest.mark.asyncio
+async def test_17_scenario_c_observation_gap_nbi_discrimination(async_client: AsyncClient):
+    """TEST 17 (Scenario C): Optical cloud obscuration yields H5 SUPPORTED; NBI explicitly discriminates H2 vs H5."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    # Satellite evidence noting dense cloud cover
+    await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "SATELLITE",
+            "source_name": "Sentinel-2 Optical",
+            "evidence_type": "optical_imagery",
+            "observation": "88% dense cloud cover obscuring cut-slope scarp and carriageway",
+            "metric": "88% Cloud Cover",
+            "reliability": "HIGH",
+            "interpretation": "UNVERIFIED",
+        },
+    )
+
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    assert outcome["outcome_type"] == OutcomeType.OBSERVATION_GAP.value
+    assert outcome["primary_hypothesis"] == HypothesisType.H5_OBSERVATION_GAP.value
+
+    hypotheses = {h["hypothesis_type"]: h for h in outcome["competing_hypotheses"]}
+    assert hypotheses[HypothesisType.H5_OBSERVATION_GAP.value]["status"] == HypothesisStatus.SUPPORTED.value
+
+    # Verify NBI recommendations include ground patrol separating H2 vs H5
+    nbi_items = outcome["nbi_recommendations"]
+    assert len(nbi_items) >= 1
+    patrol_nbi = next((item for item in nbi_items if item["action_type"] == "DISPATCH_GROUND_PATROL_INSPECTION"), None)
+    assert patrol_nbi is not None
+    assert HypothesisType.H5_OBSERVATION_GAP.value in patrol_nbi["target_hypotheses"]
+    assert [HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value, HypothesisType.H5_OBSERVATION_GAP.value] in patrol_nbi["discriminates_between"]
+    assert patrol_nbi["spatial_scope"] is not None
+    assert patrol_nbi["temporal_scope"] is not None
+
+
+# ── TEST 18: Scenario D (Residual Hazard) -> H6 Supported & Geotechnical Clearance NBI ──
+@pytest.mark.asyncio
+async def test_18_scenario_d_residual_hazard_separation(async_client: AsyncClient):
+    """TEST 18 (Scenario D): Persisting pore-water saturation and tension crack yields H6 SUPPORTED; closure blocked."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "FIELD",
+            "source_name": "BRO Engineering Patrol",
+            "evidence_type": "geotechnical_survey",
+            "observation": "Critical pore-water saturation and active tension crack persist at crest shoulder",
+            "metric": "Active Tension Crack",
+            "reliability": "HIGH",
+            "interpretation": "VERIFIED",
+        },
+    )
+
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    assert outcome["outcome_type"] == OutcomeType.RESIDUAL_HAZARD.value
+    assert outcome["primary_hypothesis"] == HypothesisType.H6_RESIDUAL_HAZARD.value
+    assert outcome["closure_permitted"] is False
+
+    hypotheses = {h["hypothesis_type"]: h for h in outcome["competing_hypotheses"]}
+    assert hypotheses[HypothesisType.H6_RESIDUAL_HAZARD.value]["status"] == HypothesisStatus.SUPPORTED.value
+
+    # NBI recommends geotechnical stabilization survey separating H6 vs H1
+    nbi_items = outcome["nbi_recommendations"]
+    geo_nbi = next((item for item in nbi_items if item["action_type"] == "GEOTECHNICAL_STABILIZATION_SURVEY"), None)
+    assert geo_nbi is not None
+    assert [HypothesisType.H6_RESIDUAL_HAZARD.value, HypothesisType.H1_FALSE_ALARM.value] in geo_nbi["discriminates_between"]
+    assert geo_nbi["authority_required"] is True
+
+
+# ── TEST 19: Scenario E (Delayed Failure) -> H3 Supported & Temporal Window Extension NBI ──
+@pytest.mark.asyncio
+async def test_19_scenario_e_delayed_failure_separation(async_client: AsyncClient):
+    """TEST 19 (Scenario E): Heavy rainfall surge with hydrologic lag yields H3 SUPPORTED; recommends extending window."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "WEATHER",
+            "source_name": "AWS Bhalukpong",
+            "evidence_type": "rainfall_telemetry",
+            "observation": "Precipitation surge 184mm sustained; deep hydrologic saturation",
+            "metric": "184mm/24h",
+            "reliability": "HIGH",
+            "interpretation": "VERIFIED",
+        },
+    )
+
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    hypotheses = {h["hypothesis_type"]: h for h in outcome["competing_hypotheses"]}
+    assert hypotheses[HypothesisType.H3_DELAYED_FAILURE.value]["status"] == HypothesisStatus.SUPPORTED.value
+
+    # NBI recommends extending observation window
+    nbi_items = outcome["nbi_recommendations"]
+    window_nbi = next((item for item in nbi_items if item["action_type"] == "EXTEND_OBSERVATION_WINDOW"), None)
+    assert window_nbi is not None
+    assert [HypothesisType.H1_FALSE_ALARM.value, HypothesisType.H3_DELAYED_FAILURE.value] in window_nbi["discriminates_between"]
+
+
+# ── TEST 20: Scenario F (Shifted Hazard) -> H4 Supported & Radar Telemetry NBI ──
+@pytest.mark.asyncio
+async def test_20_scenario_f_shifted_hazard_separation(async_client: AsyncClient):
+    """TEST 20 (Scenario F): Offset evidence within 5km corridor envelope yields H4 SUPPORTED on SAME incident."""
+    inc = await _create_test_incident(async_client, lat=27.2000, lon=92.4000)
+    inc_id = inc["id"]
+
+    # Submit evidence at 1.2km offset
+    await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "FIELD",
+            "source_name": "Highway Patrol",
+            "evidence_type": "physical_inspection",
+            "observation": "Cut-slope scarp detachment and rockfall at KM-43.2 (1.2km north)",
+            "metric": "1.2km Offset",
+            "latitude": 27.2108,
+            "longitude": 92.4000,
+            "reliability": "HIGH",
+            "interpretation": "VERIFIED",
+        },
+    )
+
+    out_res = await async_client.post(
+        f"/api/v1/incidents/{inc_id}/outcome/evaluate",
+        json={"observed_latitude": 27.2108, "observed_longitude": 92.4000},
+    )
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    assert outcome["outcome_type"] == OutcomeType.EVENT_OBSERVED.value
+    assert outcome["primary_hypothesis"] == HypothesisType.H4_SHIFTED_HAZARD.value
+    hypotheses = {h["hypothesis_type"]: h for h in outcome["competing_hypotheses"]}
+    assert hypotheses[HypothesisType.H4_SHIFTED_HAZARD.value]["status"] == HypothesisStatus.SUPPORTED.value
+
+    # NBI recommends radar scan discriminating H3 vs H4
+    nbi_items = outcome["nbi_recommendations"]
+    radar_nbi = next((item for item in nbi_items if item["action_type"] == "ACQUIRE_RADAR_TELEMETRY"), None)
+    assert radar_nbi is not None
+    assert [HypothesisType.H3_DELAYED_FAILURE.value, HypothesisType.H4_SHIFTED_HAZARD.value] in radar_nbi["discriminates_between"]
+
+
+# ── TEST 21: Scenario G (Conflicted Evidence) -> H7 Supported & Cross-Agency Reconciliation NBI ──
+@pytest.mark.asyncio
+async def test_21_scenario_g_conflicted_evidence_separation(async_client: AsyncClient):
+    """TEST 21 (Scenario G): Conflicted multi-source reports yield H7 SUPPORTED; NBI recommends joint reconciliation."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "CITIZEN",
+            "source_name": "Citizen App Report",
+            "evidence_type": "photo_report",
+            "observation": "Massive catastrophic landslide blocked whole valley",
+            "metric": "100% Blocked",
+            "conflict_status": "CONFLICTED",
+            "conflict_details": "Contradicted by patrol inspection reporting open road",
+            "interpretation": "UNVERIFIED",
+        },
+    )
+
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    assert outcome["outcome_type"] == OutcomeType.CONFLICTED.value
+    assert outcome["primary_hypothesis"] == HypothesisType.H7_CONFLICTED.value
+
+    hypotheses = {h["hypothesis_type"]: h for h in outcome["competing_hypotheses"]}
+    assert hypotheses[HypothesisType.H7_CONFLICTED.value]["status"] == HypothesisStatus.SUPPORTED.value
+
+    # NBI recommends cross-agency reconciliation patrol
+    nbi_items = outcome["nbi_recommendations"]
+    recon_nbi = next((item for item in nbi_items if item["action_type"] == "RECONCILE_DISCORDANT_OBSERVATIONS"), None)
+    assert recon_nbi is not None
+    assert [HypothesisType.H7_CONFLICTED.value, HypothesisType.H1_FALSE_ALARM.value] in recon_nbi["discriminates_between"]
+
+
+# ── TEST 22: Idempotent Hypothesis Evaluation & GET Endpoint Persistence Retrieval ──
+@pytest.mark.asyncio
+async def test_22_idempotent_hypothesis_evaluation_and_retrieval(async_client: AsyncClient):
+    """TEST 22: Re-evaluating outcome produces deterministic identical hypotheses and GET endpoint retrieves persisted state."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    # Ingest verified patrol report
+    await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "FIELD",
+            "source_name": "BRO Patrol",
+            "evidence_type": "physical_inspection",
+            "observation": "Ground inspection confirms slope intact, carriageway fully clear",
+            "metric": "0% Obstruction",
+            "reliability": "HIGH",
+            "interpretation": "VERIFIED",
+        },
+    )
+
+    eval_1 = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert eval_1.status_code == 200
+    data_1 = eval_1.json()
+
+    # Re-evaluate without new evidence
+    eval_2 = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert eval_2.status_code == 200
+    data_2 = eval_2.json()
+
+    # Deterministic equality
+    assert data_1["outcome_type"] == data_2["outcome_type"]
+    assert data_1["primary_hypothesis"] == data_2["primary_hypothesis"]
+    assert len(data_1["competing_hypotheses"]) == len(data_2["competing_hypotheses"])
+    for h1, h2 in zip(data_1["competing_hypotheses"], data_2["competing_hypotheses"]):
+        assert h1["hypothesis_type"] == h2["hypothesis_type"]
+        assert h1["status"] == h2["status"]
+
+    # Retrieve via GET endpoint
+    get_res = await async_client.get(f"/api/v1/incidents/{inc_id}/outcome")
+    assert get_res.status_code == 200
+    retrieved = get_res.json()
+    assert retrieved["outcome_type"] == data_1["outcome_type"]
+    assert retrieved["primary_hypothesis"] == data_1["primary_hypothesis"]
+    assert len(retrieved["competing_hypotheses"]) == 7
+    assert len(retrieved["nbi_recommendations"]) == len(data_1["nbi_recommendations"])
+
+
+# ── TEST 23: Research-Integrity: NBI Contains NO Quantitative Confidence Deltas ──
+@pytest.mark.asyncio
+async def test_23_nbi_no_quantitative_confidence_delta(async_client: AsyncClient):
+    """TEST 23: NBI recommendations must not output unsupported quantitative percentage deltas; qualitative discrimination is enforced."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    # Submit evidence indicating cloud obscuration
+    await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "SATELLITE",
+            "source_name": "Sentinel-2 Optical Pass",
+            "evidence_type": "optical_imagery",
+            "observation": "Cloud cover obscuration (88%) over target slope corridor",
+            "metric": "88% Cloud Cover",
+            "reliability": "MEDIUM",
+            "interpretation": "UNVERIFIED",
+        },
+    )
+
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    nbi_items = outcome.get("nbi_recommendations", [])
+    assert len(nbi_items) > 0, "Expected at least one NBI recommendation"
+
+    for item in nbi_items:
+        # Research-integrity invariant: no unverified pseudo-mathematical percentage deltas
+        assert item.get("expected_confidence_delta") is None, (
+            f"NBI item {item['action_type']} illegally has quantitative expected_confidence_delta: {item.get('expected_confidence_delta')}"
+        )
+        assert item.get("qualitative_discrimination") in ("HIGH", "MEDIUM", "LOW"), (
+            f"NBI item {item['action_type']} missing valid qualitative_discrimination level: {item.get('qualitative_discrimination')}"
+        )
+        assert "RECOMMENDED OBSERVATION ONLY" in item.get("rationale", ""), (
+            f"NBI item {item['action_type']} missing non-authorizing advisory notice"
+        )
+
+
+# ── TEST 24: Operational Invariant: NBI Recommendation CANNOT Authorize Actions ──
+@pytest.mark.asyncio
+async def test_24_nbi_cannot_authorize_actions(async_client: AsyncClient):
+    """TEST 24: NBI items are advisory information requests; they cannot dispatch actions or modify incident operational lifecycle."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    # Evaluate outcome to produce NBI recommendations
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    nbi_items = outcome["nbi_recommendations"]
+    assert len(nbi_items) > 0
+
+    # Verify every NBI item status is strictly 'RECOMMENDED'
+    for item in nbi_items:
+        assert item["status"] == "RECOMMENDED"
+
+    # Query incident: verify NO actions were dispatched or created as side-effects of NBI generation
+    inc_res = await async_client.get(f"/api/v1/incidents/{inc_id}")
+    assert inc_res.status_code == 200
+    incident_data = inc_res.json()
+    assert len(incident_data.get("actions", [])) == 0, "NBI evaluation must not dispatch operational actions"
+    assert incident_data["status"] != IncidentStatus.CLOSED.value, "NBI evaluation must not close incident"
+
+
+# ── TEST 25: Evidentiary Invariant: Stale Observation Cannot Establish Non-Event Claim ──
+@pytest.mark.asyncio
+async def test_25_stale_observation_cannot_establish_non_event(async_client: AsyncClient):
+    """TEST 25: Verified inspection older than 24 hours cannot establish current slope stability or clear carriageway."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    # Ingest a field patrol report observed 26 hours ago (exceeding 24h freshness window)
+    stale_timestamp = (datetime.now(timezone.utc) - timedelta(hours=26)).isoformat()
+    ev_res = await async_client.post(
+        f"/api/v1/incidents/{inc_id}/evidence",
+        json={
+            "source": "FIELD",
+            "source_name": "Yesterday Patrol",
+            "evidence_type": "physical_inspection",
+            "observation": "Ground inspection confirms slope intact, carriageway fully clear",
+            "metric": "0% Obstruction",
+            "reliability": "HIGH",
+            "interpretation": "VERIFIED",
+            "observed_at": stale_timestamp,
+        },
+    )
+    assert ev_res.status_code == 201
+
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    # Safety invariant: Stale observation cannot establish NON_EVENT_OBSERVED or permit closure
+    assert outcome["outcome_type"] == OutcomeType.OBSERVATION_GAP.value
+    assert outcome["closure_permitted"] is False
+    assert "24-hour freshness policy threshold" in outcome["explanation"]
+
+
+# ── TEST 26: Safety Invariant: Provenance and Policy Context Integrity ──
+@pytest.mark.asyncio
+async def test_26_policy_context_integrity_and_provenance(async_client: AsyncClient):
+    """TEST 26: Outcome evaluation includes explicit policy_context disclosing Class C/D thresholds and provenance."""
+    inc = await _create_test_incident(async_client)
+    inc_id = inc["id"]
+
+    out_res = await async_client.post(f"/api/v1/incidents/{inc_id}/outcome/evaluate")
+    assert out_res.status_code == 200
+    outcome = out_res.json()
+
+    policy_ctx = outcome.get("policy_context")
+    assert policy_ctx is not None, "policy_context must be present in outcome assessment"
+    assert policy_ctx["corridor_scope_threshold_meters"] == 5000.0
+    assert policy_ctx["spatial_divergence_threshold_meters"] == 500.0
+    assert policy_ctx["observation_window_hours"] == 4.0
+    assert policy_ctx["freshness_window_seconds"] == 86400
+    assert "research_integrity_disclosure" in policy_ctx
+    assert "Class C" in policy_ctx["research_integrity_disclosure"]
+
+

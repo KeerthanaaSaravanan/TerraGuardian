@@ -28,6 +28,9 @@ from app.services.exceptions import (
 from app.services.incident_service import IncidentService
 
 
+CLOSURE_EVIDENCE_MAX_FRESHNESS_SECONDS: int = 21600  # 6.0 hours (Mandatory Project Policy)
+
+
 class StateTransitionService:
     """Authoritative server-side state machine engine."""
 
@@ -52,10 +55,13 @@ class StateTransitionService:
 
         # 1. State Machine Validity Check
         if not is_valid_transition(current_status, target_status):
+            reason = "Direct state jump is not permitted by the canonical state machine."
+            if target_status == IncidentStatus.RESOLVED:
+                reason = "Closure blocked: " + reason
             raise InvalidTransitionError(
                 current_state=current_status.value,
                 target_state=target_status.value,
-                reason="Direct state jump is not permitted by the canonical state machine.",
+                reason=reason,
             )
 
         # 2. Authority Boundary Guards
@@ -72,12 +78,12 @@ class StateTransitionService:
 
         # 3. Evidentiary Closure Gate (RESOLVED preconditions)
         if target_status == IncidentStatus.RESOLVED:
-            # 3a. Source-state restriction
-            if current_status not in (IncidentStatus.MONITORING, IncidentStatus.REASSESSING):
+            # 3a. Source-state restriction: MUST be REASSESSING (no direct jump from MONITORING)
+            if current_status != IncidentStatus.REASSESSING:
                 raise InvalidTransitionError(
                     current_state=current_status.value,
                     target_state=target_status.value,
-                    reason="Incidents can only be RESOLVED from MONITORING or REASSESSING after hazard mitigation.",
+                    reason="Closure blocked: Incidents can only be RESOLVED from REASSESSING following outcome assessment and hazard reassessment. Direct closure from MONITORING or operational states is forbidden.",
                 )
 
             # 3b. Mandatory AUTHORIZED_DECISION_MAKER actor
@@ -87,7 +93,13 @@ class StateTransitionService:
                     f"Actor role '{actor_role.value}' is insufficient."
                 )
 
-            # 3c. All dispatched actions must be PHYSICALLY_CONFIRMED
+            # 3c. Order code required
+            if not authority_order_code:
+                raise PreconditionFailedError(
+                    "Closure requires an official resolution order reference code (e.g. ORD-CLOSURE-xxx)."
+                )
+
+            # 3d. All dispatched actions must be PHYSICALLY_CONFIRMED
             active_states = {
                 ActionState.DISPATCHED.value,
                 ActionState.ACKNOWLEDGED.value,
@@ -106,7 +118,7 @@ class StateTransitionService:
                     "All dispatched actions must be confirmed by field personnel before an incident can be resolved."
                 )
 
-            # 3d. No unresolved CONFLICTED evidence
+            # 3e. No unresolved CONFLICTED evidence
             evidence_result = await self.session.execute(
                 select(EvidenceModel).where(EvidenceModel.incident_id == incident_id)
             )
@@ -122,7 +134,7 @@ class StateTransitionService:
                     "Reconcile all conflicting evidence before resolving the incident."
                 )
 
-            # 3e. At least one VERIFIED FIELD evidence required
+            # 3f. At least one FRESH VERIFIED FIELD evidence required (freshness <= 21,600s / 6 hours, non-negative)
             verified_field = [
                 e for e in all_evidence
                 if e.source == EvidenceSource.FIELD.value
@@ -134,16 +146,50 @@ class StateTransitionService:
                     "before an incident can be resolved. Submit and verify field patrol evidence first."
                 )
 
-            # 3f. Outcome Engine Closure Verification
-            # An unmitigated outcome (OBSERVATION_GAP, RESIDUAL_HAZARD, INTERVENTION_CONDITIONED_NON_EVENT)
-            # strictly forbids closure without verified stabilization.
+            fresh_verified_field = [
+                e for e in verified_field
+                if e.freshness_seconds is not None
+                and 0 <= e.freshness_seconds <= CLOSURE_EVIDENCE_MAX_FRESHNESS_SECONDS
+            ]
+            if not fresh_verified_field:
+                min_age = min((e.freshness_seconds for e in verified_field if e.freshness_seconds is not None), default=None)
+                age_str = f"{min_age}s" if min_age is not None else "UNKNOWN"
+                raise PreconditionFailedError(
+                    f"Closure blocked: Verified FIELD evidence is stale, negative, or has unknown freshness (age: {age_str}, "
+                    f"max allowable: {CLOSURE_EVIDENCE_MAX_FRESHNESS_SECONDS}s / 6.0h). "
+                    "A fresh ground patrol verification report is mandatory before an incident can be resolved."
+                )
+
+            # 3g. Outcome Engine Closure Verification
+            # An authoritative outcome assessment MUST exist, MUST permit closure,
+            # and CANNOT be stale relative to subsequent evidence arrivals.
             from app.services.outcome_service import OutcomeService
             outcome_svc = OutcomeService(self.session)
             latest_outcome = await outcome_svc.get_latest_outcome(incident_id)
-            if latest_outcome and not latest_outcome.closure_permitted:
+            if not latest_outcome:
+                raise PreconditionFailedError(
+                    "Closure blocked by Outcome Engine: No authoritative outcome evaluation has been performed. "
+                    "An incident cannot be closed without an evaluated outcome permitting closure."
+                )
+            if not latest_outcome.closure_permitted:
                 raise PreconditionFailedError(
                     f"Closure blocked by Outcome Engine: Current outcome is '{latest_outcome.outcome_type.value}'. "
-                    "EVENT ABSENCE ≠ HAZARD RESOLUTION. Incident cannot be closed without verified geotechnical stabilization."
+                    "EVENT ABSENCE ≠ HAZARD RESOLUTION. Incident cannot be closed without verified geotechnical stabilization clearance."
+                )
+
+            latest_eval_time = (
+                latest_outcome.evaluated_at.replace(tzinfo=None)
+                if latest_outcome.evaluated_at.tzinfo
+                else latest_outcome.evaluated_at
+            )
+            stale_eval = any(
+                (e.received_at.replace(tzinfo=None) if e.received_at.tzinfo else e.received_at) > latest_eval_time
+                for e in all_evidence
+            )
+            if stale_eval:
+                raise PreconditionFailedError(
+                    "Closure blocked by Outcome Engine: New evidence has been received since the last outcome evaluation. "
+                    "Reassessment is mandatory before closure can be authorized."
                 )
 
         # 4. Mutate State
@@ -166,5 +212,7 @@ class StateTransitionService:
             reason=reason or f"Transitioned to {target_status.value}",
             payload=payload,
         )
-
         return incident
+
+    # Backward compatibility alias
+    transition_incident = transition

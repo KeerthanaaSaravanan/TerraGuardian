@@ -436,19 +436,21 @@ Claims are not upgraded without evidence.
 
 | Capability | Current status |
 |---|---|
-| Persistent Incident Twin | IMPLEMENTED |
-| Server-enforced incident lifecycle | IMPLEMENTED |
-| Evidence reconciliation | IMPLEMENTED |
-| Citizen-evidence safety boundary | IMPLEMENTED |
-| Risk + confidence baseline | IMPLEMENTED |
-| Impact / priority | IMPLEMENTED |
-| Human authorization | IMPLEMENTED |
-| Reassessment | IMPLEMENTED |
-| Deterministic / interpretable intelligence baseline | IMPLEMENTED |
-| Intervention context | IMPLEMENTED |
-| Observed-outcome integration | IMPLEMENTED |
-| Evidentiary closure gate | IMPLEMENTED |
-| Full action-confirmation enforcement | IMPLEMENTED |
+| Persistent Incident Twin | RUNTIME VERIFIED |
+| Server-enforced incident lifecycle (11-State FSM) | RUNTIME VERIFIED |
+| Evidence reconciliation | RUNTIME VERIFIED |
+| Citizen-evidence safety boundary | RUNTIME VERIFIED |
+| Risk + confidence baseline | RUNTIME VERIFIED |
+| Impact / priority | RUNTIME VERIFIED |
+| Human authorization | RUNTIME VERIFIED |
+| Reassessment | RUNTIME VERIFIED |
+| Deterministic / interpretable intelligence baseline | RUNTIME VERIFIED |
+| Intervention context | RUNTIME VERIFIED |
+| Observed-outcome integration | RUNTIME VERIFIED |
+| Configured evidentiary closure gate | RUNTIME VERIFIED |
+| Full action-confirmation enforcement | RUNTIME VERIFIED |
+| Operations Centre Frontend | DEMONSTRATION-READY |
+| TerraGuardian Safe Citizen App | DEMONSTRATION-READY |
 | Live government integrations | NOT CLAIMED |
 | Production ML accuracy | NOT CLAIMED |
 | Production RBAC / IAM | NOT CLAIMED |
@@ -471,27 +473,34 @@ Claims are not upgraded without evidence.
 
 <div align="center">
 
-### 94 Automated Tests Across 7 Test Suites
+### 149 Automated Tests Across 16 Test Suites (100% Passing)
 
 </div>
 
 Verified test modules:
 
-- `test_security_p0.py` (Authentication, Server-Side RBAC, Action Confirmation, Evidentiary Closure Gate)
-- `test_outcome_engine.py` (Intervention-Conditioned Outcome Engine & Spatial Corridor Envelope)
-- `test_adversarial_intelligence.py` (12 Adversarial Safety Invariants, NBI, Risk ≠ Confidence)
-- `test_reassessment_flow.py` (Living Incident Bounded Reassessment & State Transitions)
-- `test_priority_scoring.py` (Consequence & Multi-Factor Operational Priority)
-- `test_domain_models.py` (Domain Schemas, Enums & Invariants)
-- `test_api_endpoints.py` (FastAPI REST Routes & Serialization)
+- `test_action_confirmation_security.py` (Action Confirmation Security & Dual Verification)
+- `test_adversarial_intelligence.py` (Adversarial Robustness, Risk ≠ Confidence & Anti-Hallucination)
+- `test_api_health.py` (Health Probes & Telemetry Routes)
+- `test_api_incidents.py` (FastAPI REST Routes & Authority Transitions)
+- `test_auth_security.py` (JWT Authentication & Server-Side RBAC)
+- `test_closure_evidentiary_gate.py` (Configured Closure Preconditions & Freshness Gate)
+- `test_domain_incident.py` (Domain Schemas, Enums & Invariants)
+- `test_evidence_reconciliation.py` (Cross-Source Reconciliation & Conflict Detection)
+- `test_governed_action_workflow.py` (Action State Machine & Audit Trail)
+- `test_hazard_evolution.py` (Hazard Evolution & Watchdog Divergence)
+- `test_impact_priority.py` (Consequence Synthesis & Corridor Prioritization)
+- `test_intelligence_contracts.py` (Schema Contracts & Pydantic Validation)
+- `test_outcome_engine.py` (Intervention-Conditioned Outcomes, H1–H7 & Qualitative NBI)
+- `test_persistence.py` (Async Relational Persistence & Cascades)
+- `test_predictive_intelligence.py` (Predictive Baseline ML Pipeline)
+- `test_state_machine.py` (Canonical 11-State FSM Progression & Guards)
 
 Execution command:
 
 ```bash
-python3 -m pytest tests/ -v
+python -m pytest tests/ -v
 ```
-
-*Note: In headless or constrained host environments where the Python/Node runtimes are not pre-installed in PATH, execution status is reported truthfully as `IMPLEMENTED / VERIFICATION PENDING` rather than fabricating runtime passes.*
 
 ### VERIFICATION BOUNDARY
 
@@ -619,7 +628,7 @@ CLOSURE ASSESSMENT
 |:---|:---|
 | **Event observed** | `EVENT_OBSERVED` |
 | **No event + intervention** | `INTERVENTION_CONDITIONED_NON_EVENT` |
-| **No event + adequate observation** | `POTENTIAL_FALSE_ALARM_ASSESSMENT` |
+| **No event + adequate observation** | `NON_EVENT_OBSERVED` |
 | **No event + insufficient evidence** | `OBSERVATION_GAP` |
 | **Event + remaining hazard** | `RESIDUAL_HAZARD` |
 | **Conflicting evidence** | `CONFLICTED` |

@@ -19,6 +19,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
+from app.domain.decision import NextBestInformationItem
 from app.domain.enums import ActorRole, HazardState
 
 
@@ -48,6 +49,36 @@ class OutcomeType(str, enum.Enum):
     RESIDUAL_HAZARD = "RESIDUAL_HAZARD"
     CONFLICTED = "CONFLICTED"
     UNRESOLVED = "UNRESOLVED"
+
+
+class HypothesisType(str, enum.Enum):
+    """Authoritative bounded set of 7 competing operational hypotheses (Prompt 04)."""
+
+    H1_FALSE_ALARM = "H1_FALSE_ALARM"
+    H2_INTERVENTION_CONDITIONED_NON_EVENT = "H2_INTERVENTION_CONDITIONED_NON_EVENT"
+    H3_DELAYED_FAILURE = "H3_DELAYED_FAILURE"
+    H4_SHIFTED_HAZARD = "H4_SHIFTED_HAZARD"
+    H5_OBSERVATION_GAP = "H5_OBSERVATION_GAP"
+    H6_RESIDUAL_HAZARD = "H6_RESIDUAL_HAZARD"
+    H7_CONFLICTED = "H7_CONFLICTED"
+
+
+class EvidenceRelationshipType(str, enum.Enum):
+    """Explicit relationship between an evidence observation and a hypothesis."""
+
+    SUPPORTING = "SUPPORTING"
+    CONTRADICTING = "CONTRADICTING"
+    UNKNOWN = "UNKNOWN"
+
+
+class HypothesisStatus(str, enum.Enum):
+    """Evaluation status of a competing hypothesis."""
+
+    ACTIVE = "ACTIVE"
+    SUPPORTED = "SUPPORTED"
+    CONTRADICTED = "CONTRADICTED"
+    DISFAVORED = "DISFAVORED"
+    VIABLE = "VIABLE"
 
 
 class InterventionContextState(str, enum.Enum):
@@ -82,6 +113,68 @@ class SpatialDivergenceContext(BaseModel):
     corridor_alignment_notes: Optional[str] = None
 
 
+class HypothesisEvidenceBinding(BaseModel):
+    """Traceable evidential binding linking an evidence item to a specific competing hypothesis."""
+
+    evidence_id: uuid.UUID
+    relationship: EvidenceRelationshipType
+    reasoning: str
+
+
+class CompetingHypothesisItem(BaseModel):
+    """Authoritative representation of one of the 7 competing operational hypotheses."""
+
+    hypothesis_type: HypothesisType
+    status: HypothesisStatus = HypothesisStatus.VIABLE
+    title: str
+    description: str
+    supporting_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
+    contradicting_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
+    unknown_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
+    evidence_bindings: list[HypothesisEvidenceBinding] = Field(default_factory=list)
+    rationale: str
+
+    model_config = {"from_attributes": True}
+
+
+class OutcomePolicyConfig(BaseModel):
+    """Configurable operational policies and regional demonstration thresholds for the Outcome Engine.
+
+    RESEARCH-INTEGRITY DISCLOSURE:
+    None of these parameters represent universal, scientifically validated natural constants or statutory mandates.
+    They represent regional administrative policies, operational corridor envelopes, and synthetic demonstration assumptions.
+    """
+
+    research_integrity_disclosure: str = Field(
+        default="CONFIGURABLE POLICY & DEMONSTRATION ASSUMPTIONS (Class C/D) — Requires regional geotechnical calibration prior to field deployment.",
+        description="Explicit disclosure that thresholds represent operational policy/demonstration assumptions, not universal scientific or statutory constants.",
+    )
+    corridor_scope_threshold_meters: float = Field(
+        default=5000.0,
+        description="CONFIGURABLE POLICY (Class C): 5.0 km corridor monitoring envelope along highway transit alignment.",
+    )
+    spatial_divergence_threshold_meters: float = Field(
+        default=500.0,
+        description="CONFIGURABLE POLICY (Class C): 500 m boundary beyond which ground distress is treated as a corridor flank shift (H4).",
+    )
+    cloud_obscuration_threshold_pct: float = Field(
+        default=70.0,
+        description="CONFIGURABLE POLICY (Class C): Optical sensor obscuration >= 70% constitutes an OBSERVATION_GAP (H5).",
+    )
+    observation_window_hours: float = Field(
+        default=4.0,
+        description="DEMONSTRATION ASSUMPTION (Class D): Prototype 4-hour monitoring window from trigger detection; requires local hydrologic calibration.",
+    )
+    rainfall_surcharge_threshold_mm: float = Field(
+        default=100.0,
+        description="DEMONSTRATION ASSUMPTION (Class D): Prototype antecedent precipitation surcharge contributing to DELAYED_FAILURE (H3); uncalibrated for Himalayan catchments.",
+    )
+    freshness_window_seconds: float = Field(
+        default=86400.0,
+        description="CONFIGURABLE POLICY (Class C): 24-hour observation freshness boundary; observations older than 24h cannot establish current non-event.",
+    )
+
+
 class OutcomeAssessment(BaseModel):
     """Authoritative outcome interpretation derived by the Outcome Engine."""
 
@@ -102,6 +195,12 @@ class OutcomeAssessment(BaseModel):
     spatial_divergence: Optional[SpatialDivergenceContext] = None
     explanation: str
     evidence_summary: dict[str, Any] = Field(default_factory=dict)
+
+    # Prompt 04: Competing Hypotheses & Hypothesis-Separating NBI
+    primary_hypothesis: Optional[HypothesisType] = None
+    competing_hypotheses: list[CompetingHypothesisItem] = Field(default_factory=list)
+    nbi_recommendations: list[NextBestInformationItem] = Field(default_factory=list)
+    policy_context: Optional[OutcomePolicyConfig] = Field(default_factory=OutcomePolicyConfig)
 
     evaluated_at: datetime = Field(default_factory=datetime.utcnow)
     evaluated_by: str = "OutcomeEngine"

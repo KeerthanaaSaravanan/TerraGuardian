@@ -30,6 +30,8 @@ class IncidentStatus(str, enum.Enum):
     REASSESSING = "REASSESSING"
     RESOLVED = "RESOLVED"
     REVIEWED = "REVIEWED"
+    # Legacy alias mapping to RESOLVED
+    CLOSED = "RESOLVED"
 
 
 class HazardState(str, enum.Enum):

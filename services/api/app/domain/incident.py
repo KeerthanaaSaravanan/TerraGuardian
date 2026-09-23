@@ -38,7 +38,7 @@ VALID_TRANSITIONS: dict[IncidentStatus, frozenset[IncidentStatus]] = {
     IncidentStatus.DECISION_REQUIRED: frozenset({IncidentStatus.AUTHORIZED, IncidentStatus.MONITORING}),
     IncidentStatus.AUTHORIZED: frozenset({IncidentStatus.RESPONDING}),
     IncidentStatus.RESPONDING: frozenset({IncidentStatus.MONITORING}),
-    IncidentStatus.MONITORING: frozenset({IncidentStatus.REASSESSING, IncidentStatus.RESOLVED}),
+    IncidentStatus.MONITORING: frozenset({IncidentStatus.REASSESSING}),
     IncidentStatus.REASSESSING: frozenset({
         IncidentStatus.MONITORING,
         IncidentStatus.RESPONDING,

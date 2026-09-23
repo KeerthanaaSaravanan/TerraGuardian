@@ -58,7 +58,7 @@ export const EvidenceReconciliationView: React.FC = () => {
         observation: be.observation || be.raw_data?.observation as string || be.evidence_type,
         metric: be.metric || be.raw_data?.metric as string || (be.confidence_contribution ? `Weight: ${(be.confidence_contribution * 100).toFixed(0)}%` : "Verified Input"),
         reliability: be.reliability || be.raw_data?.reliability as string || "HIGH",
-        freshness: be.freshness_seconds ? `${Math.round(be.freshness_seconds / 60)}m ago` : "Live",
+        freshness: be.freshness_seconds ? `${Math.round(be.freshness_seconds / 60)}m ago` : "Recent (Demo)",
         status: be.interpretation || "CONFIRMING",
         details: be.details || be.raw_data?.details as string || "Domain-evaluated sensor telemetry and spatial payload.",
         conflict_status: be.conflict_status,
@@ -81,7 +81,7 @@ export const EvidenceReconciliationView: React.FC = () => {
               id: compiledObservation.observationId,
               sourceType: "CITIZEN" as const,
               sourceName: `Citizen Mobile Observation (#${compiledObservation.observationId})`,
-              observation: "Live Ground Visual: Active Debris Runoff & Cut Slope Failure",
+              observation: "Field Ground Visual: Active Debris Runoff & Cut Slope Failure",
               metric: "Optical Geo-Verification Passed (NH-13 KM-41.8)",
               reliability: "HIGH",
               freshness: "Just now",
@@ -179,7 +179,7 @@ export const EvidenceReconciliationView: React.FC = () => {
             <div>
               <span className="text-slate-400">Backend Authority: </span>
               <span className={backendStatus === "CONNECTED" ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
-                {backendStatus === "CONNECTED" ? "LIVE FASTAPI" : "DETERMINISTIC FALLBACK"}
+                {backendStatus === "CONNECTED" ? "FASTAPI BACKEND" : "DETERMINISTIC DEMO"}
               </span>
             </div>
           </div>

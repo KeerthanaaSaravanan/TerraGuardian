@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -58,7 +58,7 @@ class Decision(BaseModel):
 
 
 class NextBestInformationItem(BaseModel):
-    """Specific information gathering action recommended to reduce evidential uncertainty."""
+    """Specific information gathering action recommended to reduce evidential uncertainty and separate competing hypotheses."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     action_type: str
@@ -66,9 +66,19 @@ class NextBestInformationItem(BaseModel):
     target_modality: str
     title: str
     rationale: str
-    expected_confidence_delta: float
+
+    # Research-Integrity: Qualitative discrimination power replacing unsupported quantitative delta
+    qualitative_discrimination: str = "HIGH"  # HIGH | MEDIUM | LOW
+    expected_confidence_delta: Optional[float] = None  # Deprecated: Do not use unvalidated percentage deltas
+
     authority_required: bool = False
     status: str = "RECOMMENDED"
+
+    # Prompt 04: Hypothesis-Separation Attributes
+    target_hypotheses: list[str] = Field(default_factory=list)
+    discriminates_between: list[list[str]] = Field(default_factory=list)
+    spatial_scope: Optional[str] = None
+    temporal_scope: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
@@ -97,4 +107,7 @@ class DecisionSupportAssessment(BaseModel):
     assessed_by: str = "TerraGuardian Decision Intelligence Engine"
 
     model_config = {"from_attributes": True}
+
+
+DecisionSupportAssessment.model_rebuild()
 

@@ -63,7 +63,7 @@ class PredictiveService:
         incident.confidence_level = inference_result.confidence_level.value
         incident.updated_at = datetime.utcnow()
 
-        # 4. Construct Structured Domain Assessment
+        # 4. Construct Structured Domain Assessment with Complete Lineage
         assessment = PredictiveRiskAssessment(
             id=uuid.uuid4(),
             incident_id=incident.id,
@@ -75,13 +75,26 @@ class PredictiveService:
             feature_contributions=inference_result.feature_contributions,
             explanation_narrative=inference_result.explanation_narrative,
             data_quality=feature_vector.data_quality,
+            evidence_lineage=feature_vector.evidence_lineage,
+            feature_snapshot=feature_vector.feature_snapshot,
+            input_evidence_ids=feature_vector.input_evidence_ids,
+            feature_schema_version=feature_vector.feature_schema_version,
             model_metadata=ModelMetadata(),
             recommended_operational_action=inference_result.recommended_action,
             assessed_at=datetime.utcnow(),
             assessed_by=actor_name,
         )
 
-        # 5. Append Audit Event
+        # Update Incident Metadata with Latest Prediction Lineage
+        meta = incident.metadata_json or {}
+        meta["latest_prediction_id"] = str(assessment.id)
+        meta["latest_prediction_model"] = assessment.model_metadata.model_name
+        meta["latest_prediction_version"] = assessment.model_metadata.model_version
+        meta["latest_prediction_evidence_ids"] = [str(eid) for eid in feature_vector.input_evidence_ids]
+        meta["latest_prediction_assessed_at"] = assessment.assessed_at.isoformat()
+        incident.metadata_json = meta
+
+        # 5. Append Audit Event with Lineage Snapshot
         await self.audit_service.record_event(
             incident_id=incident.id,
             event_type=AuditEventType.RISK_ASSESSED,
@@ -91,6 +104,7 @@ class PredictiveService:
             new_state=f"Risk:{inference_result.risk_score} ({inference_result.risk_level.value}) | Conf:{inference_result.confidence_score} ({inference_result.confidence_level.value})",
             reason="Predictive baseline hazard assessment executed over multi-source evidence fabric.",
             payload={
+                "prediction_id": str(assessment.id),
                 "risk_score": inference_result.risk_score,
                 "risk_level": inference_result.risk_level.value,
                 "confidence_score": inference_result.confidence_score,
@@ -98,6 +112,10 @@ class PredictiveService:
                 "dominant_factors": inference_result.dominant_risk_factors,
                 "recommended_action": inference_result.recommended_action,
                 "model_version": assessment.model_metadata.model_version,
+                "feature_schema_version": assessment.feature_schema_version,
+                "input_evidence_ids": [str(eid) for eid in feature_vector.input_evidence_ids],
+                "evidence_lineage_count": len(feature_vector.evidence_lineage),
+                "feature_snapshot": [fs.model_dump(mode="json") for fs in feature_vector.feature_snapshot],
             },
         )
 
@@ -131,6 +149,10 @@ class PredictiveService:
             feature_contributions=inference_result.feature_contributions,
             explanation_narrative=inference_result.explanation_narrative,
             data_quality=feature_vector.data_quality,
+            evidence_lineage=feature_vector.evidence_lineage,
+            feature_snapshot=feature_vector.feature_snapshot,
+            input_evidence_ids=feature_vector.input_evidence_ids,
+            feature_schema_version=feature_vector.feature_schema_version,
             model_metadata=ModelMetadata(),
             recommended_operational_action=inference_result.recommended_action,
             assessed_at=datetime.utcnow(),

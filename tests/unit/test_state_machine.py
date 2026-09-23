@@ -3,10 +3,13 @@
 import uuid
 import pytest
 
-from app.db.models import IncidentModel
+from datetime import datetime, timezone
+from app.db.models import EvidenceModel, IncidentModel, OutcomeModel
 from app.domain.enums import (
     ActorRole,
     ConfidenceLevel,
+    EvidenceInterpretation,
+    EvidenceSource,
     HazardState,
     IncidentStatus,
     PriorityLevel,
@@ -119,12 +122,46 @@ async def test_state_machine_valid_progression(db_session):
     )
     assert updated.status == IncidentStatus.REASSESSING.value
 
+    # Satisfy Prompt 05 Evidentiary Closure Preconditions
+    now = datetime.now(timezone.utc)
+    ev = EvidenceModel(
+        id=uuid.uuid4(),
+        incident_id=incident.id,
+        source=EvidenceSource.FIELD.value,
+        source_name="SDRF Patrol",
+        evidence_type="physical_inspection",
+        observation="Slope stabilized, carriageway fully clear",
+        metric="Clearance verified",
+        reliability="HIGH",
+        interpretation=EvidenceInterpretation.VERIFIED.value,
+        freshness_seconds=1200,
+        received_at=now,
+        observed_at=now,
+    )
+    db_session.add(ev)
+    outcome = OutcomeModel(
+        id=uuid.uuid4(),
+        incident_id=incident.id,
+        outcome_type="EVENT_OBSERVED",
+        intervention_state="INTERVENTION_CONFIRMED",
+        observation_adequacy="ADEQUATE",
+        causal_claim_established=True,
+        closure_permitted=True,
+        reassessment_required=False,
+        recommended_hazard_state="RESOLVED",
+        explanation="Field verification confirmed hazard resolved.",
+        evaluated_at=now,
+    )
+    db_session.add(outcome)
+    await db_session.flush()
+
     # 9. REASSESSING -> RESOLVED
     updated = await service.transition(
         incident_id=incident.id,
         target_status=IncidentStatus.RESOLVED,
         actor_role=ActorRole.AUTHORIZED_DECISION_MAKER,
         actor_name="DC West Kameng",
+        authority_order_code="ORD-CLOSURE-2026-TEST",
         reason="BRO completed clearance; residual risk negligible.",
     )
     assert updated.status == IncidentStatus.RESOLVED.value

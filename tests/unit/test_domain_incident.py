@@ -232,7 +232,6 @@ def test_valid_state_transitions():
     assert is_valid_transition(IncidentStatus.AUTHORIZED, IncidentStatus.RESPONDING)
     assert is_valid_transition(IncidentStatus.RESPONDING, IncidentStatus.MONITORING)
     assert is_valid_transition(IncidentStatus.MONITORING, IncidentStatus.REASSESSING)
-    assert is_valid_transition(IncidentStatus.MONITORING, IncidentStatus.RESOLVED)
     assert is_valid_transition(IncidentStatus.REASSESSING, IncidentStatus.MONITORING)
     assert is_valid_transition(IncidentStatus.REASSESSING, IncidentStatus.RESOLVED)
     assert is_valid_transition(IncidentStatus.RESOLVED, IncidentStatus.REVIEWED)
@@ -242,6 +241,8 @@ def test_forbidden_state_transitions_rejected():
     """Verify illegal lifecycle jumps are strictly rejected."""
     # DETECTED -> RESOLVED is forbidden
     assert not is_valid_transition(IncidentStatus.DETECTED, IncidentStatus.RESOLVED)
+    # MONITORING -> RESOLVED is forbidden (must pass through REASSESSING first)
+    assert not is_valid_transition(IncidentStatus.MONITORING, IncidentStatus.RESOLVED)
     # AUTHORIZED -> RESOLVED is forbidden
     assert not is_valid_transition(IncidentStatus.AUTHORIZED, IncidentStatus.RESOLVED)
     # Terminal REVIEWED cannot transition

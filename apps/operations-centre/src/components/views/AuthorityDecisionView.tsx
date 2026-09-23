@@ -154,7 +154,7 @@ export const AuthorityDecisionView: React.FC = () => {
                   <IconCheck className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                   <div>
                     <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300 font-mono">
-                      OFFICIALLY AUTHORIZED & SIGNED
+                      OFFICIALLY AUTHORIZED (ORDER RECORDED)
                     </div>
                     <div className="text-xs text-slate-700 dark:text-neutral-200 mt-0.5">
                       Order enacted by {officerName} [{authCode}]. Dispatching operational tasks across agencies.
@@ -235,14 +235,17 @@ export const AuthorityDecisionView: React.FC = () => {
             <div>
               <div className="flex items-center justify-between font-bold text-xs text-slate-900 dark:text-white mb-1">
                 <span>1. Ground Truth Inspection</span>
-                <span className="text-emerald-600 dark:text-emerald-400 text-[10px]">+35% Conf. Gain</span>
+                <span className="text-emerald-700 dark:text-emerald-300 text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800">
+                  HIGH DISCRIMINATION
+                </span>
               </div>
               <p className="text-[11px] text-slate-600 dark:text-neutral-400 font-sans leading-relaxed">
                 Dispatch SDRF ground patrol to inspect KM-42 toe sloughing and confirm carriageway encroachment.
               </p>
             </div>
-            <div className="text-[10px] text-slate-500 dark:text-neutral-500 font-mono pt-2 border-t border-slate-200 dark:border-neutral-800">
-              Target: FIELD_PATROL • Authority: Operator Dispatch
+            <div className="text-[10px] text-slate-500 dark:text-neutral-500 font-mono pt-2 border-t border-slate-200 dark:border-neutral-800 space-y-0.5">
+              <div>Target: FIELD_PATROL • Authority: Operator Dispatch</div>
+              <div className="text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider text-[9px]">RECOMMENDATION ONLY • DOES NOT CONFER OPERATIONAL AUTHORITY</div>
             </div>
           </div>
 
@@ -250,14 +253,17 @@ export const AuthorityDecisionView: React.FC = () => {
             <div>
               <div className="flex items-center justify-between font-bold text-xs text-slate-900 dark:text-white mb-1">
                 <span>2. SAR Radar Coherence</span>
-                <span className="text-emerald-600 dark:text-emerald-400 text-[10px]">+15% Conf. Gain</span>
+                <span className="text-emerald-700 dark:text-emerald-300 text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800">
+                  HIGH DISCRIMINATION
+                </span>
               </div>
               <p className="text-[11px] text-slate-600 dark:text-neutral-400 font-sans leading-relaxed">
                 Acquire Sentinel-1 InSAR radar pass to penetrate 88% monsoon cloud cover and measure shear strain.
               </p>
             </div>
-            <div className="text-[10px] text-slate-500 dark:text-neutral-500 font-mono pt-2 border-t border-slate-200 dark:border-neutral-800">
-              Target: SATELLITE_RADAR • Authority: Automated Ingestion
+            <div className="text-[10px] text-slate-500 dark:text-neutral-500 font-mono pt-2 border-t border-slate-200 dark:border-neutral-800 space-y-0.5">
+              <div>Target: SATELLITE_RADAR • Authority: Automated Ingestion</div>
+              <div className="text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider text-[9px]">RECOMMENDATION ONLY • DOES NOT CONFER OPERATIONAL AUTHORITY</div>
             </div>
           </div>
 
@@ -265,14 +271,17 @@ export const AuthorityDecisionView: React.FC = () => {
             <div>
               <div className="flex items-center justify-between font-bold text-xs text-slate-900 dark:text-white mb-1">
                 <span>3. Precautionary Diversion</span>
-                <span className="text-amber-600 dark:text-amber-400 text-[10px]">CORRIDOR SAFETY</span>
+                <span className="text-amber-700 dark:text-amber-300 text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800">
+                  MEDIUM DISCRIMINATION
+                </span>
               </div>
               <p className="text-[11px] text-slate-600 dark:text-neutral-400 font-sans leading-relaxed">
                 Enforce traffic stoppage at KM-38 checkpost to prevent civilian vehicles from entering the active slope zone.
               </p>
             </div>
-            <div className="text-[10px] text-slate-500 dark:text-neutral-500 font-mono pt-2 border-t border-slate-200 dark:border-neutral-800">
-              Target: TRAFFIC_POLICE • Authority: District Magistrate Sign-off
+            <div className="text-[10px] text-slate-500 dark:text-neutral-500 font-mono pt-2 border-t border-slate-200 dark:border-neutral-800 space-y-0.5">
+              <div>Target: TRAFFIC_POLICE • Authority: District Magistrate Sign-off</div>
+              <div className="text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider text-[9px]">RECOMMENDATION ONLY • DOES NOT CONFER OPERATIONAL AUTHORITY</div>
             </div>
           </div>
         </div>

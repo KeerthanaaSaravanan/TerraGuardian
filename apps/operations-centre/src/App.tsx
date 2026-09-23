@@ -225,12 +225,12 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
 
             <div className="text-xs text-slate-600 dark:text-neutral-300 leading-relaxed space-y-2">
               <p>
-                <strong>TerraGuardian Safe</strong> is the mobile-first citizen PWA companion. While the Operations Centre handles multi-agency command, Safe provides localized alerts, camera-based hazard reporting, and offline-first safety advisories.
+                <strong>TerraGuardian Safe</strong> is the mobile-first citizen PWA companion. While the Operations Centre handles multi-agency command, Safe provides localized alerts, camera-based hazard reporting, and offline-oriented architecture.
               </p>
               <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800 font-mono text-[11px] space-y-1">
-                <div>• Client-side offline queue (IndexedDB)</div>
-                <div>• On-device EXIF & geolocation verification</div>
-                <div>• Direct feed into Incident Twin evidence pipeline</div>
+                <div>• Offline-oriented PWA architecture with service worker caching</div>
+                <div>• Geo-tagged citizen observation submission interface</div>
+                <div>• Direct feed into Incident Twin evidence pipeline (REST)</div>
               </div>
             </div>
 

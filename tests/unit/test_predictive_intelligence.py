@@ -265,3 +265,123 @@ async def test_predictive_service_and_api(test_client: AsyncClient):
     assert meta_data["active_model"]["model_name"] == "tg-landslide-baseline-v1"
     assert meta_data["active_model"]["is_demonstration_only"] is True
     assert meta_data["benchmark_validation"]["sample_size"] == 200
+
+
+@pytest.mark.asyncio
+async def test_feature_evidence_lineage_and_snapshot(test_client: AsyncClient):
+    """Verify research-grade feature -> evidence lineage and feature snapshot preservation."""
+    seed_res = await test_client.post("/api/v1/incidents/seed/tg-2048?force_reset=true")
+    assert seed_res.status_code == 201
+    incident_id = seed_res.json()["id"]
+
+    pred_res = await test_client.post(f"/api/v1/incidents/{incident_id}/predict")
+    assert pred_res.status_code == 200
+    data = pred_res.json()
+
+    # Verify input evidence lineage tracking
+    assert "input_evidence_ids" in data
+    assert len(data["input_evidence_ids"]) > 0
+    assert "evidence_lineage" in data
+    assert len(data["evidence_lineage"]) > 0
+
+    first_lineage = data["evidence_lineage"][0]
+    assert "evidence_id" in first_lineage
+    assert "source" in first_lineage
+    assert "contributed_features" in first_lineage
+
+    # Verify feature snapshot
+    assert "feature_snapshot" in data
+    assert len(data["feature_snapshot"]) == 7
+    rain_snapshot = next(f for f in data["feature_snapshot"] if f["feature_name"] == "antecedent_rainfall_7d_mm")
+    assert rain_snapshot["raw_value"] == 184.0
+    assert rain_snapshot["is_missing"] is False
+    assert len(rain_snapshot["contributing_evidence_ids"]) > 0
+
+
+def test_model_input_validation_rejects_nan_and_inf():
+    """Verify strict model boundary rejects NaN and infinite values explicitly."""
+    import math
+    from app.domain.risk import DataQualitySummary
+    from app.services.feature_pipeline import ExtractedFeatureVector
+
+    bad_vector = ExtractedFeatureVector(
+        antecedent_rainfall_7d_mm=float("nan"),  # Non-finite!
+        short_window_rainfall_24h_mm=62.5,
+        rainfall_intensity_mmh=28.4,
+        slope_gradient_deg=44.2,
+        geological_susceptibility=0.88,
+        soil_saturation_index=0.92,
+        optical_obscuration_pct=88.0,
+        radar_coherence_anomaly=0.72,
+        historical_landslide_count=3,
+        citizen_reports_count=2,
+        field_verification_count=1,
+        data_quality=DataQualitySummary(
+            available_features=7, completeness_ratio=1.0
+        ),
+    )
+
+    with pytest.raises(ValueError, match="finite numerical value"):
+        LandslidePredictiveBaseline.infer(bad_vector)
+
+
+def test_model_input_validation_rejects_out_of_range():
+    """Verify strict model boundary rejects physically impossible values (e.g. slope > 90°)."""
+    from app.domain.risk import DataQualitySummary
+    from app.services.feature_pipeline import ExtractedFeatureVector
+
+    bad_vector = ExtractedFeatureVector(
+        antecedent_rainfall_7d_mm=184.0,
+        short_window_rainfall_24h_mm=62.5,
+        rainfall_intensity_mmh=28.4,
+        slope_gradient_deg=115.0,  # Impossible physical cut-slope > 90°!
+        geological_susceptibility=0.88,
+        soil_saturation_index=0.92,
+        optical_obscuration_pct=88.0,
+        radar_coherence_anomaly=0.72,
+        historical_landslide_count=3,
+        citizen_reports_count=2,
+        field_verification_count=1,
+        data_quality=DataQualitySummary(
+            available_features=7, completeness_ratio=1.0
+        ),
+    )
+
+    with pytest.raises(ValueError, match="outside acceptable physical range"):
+        LandslidePredictiveBaseline.infer(bad_vector)
+
+
+def test_deterministic_inference_reproducibility():
+    """Verify identical input feature vectors produce byte-for-byte deterministic inference results."""
+    from app.domain.risk import DataQualitySummary
+    from app.services.feature_pipeline import ExtractedFeatureVector
+
+    vector = ExtractedFeatureVector(
+        antecedent_rainfall_7d_mm=184.0,
+        short_window_rainfall_24h_mm=62.5,
+        rainfall_intensity_mmh=28.4,
+        slope_gradient_deg=44.2,
+        geological_susceptibility=0.88,
+        soil_saturation_index=0.92,
+        optical_obscuration_pct=88.0,
+        radar_coherence_anomaly=0.72,
+        historical_landslide_count=3,
+        citizen_reports_count=2,
+        field_verification_count=1,
+        data_quality=DataQualitySummary(
+            available_features=7, completeness_ratio=1.0
+        ),
+    )
+
+    r1 = LandslidePredictiveBaseline.infer(vector)
+    r2 = LandslidePredictiveBaseline.infer(vector)
+
+    assert r1.risk_score == r2.risk_score
+    assert r1.confidence_score == r2.confidence_score
+    assert r1.risk_level == r2.risk_level
+    assert r1.confidence_level == r2.confidence_level
+    assert len(r1.feature_contributions) == len(r2.feature_contributions)
+    for c1, c2 in zip(r1.feature_contributions, r2.feature_contributions):
+        assert c1.feature_name == c2.feature_name
+        assert c1.contribution_pct == c2.contribution_pct
+        assert c1.normalized_value == c2.normalized_value

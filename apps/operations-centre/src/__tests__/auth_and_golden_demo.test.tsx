@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { LoginView } from "../components/auth/LoginView";
 import { GoldenDemoView } from "../components/views/GoldenDemoView";
@@ -100,10 +100,9 @@ describe("Living Incident GoldenDemoView Component", () => {
       </ThemeProvider>
     );
 
-    // Verify canonical operational aphorisms and core thesis
     expect(screen.getByText(/EVENT ABSENCE ≠ HAZARD RESOLUTION/i)).toBeInTheDocument();
-    expect(screen.getByText(/SAME INCIDENT\. NEW EVIDENCE\. REASSESS\./i)).toBeInTheDocument();
     expect(screen.getByText(/THE HARD CASE: WARNING → INTERVENTION → NO OBSERVED EVENT/i)).toBeInTheDocument();
+    expect(screen.getByText(/SAME INCIDENT REASSESSMENT/i)).toBeInTheDocument();
   });
 
   it("renders the timeline stages T0 through T4 for continuous living incident reassessment", () => {
@@ -117,14 +116,14 @@ describe("Living Incident GoldenDemoView Component", () => {
       </ThemeProvider>
     );
 
-    expect(screen.getByText(/T0: Prediction & Intervention/i)).toBeInTheDocument();
-    expect(screen.getByText(/T1: Observation Window/i)).toBeInTheDocument();
-    expect(screen.getByText(/T2: Divergent Evidence Arrival/i)).toBeInTheDocument();
-    expect(screen.getByText(/T3: Continuous Reassessment/i)).toBeInTheDocument();
+    expect(screen.getByText(/T0: Prediction at KM-42/i)).toBeInTheDocument();
+    expect(screen.getByText(/T1: The Hard Case \(No Event\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/T2: Later Evidence at KM-43\.2/i)).toBeInTheDocument();
+    expect(screen.getByText(/T3: Reassess SAME Incident/i)).toBeInTheDocument();
     expect(screen.getByText(/T4: Evidentiary Closure Gate/i)).toBeInTheDocument();
   });
 
-  it("renders the spatial divergence tolerance notice and safety invariant", () => {
+  it("renders Scenarios A through G in the scenario matrix inspector", () => {
     render(
       <ThemeProvider>
         <AuthProvider>
@@ -135,7 +134,128 @@ describe("Living Incident GoldenDemoView Component", () => {
       </ThemeProvider>
     );
 
-    expect(screen.getByText(/Spatial Divergence Detected: KM-42\.0 vs KM-43\.2/i)).toBeInTheDocument();
-    expect(screen.getByText(/Safety Invariant: Intervention \+ No Landslide ≠ Success/i)).toBeInTheDocument();
+    expect(screen.getByText(/SCENARIO A/i)).toBeInTheDocument();
+    expect(screen.getByText(/SCENARIO B/i)).toBeInTheDocument();
+    expect(screen.getByText(/SCENARIO C/i)).toBeInTheDocument();
+    expect(screen.getByText(/SCENARIO D/i)).toBeInTheDocument();
+    expect(screen.getByText(/SCENARIO E/i)).toBeInTheDocument();
+    expect(screen.getByText(/SCENARIO F/i)).toBeInTheDocument();
+    expect(screen.getByText(/SCENARIO G/i)).toBeInTheDocument();
+  });
+
+  it("renders the 7 competing hypotheses H1 through H7 distinctly", () => {
+    render(
+      <ThemeProvider>
+        <AuthProvider>
+          <DemoScenarioProvider>
+            <GoldenDemoView />
+          </DemoScenarioProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    );
+
+    expect(screen.getByText(/H1 – H7 COMPETING OPERATIONAL HYPOTHESES/i)).toBeInTheDocument();
+    expect(screen.getByText(/H1: False Alarm/i)).toBeInTheDocument();
+    expect(screen.getByText(/H2: Intervention Non-Event/i)).toBeInTheDocument();
+    expect(screen.getByText(/H3: Delayed Failure/i)).toBeInTheDocument();
+    expect(screen.getByText(/H4: Shifted Hazard/i)).toBeInTheDocument();
+    expect(screen.getByText(/H5: Observation Gap/i)).toBeInTheDocument();
+    expect(screen.getByText(/H6: Residual Hazard/i)).toBeInTheDocument();
+    expect(screen.getByText(/H7: Conflicted Evidence/i)).toBeInTheDocument();
+  });
+
+  it("renders the 3-tier spatial intelligence hierarchy", () => {
+    render(
+      <ThemeProvider>
+        <AuthProvider>
+          <DemoScenarioProvider>
+            <GoldenDemoView />
+          </DemoScenarioProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    );
+
+    expect(screen.getByText(/1\. INPUT REJECTION BOUNDARY/i)).toBeInTheDocument();
+    expect(screen.getByText(/> 10\.0 km/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\. SUPPORTED INCIDENT CORRIDOR/i)).toBeInTheDocument();
+    expect(screen.getByText(/≤ 5\.0 km/i)).toBeInTheDocument();
+    expect(screen.getByText(/3\. LOCAL SPATIAL DIVERGENCE/i)).toBeInTheDocument();
+    expect(screen.getByText(/≤ 500 m/i)).toBeInTheDocument();
+  });
+
+  it("renders the 7 strict evidentiary closure preconditions", () => {
+    render(
+      <ThemeProvider>
+        <AuthProvider>
+          <DemoScenarioProvider>
+            <GoldenDemoView />
+          </DemoScenarioProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    );
+
+    expect(screen.getByText(/1\. Source State: REASSESSING/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\. Actor Role: AUTHORIZED_DECISION_MAKER/i)).toBeInTheDocument();
+    expect(screen.getByText(/3\. Order Reference: Resolution Order Code/i)).toBeInTheDocument();
+    expect(screen.getByText(/4\. Dispatched Tasks: ALL PHYSICALLY_CONFIRMED/i)).toBeInTheDocument();
+    expect(screen.getByText(/5\. Evidence Conflicts: All Reconciled/i)).toBeInTheDocument();
+    expect(screen.getByText(/6\. Ground Truth: Fresh Verified FIELD/i)).toBeInTheDocument();
+    expect(screen.getByText(/7\. Outcome Engine: Clearance & Fresh Eval/i)).toBeInTheDocument();
+  });
+
+  it("enforces that NBI uses qualitative discrimination only without quantitative confidence gains", () => {
+    render(
+      <ThemeProvider>
+        <AuthProvider>
+          <DemoScenarioProvider>
+            <GoldenDemoView />
+          </DemoScenarioProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    );
+
+    // Qualitative discrimination must be present
+    expect(screen.getByText(/QUALITATIVE DISCRIMINATION ONLY/i)).toBeInTheDocument();
+
+    // Quantitative confidence gains must NOT be present
+    expect(screen.queryByText(/\+35% Conf\. Gain/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\+15% Conf\. Gain/i)).not.toBeInTheDocument();
+  });
+
+  it("enforces causal safety invariant and blocks premature closure for Scenario D", () => {
+    render(
+      <ThemeProvider>
+        <AuthProvider>
+          <DemoScenarioProvider>
+            <GoldenDemoView />
+          </DemoScenarioProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    );
+
+    // Scenario D is the default active hard case scenario
+    expect(screen.getByText(/CAUSAL CLAIM:/i)).toBeInTheDocument();
+    expect(screen.getByText(/UNPROVEN \(FALSE\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/CLOSURE PERMITTED:/i)).toBeInTheDocument();
+    expect(screen.getByText(/NO \(STRICTLY BLOCKED\)/i)).toBeInTheDocument();
+  });
+
+  it("enforces spatial divergence precedence mapping to H4_SHIFTED_HAZARD for Scenario F", () => {
+    render(
+      <ThemeProvider>
+        <AuthProvider>
+          <DemoScenarioProvider>
+            <GoldenDemoView />
+          </DemoScenarioProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    );
+
+    // Click Scenario F button in the matrix
+    const scenarioFBtn = screen.getByRole("button", { name: /SCENARIO F/i });
+    fireEvent.click(scenarioFBtn);
+
+    // Primary hypothesis must show H4_SHIFTED_HAZARD
+    expect(screen.getByText(/PRIMARY: H4_SHIFTED_HAZARD/i)).toBeInTheDocument();
   });
 });

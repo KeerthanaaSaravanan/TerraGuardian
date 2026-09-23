@@ -13,6 +13,20 @@ from app.db.models import AuditEventModel
 from app.domain.enums import ActorRole, AuditEventType
 
 
+def _sanitize_payload(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {str(k): _sanitize_payload(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple, set)):
+        return [_sanitize_payload(v) for v in obj]
+    elif isinstance(obj, uuid.UUID):
+        return str(obj)
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
+    elif hasattr(obj, "value"):
+        return obj.value
+    return obj
+
+
 class AuditService:
     """Service handling append-only audit trail operations."""
 
@@ -43,7 +57,7 @@ class AuditService:
             previous_state=previous_state,
             new_state=new_state,
             reason=reason,
-            payload=payload or {},
+            payload=_sanitize_payload(payload or {}),
             created_at=created_at or datetime.utcnow(),
         )
         self.session.add(event)

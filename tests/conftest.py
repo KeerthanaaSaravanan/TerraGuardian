@@ -90,3 +90,9 @@ async def test_client(db_engine):
         base_url="http://testserver",
     ) as client:
         yield client
+
+
+@pytest_asyncio.fixture(scope="function")
+async def async_client(test_client):
+    """Alias test_client as async_client for compatibility across test suites."""
+    yield test_client

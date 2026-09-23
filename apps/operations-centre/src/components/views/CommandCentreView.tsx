@@ -51,23 +51,23 @@ export const CommandCentreView: React.FC = () => {
             <InteractiveMap detailedView={false} />
           </div>
 
-          {/* Real-time Telemetry Strip */}
+          {/* Seeded Operational Telemetry Strip */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800 p-3 rounded-lg flex flex-col justify-between shadow-sm">
               <div className="flex items-center justify-between text-slate-500 dark:text-neutral-400 text-xs font-mono">
-                <span>IMD AWS RAINFALL</span>
+                <span>IMD AWS RAINFALL (SEEDED)</span>
                 <IconCloudRain className="w-4 h-4 text-blue-500 dark:text-blue-400" />
               </div>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-xl font-bold text-slate-900 dark:text-white font-mono">184.6</span>
                 <span className="text-xs text-slate-500 dark:text-neutral-400">mm / 24h</span>
               </div>
-              <div className="text-[10px] text-red-600 dark:text-red-400 font-mono mt-1 font-semibold">▲ Bhalukpong Peak</div>
+              <div className="text-[10px] text-red-600 dark:text-red-400 font-mono mt-1 font-semibold">▲ Bhalukpong Peak (Demo)</div>
             </div>
 
             <div className="bg-white dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800 p-3 rounded-lg flex flex-col justify-between shadow-sm">
               <div className="flex items-center justify-between text-slate-500 dark:text-neutral-400 text-xs font-mono">
-                <span>SLOPE STABILITY</span>
+                <span>SLOPE STABILITY (SEEDED)</span>
                 <IconActivity className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               </div>
               <div className="mt-2 flex items-baseline gap-2">
@@ -79,25 +79,25 @@ export const CommandCentreView: React.FC = () => {
 
             <div className="bg-white dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800 p-3 rounded-lg flex flex-col justify-between shadow-sm">
               <div className="flex items-center justify-between text-slate-500 dark:text-neutral-400 text-xs font-mono">
-                <span>RADAR REFLECTIVITY</span>
+                <span>RADAR REFLECTIVITY (DEMO)</span>
                 <IconRadar className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
               </div>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-xl font-bold text-slate-900 dark:text-white font-mono">52 dBZ</span>
                 <span className="text-xs text-slate-500 dark:text-neutral-400">Kameng Flank</span>
               </div>
-              <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-mono mt-1">DWR Mohanbari Feed</div>
+              <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-mono mt-1">DWR Mohanbari (Simulated)</div>
             </div>
 
             <div className="bg-white dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800 p-3 rounded-lg flex flex-col justify-between shadow-sm">
               <div className="flex items-center justify-between text-slate-500 dark:text-neutral-400 text-xs font-mono">
-                <span>INTER-AGENCY STATUS</span>
+                <span>INTER-AGENCY (SIMULATED)</span>
                 <IconRadio className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
               </div>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">BRO + SDRF</span>
               </div>
-              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono mt-1 font-semibold">TETRA Comms Active</div>
+              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono mt-1 font-semibold">TETRA Comms (Simulated)</div>
             </div>
           </div>
         </div>

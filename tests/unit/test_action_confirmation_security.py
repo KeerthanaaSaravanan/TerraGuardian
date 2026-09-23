@@ -72,13 +72,13 @@ async def test_physically_confirmed_via_transition_is_blocked(async_client: Asyn
         pytest.skip("Incident creation failed")
     incident_id = inc_resp.json()["id"]
 
-    # List actions and get the first one (from seed or create)
-    acts_resp = await async_client.get(f"/api/v1/incidents/{incident_id}/actions")
-    if acts_resp.status_code != 200 or not acts_resp.json():
-        pytest.skip("No actions available for test")
-
-    action_id = acts_resp.json()[0]["id"]
-    current_state = acts_resp.json()[0]["state"]
+    # Create action
+    act_resp = await async_client.post(
+        f"/api/v1/incidents/{incident_id}/actions",
+        json=ACTION_PAYLOAD,
+    )
+    assert act_resp.status_code == 201
+    action_id = act_resp.json()["id"]
 
     # Directly attempt PHYSICALLY_CONFIRMED via transition
     response = await async_client.post(
@@ -98,21 +98,18 @@ async def test_physically_confirmed_via_transition_is_blocked(async_client: Asyn
 @pytest.mark.asyncio
 async def test_regular_action_transitions_still_work(async_client: AsyncClient) -> None:
     """Verify that normal action state progression (PROPOSED → APPROVED → DISPATCHED) still works."""
-    # Use seeded incident
-    seed_resp = await async_client.post("/api/v1/incidents/seed/tg-2048")
-    if seed_resp.status_code not in (200, 201):
-        pytest.skip("Seed endpoint unavailable")
-    incident_id = seed_resp.json()["id"]
+    inc_resp = await async_client.post("/api/v1/incidents", json={
+        **SEED_PAYLOAD, "code": f"TG-REG-{uuid.uuid4().hex[:6].upper()}"
+    })
+    assert inc_resp.status_code == 201
+    incident_id = inc_resp.json()["id"]
 
-    acts_resp = await async_client.get(f"/api/v1/incidents/{incident_id}/actions")
-    if acts_resp.status_code != 200 or not acts_resp.json():
-        pytest.skip("No actions in seeded incident")
-
-    # Find a PROPOSED action
-    proposed = [a for a in acts_resp.json() if a["state"] == "PROPOSED"]
-    if not proposed:
-        pytest.skip("No PROPOSED actions available")
-    action_id = proposed[0]["id"]
+    act_resp = await async_client.post(
+        f"/api/v1/incidents/{incident_id}/actions",
+        json=ACTION_PAYLOAD,
+    )
+    assert act_resp.status_code == 201
+    action_id = act_resp.json()["id"]
 
     # PROPOSED → APPROVED
     resp = await async_client.post(

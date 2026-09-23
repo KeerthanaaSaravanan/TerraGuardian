@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Optional
 
 from sqlalchemy import select
@@ -17,6 +17,7 @@ from app.domain.enums import (
     EvidenceInterpretation,
     EvidenceProcessingStatus,
     EvidenceSource,
+    IncidentStatus,
 )
 from app.domain.outcome import haversine_distance_meters
 from app.services.audit_service import AuditService
@@ -85,6 +86,36 @@ class EvidenceService:
         """Add a discrete piece of evidence to an incident with safety boundary enforcement and audit tracking."""
         incident = await self.incident_service.get_by_id(incident_id)
 
+        # ── TERMINAL STATE IMMUTABILITY ──
+        # Closed / reviewed incidents cannot accept new operational evidence.
+        if incident.status in (IncidentStatus.RESOLVED.value, IncidentStatus.REVIEWED.value):
+            raise DomainError(
+                f"Incident {incident.code} is in terminal state '{incident.status}'. "
+                "Evidence cannot be attached to a closed or archived incident twin."
+            )
+
+        # ── COORDINATE RANGE VALIDATION ──
+        if latitude is not None and not (-90.0 <= latitude <= 90.0):
+            raise DomainError(f"Invalid latitude: {latitude}. Latitude must be between -90.0 and 90.0 degrees.")
+        if longitude is not None and not (-180.0 <= longitude <= 180.0):
+            raise DomainError(f"Invalid longitude: {longitude}. Longitude must be between -180.0 and 180.0 degrees.")
+
+        # ── TEMPORAL / FRESHNESS VALIDATION ──
+        now_utc = datetime.utcnow()
+        if observed_at is not None:
+            obs_cmp = observed_at.replace(tzinfo=None) if observed_at.tzinfo else observed_at
+            if obs_cmp > now_utc + timedelta(minutes=5):
+                raise DomainError(
+                    f"Temporal integrity violation: Evidence observed_at ({observed_at.isoformat()}) "
+                    f"is in the future relative to server time ({now_utc.isoformat()})."
+                )
+        if freshness_seconds is not None and freshness_seconds < 0:
+            raise DomainError(f"freshness_seconds cannot be negative, got {freshness_seconds}.")
+
+        if freshness_seconds is None and observed_at is not None:
+            obs_cmp = observed_at.replace(tzinfo=None) if observed_at.tzinfo else observed_at
+            freshness_seconds = max(0, int((now_utc - obs_cmp).total_seconds()))
+
         # ── SPATIAL BOUNDARY VALIDATION ──
         # Evidence with coordinates must fall within the maximum supported spatial scope (10.0 km).
         # Unrelated distant evidence cannot silently attach to the incident.
@@ -119,8 +150,8 @@ class EvidenceService:
             observation=observation,
             metric=metric,
             reliability=reliability,
-            observed_at=observed_at or datetime.utcnow(),
-            received_at=datetime.utcnow(),
+            observed_at=observed_at or now_utc,
+            received_at=now_utc,
             latitude=latitude,
             longitude=longitude,
             provenance=provenance,

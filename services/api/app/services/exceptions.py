@@ -15,7 +15,7 @@ class IncidentNotFoundError(DomainError):
 class InvalidTransitionError(DomainError):
     """Raised when an illegal lifecycle transition is attempted."""
     def __init__(self, current_state: str, target_state: str, reason: str | None = None):
-        msg = f"Cannot transition incident from state '{current_state}' to '{target_state}'."
+        msg = f"Transition REJECTED: Cannot transition incident from state '{current_state}' to '{target_state}'."
         if reason:
             msg += f" Reason: {reason}"
         super().__init__(msg)

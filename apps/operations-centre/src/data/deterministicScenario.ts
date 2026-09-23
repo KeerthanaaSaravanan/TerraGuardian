@@ -239,7 +239,7 @@ export const SIMULATED_FIELD_REPORT: FieldReport = {
   officerName: "Sub-Inspector R. Thapa",
   unit: "State Disaster Response Force (SDRF) Quick Response Team Bravo",
   callsign: "SDRF-KAMENG-02",
-  timestamp: "Just now (Live Field Upload)",
+  timestamp: "Just now (Field Upload - Demo)",
   coordinates: {
     lat: 27.0842,
     lng: 92.5681,

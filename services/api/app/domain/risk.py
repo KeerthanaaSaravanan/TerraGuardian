@@ -36,6 +36,32 @@ class FeatureContribution(BaseModel):
     description: str
 
 
+class EvidenceLineageItem(BaseModel):
+    """Auditable lineage of an input evidence item contributing to feature derivation."""
+
+    evidence_id: uuid.UUID
+    source: str
+    source_name: str
+    evidence_type: str
+    metric: str
+    observed_at: datetime
+    contributed_features: list[str] = Field(default_factory=list)
+    freshness_seconds: Optional[int] = None
+    conflict_status: str = "NONE"
+
+
+class FeatureSnapshotItem(BaseModel):
+    """Auditable snapshot of an individual feature at time of model inference."""
+
+    feature_name: str
+    raw_value: Optional[float] = None
+    normalized_value: float
+    is_missing: bool = False
+    is_stale: bool = False
+    is_conflicted: bool = False
+    contributing_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
+
+
 class DataQualitySummary(BaseModel):
     """Assessment of evidence completeness, freshness, and sensor obstruction."""
 
@@ -69,6 +95,12 @@ class PredictiveRiskAssessment(BaseModel):
     feature_contributions: list[FeatureContribution] = Field(default_factory=list)
     explanation_narrative: str
     data_quality: DataQualitySummary
+
+    # Research-Grade Evidence Lineage & Feature Snapshot Tracking
+    evidence_lineage: list[EvidenceLineageItem] = Field(default_factory=list)
+    feature_snapshot: list[FeatureSnapshotItem] = Field(default_factory=list)
+    input_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
+    feature_schema_version: str = "v1.0"
 
     model_metadata: ModelMetadata = Field(default_factory=ModelMetadata)
     recommended_operational_action: str = "FIELD_VERIFICATION_REQUIRED"

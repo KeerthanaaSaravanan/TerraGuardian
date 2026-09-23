@@ -97,7 +97,7 @@ export const ActionGapView: React.FC = () => {
               Debris slurry at KM-42 is actively expanding. <strong>Loaded civilian vehicles may still be entering the hazardous runout corridor.</strong>
             </p>
             <div className="bg-white dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800 text-xs font-mono text-slate-800 dark:text-neutral-300">
-              <span className="text-amber-600 dark:text-amber-400 font-semibold">CORE PRINCIPLE:</span> "Approved action ≠ Completed action. The incident remains LIVE until physical response confirmation is verified."
+              <span className="text-amber-600 dark:text-amber-400 font-semibold">CORE PRINCIPLE:</span> "Approved action ≠ Completed action. The incident remains ACTIVE until physical response confirmation is submitted."
             </div>
           </div>
 

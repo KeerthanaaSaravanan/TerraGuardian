@@ -176,7 +176,7 @@ export const FieldVerificationView: React.FC = () => {
 
             <div className="text-[11px] font-mono text-slate-500 dark:text-neutral-400 flex items-center justify-between px-1">
               <span>DEVICE: SDRF Rugged Tablet (IMEI #738)</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Cryptographic Hash: Valid</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Report Checksum: Logged (Demo)</span>
             </div>
           </div>
 

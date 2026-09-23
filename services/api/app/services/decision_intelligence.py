@@ -93,7 +93,7 @@ class DecisionIntelligenceService:
             for ev in evidence_items
         )
         has_confirmed_action = any(
-            a.status == ActionState.PHYSICALLY_CONFIRMED.value for a in actions
+            a.state == ActionState.PHYSICALLY_CONFIRMED.value for a in actions
         )
         optical_cloud_cover = float(incident.metadata_json.get("optical_cloud_cover_pct", 88.0)) if incident.metadata_json else 88.0
 
@@ -123,7 +123,15 @@ class DecisionIntelligenceService:
                         "On-site visual confirmation of slope toe displacement and carriageway encroachment "
                         "provides definitive ground truth, resolving spaceborne ambiguity."
                     ),
-                    expected_confidence_delta=35.0,
+                    target_hypotheses=["H2_INTERVENTION_CONDITIONED_NON_EVENT", "H5_OBSERVATION_GAP", "H1_FALSE_ALARM"],
+                    discriminates_between=[
+                        ["H2_INTERVENTION_CONDITIONED_NON_EVENT", "H5_OBSERVATION_GAP"],
+                        ["H1_FALSE_ALARM", "H5_OBSERVATION_GAP"],
+                    ],
+                    spatial_scope=f"Slope Toe & Carriageway Envelope ({incident.latitude:.4f}N, {incident.longitude:.4f}E)",
+                    temporal_scope="Immediate (< 2 hours)",
+                    qualitative_discrimination="HIGH",
+                    expected_confidence_delta=None,
                     authority_required=False,
                 )
             )
@@ -141,7 +149,15 @@ class DecisionIntelligenceService:
                         "Synthetic Aperture Radar (SAR) phase coherence penetrates heavy precipitation "
                         "to detect millimeter-scale downslope shear."
                     ),
-                    expected_confidence_delta=15.0,
+                    target_hypotheses=["H3_DELAYED_FAILURE", "H4_SHIFTED_HAZARD", "H5_OBSERVATION_GAP"],
+                    discriminates_between=[
+                        ["H3_DELAYED_FAILURE", "H4_SHIFTED_HAZARD"],
+                        ["H1_FALSE_ALARM", "H4_SHIFTED_HAZARD"],
+                    ],
+                    spatial_scope="5km Regional Transit Corridor Envelope",
+                    temporal_scope="Next orbital pass (< 12 hours)",
+                    qualitative_discrimination="HIGH",
+                    expected_confidence_delta=None,
                     authority_required=False,
                 )
             )
@@ -158,7 +174,15 @@ class DecisionIntelligenceService:
                         f"Conflict detected: {reconciliation.conflict_summary} "
                         "Reconciling source discordance avoids premature resource commitment or false reassurance."
                     ),
-                    expected_confidence_delta=10.0,
+                    target_hypotheses=["H7_CONFLICTED", "H1_FALSE_ALARM", "H2_INTERVENTION_CONDITIONED_NON_EVENT"],
+                    discriminates_between=[
+                        ["H7_CONFLICTED", "H1_FALSE_ALARM"],
+                        ["H7_CONFLICTED", "H2_INTERVENTION_CONDITIONED_NON_EVENT"],
+                    ],
+                    spatial_scope="Carriageway conflict coordinates",
+                    temporal_scope="Immediate (< 1 hour)",
+                    qualitative_discrimination="HIGH",
+                    expected_confidence_delta=None,
                     authority_required=False,
                 )
             )
@@ -176,7 +200,14 @@ class DecisionIntelligenceService:
                         "Precipitation surcharge (184mm) maintains critical pore-water pressure. "
                         "Extend temporal window and execute drone inspection to scan for shifted tension cracks."
                     ),
-                    expected_confidence_delta=20.0,
+                    target_hypotheses=["H1_FALSE_ALARM", "H3_DELAYED_FAILURE"],
+                    discriminates_between=[
+                        ["H1_FALSE_ALARM", "H3_DELAYED_FAILURE"],
+                    ],
+                    spatial_scope="Corridor Monitoring Sector",
+                    temporal_scope="Extend monitoring window by 6 hours",
+                    qualitative_discrimination="MEDIUM",
+                    expected_confidence_delta=None,
                     authority_required=False,
                 )
             )
@@ -193,7 +224,14 @@ class DecisionIntelligenceService:
                         "Evidentiary closure gate requires documented engineering stabilization or debris clearance report "
                         "before this incident can be transitioned to RESOLVED or CLOSED."
                     ),
-                    expected_confidence_delta=10.0,
+                    target_hypotheses=["H6_RESIDUAL_HAZARD", "H1_FALSE_ALARM"],
+                    discriminates_between=[
+                        ["H6_RESIDUAL_HAZARD", "H1_FALSE_ALARM"],
+                    ],
+                    spatial_scope="Full cut-slope geometry and retaining structures",
+                    temporal_scope="Prior to any formal incident closure order",
+                    qualitative_discrimination="MEDIUM",
+                    expected_confidence_delta=None,
                     authority_required=True,
                 )
             )

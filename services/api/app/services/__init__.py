@@ -14,6 +14,7 @@ from app.services.incident_service import IncidentService
 from app.services.seed_service import SeedService
 from app.services.state_transition_service import StateTransitionService
 from app.services.decision_intelligence import DecisionIntelligenceService
+from app.services.decision_service import DecisionService
 
 __all__ = [
     "DomainError",
@@ -28,4 +29,6 @@ __all__ = [
     "StateTransitionService",
     "SeedService",
     "DecisionIntelligenceService",
+    "DecisionService",
 ]
+

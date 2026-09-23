@@ -25,10 +25,10 @@ export const ConfirmationView: React.FC = () => {
             <span className="text-emerald-600 dark:text-emerald-400 font-bold">RESPONSE CLOSED-LOOP CONFIRMATION</span>
           </div>
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
-            Ground Action Verified & Incident Loop Closed
+            Ground Action Confirmation Submitted
           </h1>
           <p className="text-xs text-slate-600 dark:text-neutral-400 mt-0.5">
-            Physical roadblock installation verified on NH-13 KM-38. Zero civilian exposure remains in the active runout zone.
+            Physical roadblock installation reported on NH-13 KM-38. Civilian exposure mitigated in the active runout zone.
           </p>
         </div>
 
@@ -57,7 +57,7 @@ export const ConfirmationView: React.FC = () => {
           </span>
           <div className="space-y-1">
             <div className="flex items-center gap-2 font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">
-              <span>CLOSED-LOOP VERIFICATION COMPLETE</span>
+              <span>FIELD CONFIRMATION SUBMITTED (DEMO SCENARIO)</span>
               <span>•</span>
               <span className="bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-700 px-2 py-0.2 rounded text-[10px]">
                 STATE: {incidentStatus}
@@ -67,7 +67,7 @@ export const ConfirmationView: React.FC = () => {
               Physical Roadblock & Diversion Confirmed Operational
             </h2>
             <p className="text-xs text-slate-700 dark:text-neutral-300 max-w-2xl leading-relaxed">
-              ASI D. Sonam confirmed via encrypted TETRA wireless network that steel barriers and police warning flashers are secured across both lanes at KM-38.
+              ASI D. Sonam submitted field confirmation (Simulated TETRA Comms) that steel barriers and police warning flashers are secured across both lanes at KM-38.
               Heavy commercial traffic is safely held in the Bhalukpong staging ground.
             </p>
           </div>
@@ -76,7 +76,7 @@ export const ConfirmationView: React.FC = () => {
         <div className="bg-white dark:bg-neutral-950 p-4 rounded-xl border border-slate-200 dark:border-neutral-800 text-center font-mono w-full sm:w-auto sm:min-w-[200px] shadow-xs">
           <div className="text-[10px] text-slate-500 dark:text-neutral-400">CORRIDOR STATUS</div>
           <div className="text-emerald-600 dark:text-emerald-400 font-bold text-base mt-1">TRAFFIC SAFELY DIVERTED</div>
-          <div className="text-[10px] text-slate-500 dark:text-neutral-500 mt-0.5">CASUALTY RISK ELIMINATED</div>
+          <div className="text-[10px] text-slate-500 dark:text-neutral-500 mt-0.5">EXPOSURE MITIGATED (DEMO)</div>
         </div>
       </div>
 
@@ -86,7 +86,7 @@ export const ConfirmationView: React.FC = () => {
           <div>
             <div className="text-xs font-mono text-slate-600 dark:text-neutral-400 uppercase font-bold flex items-center gap-2">
               <IconTruck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              PHYSICAL BARRIER TELEMETRY
+              PHYSICAL BARRIER CONFIRMATION (DEMO)
             </div>
             <div className="text-sm font-bold text-slate-900 dark:text-white mt-2">
               NH-13 KM-38 Police Checkpost

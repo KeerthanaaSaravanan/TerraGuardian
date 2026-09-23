@@ -133,7 +133,7 @@ async def test_no_event_observed_does_not_auto_resolve_or_false_alarm(db_session
         id=uuid.uuid4(),
         code="TG-ADV-03",
         title="Event Absence Verification",
-        status=IncidentStatus.ACTIVE.value,
+        status=IncidentStatus.MONITORING.value,
         hazard_state=HazardState.EXPECTED.value,
         risk_score=86.0,
         risk_level=RiskLevel.HIGH.value,
@@ -192,8 +192,12 @@ async def test_intervention_plus_non_event_rejects_causal_claim(db_session: Asyn
     action = ActionModel(
         id=uuid.uuid4(),
         incident_id=incident.id,
+        task_code="TSK-03",
+        agency="Police",
         title="Deploy Roadblock at KM-38",
-        status=ActionState.PHYSICALLY_CONFIRMED.value,
+        description="Deploy roadblock",
+        assigned_to="Patrol",
+        state=ActionState.PHYSICALLY_CONFIRMED.value,
     )
     # No debris observed at KM-42
     incident.evidence_items = [
@@ -206,6 +210,7 @@ async def test_intervention_plus_non_event_rejects_causal_claim(db_session: Asyn
             observation="No slide debris observed on road.",
             metric="0% obstruction",
             observed_at=datetime.utcnow(),
+            interpretation=EvidenceInterpretation.VERIFIED.value,
         )
     ]
     incident.actions = [action]
@@ -372,15 +377,19 @@ async def test_approved_action_does_not_equal_confirmed_execution(db_session: As
     action = ActionModel(
         id=uuid.uuid4(),
         incident_id=uuid.uuid4(),
+        task_code="TSK-01",
+        agency="Police",
         title="Close Highway at KM-38",
-        status=ActionState.DISPATCHED.value,  # Approved by magistrate, dispatched to police
+        description="Highway barrier",
+        assigned_to="Patrol",
+        state=ActionState.DISPATCHED.value,  # Approved by magistrate, dispatched to police
     )
     db_session.add(action)
     await db_session.commit()
 
-    assert action.status != ActionState.PHYSICALLY_CONFIRMED.value
+    assert action.state != ActionState.PHYSICALLY_CONFIRMED.value
     # Verification check: Action gap exists between authorization and physical reality
-    assert action.status == ActionState.DISPATCHED.value
+    assert action.state == ActionState.DISPATCHED.value
 
 
 # ── 10. Confirmed Execution does NOT equal Hazard Resolution ──
@@ -401,8 +410,12 @@ async def test_confirmed_execution_does_not_resolve_hazard(db_session: AsyncSess
     action = ActionModel(
         id=uuid.uuid4(),
         incident_id=incident.id,
+        task_code="TSK-02",
+        agency="Police",
         title="Roadblock",
-        status=ActionState.PHYSICALLY_CONFIRMED.value,
+        description="Roadblock deployment",
+        assigned_to="Patrol",
+        state=ActionState.PHYSICALLY_CONFIRMED.value,
     )
     db_session.add_all([incident, action])
     await db_session.commit()

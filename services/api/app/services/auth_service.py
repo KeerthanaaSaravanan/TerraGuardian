@@ -85,7 +85,7 @@ def create_access_token(
     full_name: str,
     expires_delta: Optional[timedelta] = None,
 ) -> str:
-    """Issue a tamper-proof server-signed access token."""
+    """Issue an HMAC-SHA256 server-signed access token."""
     header = {"alg": "HS256", "typ": "JWT"}
     now = datetime.now(timezone.utc)
     delta = expires_delta or timedelta(hours=12)
@@ -291,7 +291,9 @@ async def get_current_user(
         return user
 
     # 2. Rejection for Missing Token (Production / Strict Mode)
-    if settings.environment != "test":
+    import os
+    current_env = os.environ.get("TERRAGUARDIAN_ENV", settings.environment).lower().strip()
+    if current_env != "test":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required. Provide 'Authorization: Bearer <token>' header.",

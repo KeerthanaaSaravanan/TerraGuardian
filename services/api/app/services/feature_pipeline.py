@@ -13,7 +13,8 @@ from typing import Any, Optional
 
 from app.db.models import EvidenceModel, IncidentModel
 from app.domain.enums import EvidenceConflictStatus, EvidenceInterpretation, EvidenceSource
-from app.domain.risk import DataQualitySummary
+from app.domain.risk import DataQualitySummary, EvidenceLineageItem, FeatureSnapshotItem
+import uuid
 
 
 @dataclass
@@ -42,6 +43,13 @@ class ExtractedFeatureVector:
     # Quality & Provenance Metadata
     data_quality: DataQualitySummary
     raw_feature_map: dict[str, Any] = field(default_factory=dict)
+
+    # Complete Prediction -> Feature -> Evidence Lineage
+    input_evidence_ids: list[uuid.UUID] = field(default_factory=list)
+    evidence_lineage: list[EvidenceLineageItem] = field(default_factory=list)
+    feature_to_evidence_map: dict[str, list[uuid.UUID]] = field(default_factory=dict)
+    feature_snapshot: list[FeatureSnapshotItem] = field(default_factory=list)
+    feature_schema_version: str = "v1.0"
 
 
 class FeaturePipeline:
@@ -88,8 +96,16 @@ class FeaturePipeline:
         citizen_count = 0
         field_verified_count = 0
 
+        # Initialize Lineage Tracking
+        input_evidence_ids: list[uuid.UUID] = []
+        evidence_lineage: list[EvidenceLineageItem] = []
+        feature_to_evidence_map: dict[str, list[uuid.UUID]] = {f: [] for f in cls.EXPECTED_CORE_FEATURES}
+
         # Scan evidence items
         for ev in evidence_items:
+            input_evidence_ids.append(ev.id)
+            contributed_for_ev: list[str] = []
+
             # Check freshness (stale if > 24 hours / 86400s)
             if ev.freshness_seconds and ev.freshness_seconds > 86400:
                 stale_features.append(f"{ev.source}_{ev.evidence_type}")
@@ -109,7 +125,7 @@ class FeaturePipeline:
                 metric_lower = ev.metric.lower()
                 
                 # Parse 7d / 24h rainfall
-                if "184mm" in metric_lower or "184" in obs_lower:
+                if "184" in metric_lower or "184" in obs_lower:
                     rain_7d = 184.0
                     rain_24h = 62.5
                 elif "mm" in metric_lower:
@@ -124,6 +140,13 @@ class FeaturePipeline:
                 if "rainfall_peak_rate_mm_hr" in raw:
                     rain_rate = float(raw["rainfall_peak_rate_mm_hr"])
 
+                contributed_for_ev.extend(["antecedent_rainfall_7d_mm", "short_window_rainfall_24h_mm"])
+                feature_to_evidence_map["antecedent_rainfall_7d_mm"].append(ev.id)
+                feature_to_evidence_map["short_window_rainfall_24h_mm"].append(ev.id)
+                if rain_rate is not None:
+                    contributed_for_ev.append("rainfall_intensity_mmh")
+                    feature_to_evidence_map["rainfall_intensity_mmh"].append(ev.id)
+
             # Match Terrain Evidence
             elif ev.source == EvidenceSource.TERRAIN.value:
                 obs_lower = ev.observation.lower()
@@ -137,27 +160,54 @@ class FeaturePipeline:
                 if "soil_saturation" in raw:
                     saturation = float(raw["soil_saturation"])
 
+                contributed_for_ev.extend(["slope_gradient_deg", "geological_susceptibility"])
+                feature_to_evidence_map["slope_gradient_deg"].append(ev.id)
+                feature_to_evidence_map["geological_susceptibility"].append(ev.id)
+                if saturation is not None:
+                    contributed_for_ev.append("soil_saturation_index")
+                    feature_to_evidence_map["soil_saturation_index"].append(ev.id)
+
             # Match Satellite Evidence
             elif ev.source == EvidenceSource.SATELLITE.value:
                 obs_lower = ev.observation.lower()
                 metric_lower = ev.metric.lower()
                 if "cloud cover" in metric_lower or "88%" in metric_lower:
                     optical_obscuration = 88.0
+                    contributed_for_ev.append("optical_obscuration_pct")
+                    feature_to_evidence_map["optical_obscuration_pct"].append(ev.id)
                 if "radar" in obs_lower or "sar" in obs_lower or "phase anomaly" in metric_lower:
                     radar_anomaly = 0.72
+                    contributed_for_ev.append("radar_coherence_anomaly")
 
             # Match Historical Evidence
             elif ev.source == EvidenceSource.HISTORICAL.value:
                 historical_count += 1
+                contributed_for_ev.append("historical_landslide_count")
 
             # Match Citizen Evidence
             elif ev.source == EvidenceSource.CITIZEN.value:
                 citizen_count += 1
+                contributed_for_ev.append("citizen_reports_count")
 
             # Match Field Evidence
             elif ev.source == EvidenceSource.FIELD.value:
                 if ev.interpretation == EvidenceInterpretation.VERIFIED.value:
                     field_verified_count += 1
+                contributed_for_ev.append("field_verification_count")
+
+            evidence_lineage.append(
+                EvidenceLineageItem(
+                    evidence_id=ev.id,
+                    source=ev.source,
+                    source_name=ev.source_name,
+                    evidence_type=ev.evidence_type,
+                    metric=ev.metric,
+                    observed_at=ev.observed_at,
+                    contributed_features=contributed_for_ev,
+                    freshness_seconds=ev.freshness_seconds,
+                    conflict_status=ev.conflict_status or "NONE",
+                )
+            )
 
         # Fallbacks & Default Domain Priors (with missing feature tracking)
         if rain_7d is None:
@@ -214,6 +264,73 @@ class FeaturePipeline:
             "field_verification_count": field_verified_count,
         }
 
+        # Build Auditable Feature Snapshot
+        feature_snapshot: list[FeatureSnapshotItem] = [
+            FeatureSnapshotItem(
+                feature_name="antecedent_rainfall_7d_mm",
+                raw_value=rain_7d,
+                normalized_value=round((rain_7d - 120.0) / 35.0, 2),
+                is_missing="antecedent_rainfall_7d_mm" in missing_features,
+                is_stale=any("WEATHER" in s for s in stale_features),
+                is_conflicted=any("WEATHER" in c for c in conflicted_features),
+                contributing_evidence_ids=feature_to_evidence_map.get("antecedent_rainfall_7d_mm", []),
+            ),
+            FeatureSnapshotItem(
+                feature_name="short_window_rainfall_24h_mm",
+                raw_value=rain_24h,
+                normalized_value=round((rain_24h - 40.0) / 15.0, 2),
+                is_missing="short_window_rainfall_24h_mm" in missing_features,
+                is_stale=any("WEATHER" in s for s in stale_features),
+                is_conflicted=any("WEATHER" in c for c in conflicted_features),
+                contributing_evidence_ids=feature_to_evidence_map.get("short_window_rainfall_24h_mm", []),
+            ),
+            FeatureSnapshotItem(
+                feature_name="rainfall_intensity_mmh",
+                raw_value=rain_rate,
+                normalized_value=round((rain_rate - 20.0) / 10.0, 2),
+                is_missing="rainfall_intensity_mmh" in missing_features,
+                is_stale=any("WEATHER" in s for s in stale_features),
+                is_conflicted=any("WEATHER" in c for c in conflicted_features),
+                contributing_evidence_ids=feature_to_evidence_map.get("rainfall_intensity_mmh", []),
+            ),
+            FeatureSnapshotItem(
+                feature_name="slope_gradient_deg",
+                raw_value=slope_deg,
+                normalized_value=round((slope_deg - 32.0) / 7.5, 2),
+                is_missing="slope_gradient_deg" in missing_features,
+                is_stale=any("TERRAIN" in s for s in stale_features),
+                is_conflicted=any("TERRAIN" in c for c in conflicted_features),
+                contributing_evidence_ids=feature_to_evidence_map.get("slope_gradient_deg", []),
+            ),
+            FeatureSnapshotItem(
+                feature_name="geological_susceptibility",
+                raw_value=geo_susc,
+                normalized_value=round((geo_susc - 0.5) * 4.0, 2),
+                is_missing="geological_susceptibility" in missing_features,
+                is_stale=any("TERRAIN" in s for s in stale_features),
+                is_conflicted=any("TERRAIN" in c for c in conflicted_features),
+                contributing_evidence_ids=feature_to_evidence_map.get("geological_susceptibility", []),
+            ),
+            FeatureSnapshotItem(
+                feature_name="soil_saturation_index",
+                raw_value=saturation,
+                normalized_value=round((saturation - 0.5) * 3.0, 2),
+                is_missing=False,
+                is_stale=any("TERRAIN" in s for s in stale_features),
+                is_conflicted=any("TERRAIN" in c for c in conflicted_features),
+                contributing_evidence_ids=feature_to_evidence_map.get("soil_saturation_index", []),
+            ),
+            FeatureSnapshotItem(
+                feature_name="optical_obscuration_pct",
+                raw_value=optical_obscuration,
+                normalized_value=round((optical_obscuration - 50.0) / 25.0, 2),
+                is_missing="optical_obscuration_pct" in missing_features,
+                is_stale=any("SATELLITE" in s for s in stale_features),
+                is_conflicted=any("SATELLITE" in c for c in conflicted_features),
+                contributing_evidence_ids=feature_to_evidence_map.get("optical_obscuration_pct", []),
+            ),
+        ]
+
         return ExtractedFeatureVector(
             antecedent_rainfall_7d_mm=rain_7d,
             short_window_rainfall_24h_mm=rain_24h,
@@ -228,4 +345,9 @@ class FeaturePipeline:
             field_verification_count=field_verified_count,
             data_quality=data_quality,
             raw_feature_map=raw_map,
+            input_evidence_ids=input_evidence_ids,
+            evidence_lineage=evidence_lineage,
+            feature_to_evidence_map=feature_to_evidence_map,
+            feature_snapshot=feature_snapshot,
+            feature_schema_version="v1.0",
         )

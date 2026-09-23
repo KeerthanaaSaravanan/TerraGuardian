@@ -25,14 +25,14 @@ export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];
 
 export const VALID_TRANSITIONS: Record<IncidentStatus, readonly IncidentStatus[]> = {
   DETECTED: ["ASSESSING"],
-  ASSESSING: ["VERIFYING"],
-  VERIFYING: ["VERIFIED"],
+  ASSESSING: ["VERIFYING", "DECISION_REQUIRED"],
+  VERIFYING: ["VERIFIED", "ASSESSING"],
   VERIFIED: ["DECISION_REQUIRED"],
-  DECISION_REQUIRED: ["AUTHORIZED"],
+  DECISION_REQUIRED: ["AUTHORIZED", "MONITORING"],
   AUTHORIZED: ["RESPONDING"],
   RESPONDING: ["MONITORING"],
-  MONITORING: ["REASSESSING", "RESOLVED"],
-  REASSESSING: ["RESPONDING", "MONITORING", "RESOLVED"],
+  MONITORING: ["REASSESSING"],
+  REASSESSING: ["MONITORING", "RESPONDING", "RESOLVED", "DECISION_REQUIRED"],
   RESOLVED: ["REVIEWED"],
   REVIEWED: [],
 };
@@ -617,6 +617,41 @@ export const OBSERVATION_ADEQUACIES = [
 ] as const;
 export type ObservationAdequacy = (typeof OBSERVATION_ADEQUACIES)[number];
 
+export const HYPOTHESIS_TYPES = [
+  "H1_FALSE_ALARM",
+  "H2_INTERVENTION_CONDITIONED_NON_EVENT",
+  "H3_DELAYED_FAILURE",
+  "H4_SHIFTED_HAZARD",
+  "H5_OBSERVATION_GAP",
+  "H6_RESIDUAL_HAZARD",
+  "H7_CONFLICTED",
+] as const;
+export type HypothesisType = (typeof HYPOTHESIS_TYPES)[number];
+
+export const EVIDENCE_RELATIONSHIP_TYPES = ["SUPPORTING", "CONTRADICTING", "UNKNOWN"] as const;
+export type EvidenceRelationshipType = (typeof EVIDENCE_RELATIONSHIP_TYPES)[number];
+
+export const HYPOTHESIS_STATUSES = ["ACTIVE", "SUPPORTED", "CONTRADICTED", "DISFAVORED", "VIABLE"] as const;
+export type HypothesisStatus = (typeof HYPOTHESIS_STATUSES)[number];
+
+export interface HypothesisEvidenceBinding {
+  evidence_id: string;
+  relationship: EvidenceRelationshipType;
+  reasoning: string;
+}
+
+export interface CompetingHypothesisItem {
+  hypothesis_type: HypothesisType;
+  status: HypothesisStatus;
+  title: string;
+  description: string;
+  supporting_evidence_ids: string[];
+  contradicting_evidence_ids: string[];
+  unknown_evidence_ids: string[];
+  evidence_bindings: HypothesisEvidenceBinding[];
+  rationale: string;
+}
+
 export interface SpatialDivergenceContext {
   original_latitude: number;
   original_longitude: number;
@@ -641,6 +676,9 @@ export interface OutcomeAssessment {
   spatial_divergence?: SpatialDivergenceContext | null;
   explanation: string;
   evidence_summary: Record<string, unknown>;
+  primary_hypothesis?: HypothesisType | null;
+  competing_hypotheses?: CompetingHypothesisItem[];
+  nbi_recommendations?: NextBestInformationItem[];
   evaluated_at: string;
   evaluated_by: string;
 }
@@ -662,9 +700,14 @@ export interface NextBestInformationItem {
   target_modality: string;
   title: string;
   rationale: string;
-  expected_confidence_delta: number;
+  expected_confidence_delta?: number | null;
+  qualitative_discrimination?: "HIGH" | "MEDIUM" | "LOW" | string;
   authority_required: boolean;
   status: string;
+  target_hypotheses?: string[];
+  discriminates_between?: string[][];
+  spatial_scope?: string | null;
+  temporal_scope?: string | null;
 }
 
 export interface DecisionSupportAssessment {

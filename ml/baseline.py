@@ -67,6 +67,11 @@ except ImportError:
         field_verification_count: int
         data_quality: Any
         raw_feature_map: dict[str, Any] = field(default_factory=dict)
+        input_evidence_ids: list[Any] = field(default_factory=list)
+        evidence_lineage: list[Any] = field(default_factory=list)
+        feature_to_evidence_map: dict[str, Any] = field(default_factory=dict)
+        feature_snapshot: list[Any] = field(default_factory=list)
+        feature_schema_version: str = "v1.0"
 
 
 @dataclass
@@ -106,8 +111,37 @@ class LandslidePredictiveBaseline:
     SCALE_SLOPE = 7.5
 
     @classmethod
+    def validate_inputs(cls, features: ExtractedFeatureVector) -> None:
+        """Strict model-boundary validation for physical and numerical integrity.
+        
+        Rejects non-finite numbers (NaN, inf), invalid physical ranges, and malformed inputs.
+        """
+        required_numeric_fields = [
+            ("antecedent_rainfall_7d_mm", features.antecedent_rainfall_7d_mm, 0.0, 2000.0),
+            ("short_window_rainfall_24h_mm", features.short_window_rainfall_24h_mm, 0.0, 1000.0),
+            ("rainfall_intensity_mmh", features.rainfall_intensity_mmh, 0.0, 300.0),
+            ("slope_gradient_deg", features.slope_gradient_deg, 0.0, 90.0),
+            ("geological_susceptibility", features.geological_susceptibility, 0.0, 1.0),
+            ("soil_saturation_index", features.soil_saturation_index, 0.0, 1.0),
+            ("optical_obscuration_pct", features.optical_obscuration_pct, 0.0, 100.0),
+        ]
+
+        for name, val, min_val, max_val in required_numeric_fields:
+            if not isinstance(val, (int, float)):
+                raise ValueError(f"Feature '{name}' must be numeric, got {type(val).__name__}.")
+            if not math.isfinite(val):
+                raise ValueError(f"Feature '{name}' must be a finite numerical value, got {val}.")
+            if val < min_val or val > max_val:
+                raise ValueError(
+                    f"Feature '{name}' value {val} is outside acceptable physical range [{min_val}, {max_val}]."
+                )
+
+    @classmethod
     def infer(cls, features: ExtractedFeatureVector) -> ModelInferenceResult:
         """Run predictive inference over an extracted feature vector."""
+        # 0. Strict Model Input Boundary Validation
+        cls.validate_inputs(features)
+
         # 1. Feature normalization (standardized scaling)
         z_rain = (features.antecedent_rainfall_7d_mm - cls.CENTER_RAIN_7D) / cls.SCALE_RAIN_7D
         z_slope = (features.slope_gradient_deg - cls.CENTER_SLOPE) / cls.SCALE_SLOPE

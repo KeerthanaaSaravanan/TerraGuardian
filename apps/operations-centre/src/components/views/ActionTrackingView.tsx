@@ -46,7 +46,7 @@ export const ActionTrackingView: React.FC = () => {
       <PrincipleBanner
         principle="APPROVED ACTION ≠ COMPLETED ACTION"
         title="Operational Reality: An authorized action is only an order, not safety."
-        explanation="In paper disaster management, issuing an order is often mistaken for completing it. In TerraGuardian, an authorized action remains LIVE and UNCONFIRMED until the responding agency provides cryptographic or wireless confirmation of ground execution."
+        explanation="In paper disaster management, issuing an order is often mistaken for completing it. In TerraGuardian, an authorized action remains DISPATCHED and UNCONFIRMED until the responding agency submits physical ground confirmation."
         variant="cyan"
       />
 

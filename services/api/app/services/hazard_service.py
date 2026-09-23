@@ -316,8 +316,11 @@ class HazardService:
         model_result = LandslidePredictiveBaseline.infer(feature_vector)
 
         # 2. Deterministic Bounded Reassessment Logic
-        has_verified_field_evidence = any(
-            ev.source == EvidenceSource.FIELD.value and ev.interpretation == EvidenceInterpretation.VERIFIED.value
+        has_verified_active_event = any(
+            ev.source == EvidenceSource.FIELD.value
+            and ev.interpretation == EvidenceInterpretation.VERIFIED.value
+            and not any(neg in (ev.observation or "").lower() for neg in ("no road debris", "no debris", "0% blockage", "0% obstruction", "intact", "slope intact", "no failure", "clear"))
+            and any(kw in (ev.observation or "").lower() for kw in ("debris", "failure", "slide", "slurry", "blockage", "obstruction", "active"))
             for ev in evidence_items
         )
         has_resolution_evidence = any(
@@ -332,7 +335,7 @@ class HazardService:
             # Deterministic classification based on evidence
             if has_resolution_evidence:
                 target_state = HazardState.RESOLVED
-            elif has_verified_field_evidence:
+            elif has_verified_active_event:
                 # Active ground movement verified by patrol
                 target_state = HazardState.ACTIVE
             elif prev_hazard_state == HazardState.EXPECTED:
@@ -376,6 +379,7 @@ class HazardService:
         if target_state == HazardState.DELAYED:
             rationale = (
                 "TEMPORAL REASSESSMENT: Expected failure window elapsed without catastrophic collapse. "
+                "EVENT ABSENCE ≠ HAZARD RESOLUTION. "
                 "However, hydrometeorological saturation (184.6mm) and 44.2° cut-slope gradient sustain high structural danger. "
                 "Hazard state updated from EXPECTED to DELAYED. NO AUTO-RESOLUTION."
             )
