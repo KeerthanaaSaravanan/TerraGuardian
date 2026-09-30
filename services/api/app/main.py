@@ -68,6 +68,19 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Root and API index endpoints
+    @application.get("/")
+    @application.get("/api")
+    @application.get("/api/index")
+    @application.get("/api/v1")
+    async def root_index():
+        return {
+            "status": "ok",
+            "service": "terraguardian-api",
+            "version": "0.0.1",
+            "health": "/api/v1/health"
+        }
+
     # Routers
     application.include_router(health.router)
     application.include_router(health.router, prefix="/api")

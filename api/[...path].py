@@ -18,5 +18,27 @@ if os.environ.get("VERCEL") and not os.environ.get("DATABASE_URL"):
 
 from app.main import app
 
-# Export app for Vercel Python Serverless Runtime
-handler = app
+
+class VercelPathAdapter:
+    """Ensure incoming paths forwarded from Vercel rewrites match FastAPI route definitions."""
+    def __init__(self, inner_app):
+        self.inner_app = inner_app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            headers = dict(scope.get("headers", []))
+            orig_uri = (
+                headers.get(b"x-forwarded-uri")
+                or headers.get(b"x-original-url")
+                or headers.get(b"x-real-path")
+                or headers.get(b"x-matched-path")
+            )
+            if orig_uri:
+                raw_path = orig_uri.decode("utf-8").split("?")[0]
+                if raw_path.startswith("/api"):
+                    scope["path"] = raw_path
+
+        await self.inner_app(scope, receive, send)
+
+
+handler = VercelPathAdapter(app)
