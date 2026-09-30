@@ -73,6 +73,7 @@ def create_app() -> FastAPI:
     @application.get("/api")
     @application.get("/api/index")
     @application.get("/api/v1")
+    @application.get("/v1")
     async def root_index():
         return {
             "status": "ok",
@@ -81,17 +82,35 @@ def create_app() -> FastAPI:
             "health": "/api/v1/health"
         }
 
-    # Routers
+    # Routers - support direct, /api, /v1, and /api/v1 prefixes
     application.include_router(health.router)
     application.include_router(health.router, prefix="/api")
+    application.include_router(health.router, prefix="/v1")
     application.include_router(health.router, prefix="/api/v1")
+
+    application.include_router(auth.router, prefix="/v1")
     application.include_router(auth.router, prefix="/api/v1")
+
+    application.include_router(incidents.router, prefix="/v1")
     application.include_router(incidents.router, prefix="/api/v1")
+
     application.include_router(alerts.router)
+    application.include_router(alerts.router, prefix="/v1")
+    application.include_router(alerts.router, prefix="/api/v1")
+
+    application.include_router(ingestion.router, prefix="/v1")
     application.include_router(ingestion.router, prefix="/api/v1")
+
+    application.include_router(gis.router, prefix="/v1")
     application.include_router(gis.router, prefix="/api/v1")
+
+    application.include_router(copilot.router, prefix="/v1")
     application.include_router(copilot.router, prefix="/api/v1")
+
+    application.include_router(system.router, prefix="/v1")
     application.include_router(system.router, prefix="/api/v1")
+
+    application.include_router(citizen.router, prefix="/v1")
     application.include_router(citizen.router, prefix="/api/v1")
 
     # Static file uploads (citizen evidence photographs)

@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-# Add services/api to sys.path so app and its submodules can be resolved
+# Add services/api and repository root to sys.path so app and its submodules resolve cleanly
 api_dir = Path(__file__).resolve().parent
 root_dir = api_dir.parent
 services_api_dir = root_dir / "services" / "api"
@@ -18,27 +18,4 @@ if os.environ.get("VERCEL") and not os.environ.get("DATABASE_URL"):
 
 from app.main import app
 
-
-class VercelPathAdapter:
-    """Ensure incoming paths forwarded from Vercel rewrites match FastAPI route definitions."""
-    def __init__(self, inner_app):
-        self.inner_app = inner_app
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] == "http":
-            headers = dict(scope.get("headers", []))
-            orig_uri = (
-                headers.get(b"x-forwarded-uri")
-                or headers.get(b"x-original-url")
-                or headers.get(b"x-real-path")
-                or headers.get(b"x-matched-path")
-            )
-            if orig_uri:
-                raw_path = orig_uri.decode("utf-8").split("?")[0]
-                if raw_path.startswith("/api"):
-                    scope["path"] = raw_path
-
-        await self.inner_app(scope, receive, send)
-
-
-handler = VercelPathAdapter(app)
+handler = app

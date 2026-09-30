@@ -327,7 +327,7 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
     async function initializeBackend() {
       try {
         const health = await apiClient.checkHealth();
-        if (health.status !== "ok") {
+        if (health.status !== "ok" && health.status !== "degraded") {
           throw new Error("Backend health check unsuccessful");
         }
 
