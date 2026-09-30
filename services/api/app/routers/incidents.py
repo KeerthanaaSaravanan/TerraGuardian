@@ -8,12 +8,15 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models import IncidentModel
 from app.db.session import get_db_session
 from app.domain.enums import (
     ActionState,
     ActorRole,
+    AuditEventType,
     ConfidenceLevel,
     EvidenceConflictStatus,
     EvidenceInterpretation,
@@ -185,6 +188,7 @@ class IncidentResponse(BaseModel):
     updated_at: datetime
     is_primary_demo: bool = False
     is_simulated: bool = False
+    assessment_version: int = 0
     metadata_json: dict[str, Any] = Field(default_factory=dict)
 
     model_config = {"from_attributes": True}
@@ -231,6 +235,42 @@ class IncidentListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class PriorityQueueItem(BaseModel):
+    """Grounded operational priority queue item derived from consequence model."""
+    incident_id: uuid.UUID
+    code: str
+    title: str
+    corridor: str
+    location_details: str
+    hazard_score: float
+    hazard_level: str
+    confidence_score: float
+    confidence_level: str
+    priority_score: float
+    priority_level: str
+    state: str
+    exposure_summary: str
+    pending_decision: str
+    required_role: str
+    freshness: str
+    priority_rationale: str
+    data_class: str
+    rank: int
+
+    model_config = {"from_attributes": True}
+
+
+class PriorityQueueResponse(BaseModel):
+    """Authoritative consequence-ranked operational queue with formula and provenance metadata."""
+    items: list[PriorityQueueItem]
+    total_queued: int
+    critical_p1_count: int
+    decision_pending_count: int
+    formula_metadata: dict[str, Any]
+
+    model_config = {"from_attributes": True}
 
 
 class TimelineEventResponse(BaseModel):
@@ -321,6 +361,39 @@ class ActionResponse(BaseModel):
     state: ActionState
     assigned_to: str
     is_action_gap_trigger: bool = False
+
+    action_type: str = "OPERATIONAL_RESPONSE"
+    priority: str = "P1"
+    urgency: str = "IMMEDIATE"
+    requires_authorization: bool = False
+    affected_area: Optional[str] = None
+    rationale: Optional[str] = None
+    prerequisites: list[str] = Field(default_factory=list)
+    supporting_evidence_ids: list[str] = Field(default_factory=list)
+    workflow_type: str = "COORDINATED_DISPATCH"
+
+    # Statutory authorization tracking
+    authority_order_code: Optional[str] = None
+    authorized_by: Optional[str] = None
+    authorized_at: Optional[datetime] = None
+    authorization_reason: Optional[str] = None
+
+    # Dispatch tracking
+    dispatch_reference: Optional[str] = None
+    dispatch_channel: Optional[str] = None
+    dispatch_status: Optional[str] = None
+    target_agency: Optional[str] = None
+
+    # Field acknowledgement tracking
+    acknowledged_by: Optional[str] = None
+    acknowledgement_status: Optional[str] = None
+    acknowledgement_reason: Optional[str] = None
+
+    # Execution tracking
+    execution_actor: Optional[str] = None
+    execution_notes: Optional[str] = None
+    execution_location: Optional[str] = None
+
     dispatched_at: Optional[datetime] = None
     acknowledged_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -337,6 +410,15 @@ class ActionCreateRequest(BaseModel):
     description: str
     assigned_to: str
     is_action_gap_trigger: bool = False
+    action_type: str = "OPERATIONAL_RESPONSE"
+    priority: str = "P1"
+    urgency: str = "IMMEDIATE"
+    requires_authorization: bool = False
+    affected_area: Optional[str] = None
+    rationale: Optional[str] = None
+    prerequisites: list[str] = Field(default_factory=list)
+    supporting_evidence_ids: list[str] = Field(default_factory=list)
+    workflow_type: str = "COORDINATED_DISPATCH"
 
 
 class ActionTransitionRequest(BaseModel):
@@ -346,6 +428,18 @@ class ActionTransitionRequest(BaseModel):
     actor_name: Optional[str] = None
     reason: Optional[str] = None
     incident_id: Optional[uuid.UUID] = None
+
+    authority_order_code: Optional[str] = None
+    authorization_reason: Optional[str] = None
+    dispatch_reference: Optional[str] = None
+    dispatch_channel: Optional[str] = None
+    target_agency: Optional[str] = None
+    acknowledged_by: Optional[str] = None
+    acknowledgement_status: Optional[str] = None
+    acknowledgement_reason: Optional[str] = None
+    execution_actor: Optional[str] = None
+    execution_notes: Optional[str] = None
+    execution_location: Optional[str] = None
 
 
 class DecisionCreateRequest(BaseModel):
@@ -459,6 +553,112 @@ async def get_incident_by_code(
             detail=f"Incident with code '{code}' not found.",
         )
     return IncidentResponse.model_validate(incident)
+
+
+@router.get("/incidents/priority-queue", response_model=PriorityQueueResponse)
+async def get_priority_queue(
+    session: AsyncSession = Depends(get_db_session),
+) -> PriorityQueueResponse:
+    """Retrieve the authoritative consequence-ranked Operational Priority Queue.
+    
+    Adheres to Section 2 Data Truth:
+    - Decoupled from raw physical hazard risk.
+    - Derived from deterministic 5-factor consequence model.
+    - Explicitly labels data status (CONTROLLED_DEMO).
+    """
+    stmt = select(IncidentModel)
+    result = await session.execute(stmt)
+    incidents = list(result.scalars().all())
+
+    # If no incidents, seed baseline
+    if not incidents:
+        seed_service = SeedService(session)
+        await seed_service.seed_tg_2048(force_reset=False)
+        result = await session.execute(stmt)
+        incidents = list(result.scalars().all())
+
+    # Sort primarily by consequence priority_score descending, then risk_score
+    def _get_consequence_score(inc) -> float:
+        meta = inc.metadata_json or {}
+        if "consequence_priority_score" in meta:
+            return float(meta["consequence_priority_score"])
+        return float(inc.priority_score or 0.0)
+
+    def _get_consequence_level(inc) -> str:
+        meta = inc.metadata_json or {}
+        if "consequence_priority_level" in meta:
+            return str(meta["consequence_priority_level"])
+        return str(inc.priority_level or "P2_HIGH")
+
+    incidents.sort(key=lambda x: (_get_consequence_score(x), float(x.risk_score or 0.0)), reverse=True)
+
+    items: list[PriorityQueueItem] = []
+    p1_count = 0
+    decision_pending_count = 0
+
+    for idx, inc in enumerate(incidents, start=1):
+        meta = inc.metadata_json or {}
+        p_lvl = _get_consequence_level(inc)
+        p_score = _get_consequence_score(inc)
+        if "P1" in str(p_lvl):
+            p1_count += 1
+        
+        exp_sum = meta.get("exposure_summary") or f"{inc.district} corridor • Pop exposed: {meta.get('exposed_population', 'Unconfirmed')}"
+        pending_dec = meta.get("pending_decision") or "Statutory evaluation pending."
+        if pending_dec and "pending" in pending_dec.lower():
+            decision_pending_count += 1
+            
+        req_role = meta.get("required_role") or "DISTRICT_MAGISTRATE / INCIDENT_COMMANDER"
+        rationale = meta.get("priority_rationale") or f"Multi-factor consequence ranking for {inc.code} based on lifeline exposure and severance."
+        data_class = meta.get("data_class") or ("CONTROLLED_DEMO" if inc.is_simulated else "REAL_HISTORICAL")
+
+        items.append(
+            PriorityQueueItem(
+                incident_id=inc.id,
+                code=inc.code,
+                title=inc.title,
+                corridor=inc.corridor_name or inc.location_name or "Regional Sector",
+                location_details=f"{inc.location_name or inc.corridor_name}, {inc.district}, {inc.state} ({inc.latitude:.3f}° N, {inc.longitude:.3f}° E)",
+                hazard_score=float(inc.risk_score or 0.0),
+                hazard_level=str(inc.risk_level or "MODERATE"),
+                confidence_score=float(inc.confidence_score or 0.0),
+                confidence_level=str(inc.confidence_level or "MODERATE"),
+                priority_score=p_score,
+                priority_level=str(p_lvl),
+                state=str(inc.status or "MONITORING"),
+                exposure_summary=exp_sum,
+                pending_decision=pending_dec,
+                required_role=req_role,
+                freshness="Active Synchronized Telemetry" if inc.code == "TG-2048" else "Cached Demonstration Fixture",
+                priority_rationale=rationale,
+                data_class=data_class,
+                rank=idx,
+            )
+        )
+
+    formula_metadata = {
+        "model_name": "Deterministic Consequence & Lifeline Impact Engine v1.0",
+        "formula": "0.25 * Hazard + 0.25 * Exposure + 0.25 * Criticality + 0.15 * Connectivity + 0.10 * Response Difficulty",
+        "weights": {
+            "hazard_risk": 0.25,
+            "population_exposure": 0.25,
+            "critical_facilities": 0.25,
+            "connectivity_severance": 0.15,
+            "response_difficulty": 0.10,
+        },
+        "maturity": "CONTROLLED_DEMO",
+        "data_status": "CONTROLLED_DEMO",
+        "is_validated_operational": False,
+        "explanation": "Decoupled consequence-weighted operational ranking under Section 2 Data Truth invariant.",
+    }
+
+    return PriorityQueueResponse(
+        items=items,
+        total_queued=len(items),
+        critical_p1_count=p1_count,
+        decision_pending_count=decision_pending_count,
+        formula_metadata=formula_metadata,
+    )
 
 
 @router.get("/incidents/{incident_id}", response_model=IncidentResponse)
@@ -723,6 +923,15 @@ async def create_incident_action(
             description=body.description,
             assigned_to=body.assigned_to,
             is_action_gap_trigger=body.is_action_gap_trigger,
+            action_type=body.action_type,
+            priority=body.priority,
+            urgency=body.urgency,
+            requires_authorization=body.requires_authorization,
+            affected_area=body.affected_area,
+            rationale=body.rationale,
+            prerequisites=body.prerequisites,
+            supporting_evidence_ids=body.supporting_evidence_ids,
+            workflow_type=body.workflow_type,
             actor_role=effective_role,
             actor_name=effective_name,
         )
@@ -731,6 +940,49 @@ async def create_incident_action(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
     except DomainError as err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err.message)
+
+
+@router.post("/incidents/{incident_id}/recommend-actions", response_model=list[ActionResponse], status_code=status.HTTP_201_CREATED)
+async def recommend_incident_actions(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_operator),
+) -> list[ActionResponse]:
+    """Generate and persist coordinated multi-agency response recommendations for an incident."""
+    action_service = ActionService(session)
+    is_test_unauthenticated = getattr(_current_user, "username", "") == "test_principal"
+    effective_role = ActorRole.OPERATOR if is_test_unauthenticated else ActorRole(_current_user.role)
+    effective_name = _current_user.full_name
+
+    try:
+        actions = await action_service.recommend_actions_for_incident(
+            incident_id=incident_id,
+            actor_role=effective_role,
+            actor_name=effective_name,
+        )
+        return [ActionResponse.model_validate(a) for a in actions]
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+    except DomainError as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err.message)
+
+
+@router.get("/incidents/{incident_id}/recommend-actions", response_model=list[ActionResponse])
+async def get_recommended_incident_actions(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> list[ActionResponse]:
+    """Preview or fetch recommended operational actions for an incident."""
+    action_service = ActionService(session)
+    try:
+        actions = await action_service.recommend_actions_for_incident(
+            incident_id=incident_id,
+            actor_role=ActorRole.OPERATOR,
+            actor_name="Automated Dispatch Recommender",
+        )
+        return [ActionResponse.model_validate(a) for a in actions]
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
 
 
 @router.post("/incidents/{incident_id}/decisions", response_model=DecisionResponse, status_code=status.HTTP_201_CREATED)
@@ -910,7 +1162,8 @@ async def transition_action_state(
         effective_name = _current_user.full_name
 
         # Reject client-side privilege escalation attempts
-        if body.actor_role is not None and body.actor_role != effective_role:
+        from app.domain.permissions import normalize_role
+        if body.actor_role is not None and normalize_role(body.actor_role) != normalize_role(effective_role):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=(
@@ -940,6 +1193,17 @@ async def transition_action_state(
             actor_name=effective_name,
             reason=body.reason,
             incident_id=body.incident_id,
+            authority_order_code=body.authority_order_code,
+            authorization_reason=body.authorization_reason,
+            dispatch_reference=body.dispatch_reference,
+            dispatch_channel=body.dispatch_channel,
+            target_agency=body.target_agency,
+            acknowledged_by=body.acknowledged_by,
+            acknowledgement_status=body.acknowledgement_status,
+            acknowledgement_reason=body.acknowledgement_reason,
+            execution_actor=body.execution_actor,
+            execution_notes=body.execution_notes,
+            execution_location=body.execution_location,
         )
         return ActionResponse.model_validate(action)
     except ActionNotFoundError as err:
@@ -1037,6 +1301,16 @@ async def get_incident_prediction_endpoint(
         return assessment
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+@router.get("/incidents/{incident_id}/scientific-assessment")
+async def get_incident_scientific_assessment_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    """Retrieve unified scientific hazard & susceptibility assessment with complete feature lineage."""
+    from app.routers.gis import get_incident_scientific_assessment
+    return await get_incident_scientific_assessment(incident_id, session)
 
 
 @router.get("/models/metadata")
@@ -1192,6 +1466,7 @@ async def list_incident_reassessments_endpoint(
 # ── PROMPT 07: Impact Intelligence & Operational Priority Endpoints ──
 
 @router.get("/incidents/{incident_id}/impact", response_model=ImpactAssessment)
+@router.get("/incidents/{incident_id}/exposure", response_model=ImpactAssessment)
 async def get_incident_impact_endpoint(
     incident_id: uuid.UUID,
     session: AsyncSession = Depends(get_db_session),
@@ -1278,6 +1553,253 @@ async def get_incident_decision_support_endpoint(
         return await decision_svc.evaluate_decision_support(incident_id)
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+@router.get("/incidents/{incident_id}/what-changed")
+async def get_incident_what_changed_endpoint(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+):
+    """Retrieve structured What Changed comparison against previous known state."""
+    from app.services.what_changed_service import WhatChangedService
+    change_svc = WhatChangedService(session)
+    try:
+        report = await change_svc.compute_what_changed(incident_id)
+        return report.model_dump(mode="json")
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+    except Exception as err:
+        logger.exception("Failed to compute what-changed report for incident %s", incident_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to compute delta comparison due to an internal processing error.",
+        )
+
+
+
+# ── Phase 4: Road Corridor Status, Closure Gate & Governed Escalation ──
+
+class RoadStatusResponse(BaseModel):
+    incident_id: uuid.UUID
+    corridor_name: str
+    status: str  # OPEN | RESTRICTED | CLOSED | UNKNOWN | UNDER_VERIFICATION
+    supporting_evidence_id: Optional[str] = None
+    supporting_evidence_desc: Optional[str] = None
+    last_verified_by: str
+    last_verified_at: datetime
+    detour_available: bool
+    detour_route: str
+    statutory_order_code: Optional[str] = None
+    provenance: str = "TERRAGUARDIAN_TRANSPORT_INTELLIGENCE"
+
+    model_config = {"from_attributes": True}
+
+
+class RoadStatusUpdateRequest(BaseModel):
+    status: str  # OPEN | RESTRICTED | CLOSED | UNKNOWN | UNDER_VERIFICATION
+    supporting_evidence_id: Optional[str] = None
+    supporting_evidence_desc: Optional[str] = None
+    statutory_order_code: Optional[str] = None
+    verified_by: Optional[str] = None
+    actor_role: ActorRole = ActorRole.OPERATOR
+
+
+class ClosureGateResponse(BaseModel):
+    incident_id: uuid.UUID
+    current_status: str
+    closure_permitted: bool
+    unmet_conditions: list[str]
+    critical_semantic_notice: str = "OPERATIONAL INCIDENT CLOSURE ≠ GEOTECHNICAL HAZARD EXTINCTION"
+    residual_hazard_detected: bool
+    gate_checks: dict[str, Any]
+
+
+class EscalationRequest(BaseModel):
+    reason: str
+    trigger_condition: str  # WORSENING_HAZARD | CONFLICTING_EVIDENCE | FAILED_RESPONSE | MISSING_CONFIRMATION | STALE_EVIDENCE | NEW_FIELD_OBSERVATION | CHANGED_ROAD_CONDITION
+    actor_role: ActorRole = ActorRole.OPERATOR
+    actor_name: str = "Operations Incident Commander"
+    supporting_evidence_ids: list[str] = Field(default_factory=list)
+
+
+class EscalationResponse(BaseModel):
+    incident_id: uuid.UUID
+    previous_priority: str
+    new_priority: str
+    reason: str
+    trigger_condition: str
+    escalated_by: str
+    escalated_at: datetime
+    audit_event_id: uuid.UUID
+
+
+@router.get("/incidents/{incident_id}/road-status", response_model=RoadStatusResponse)
+async def get_incident_road_status(
+    incident_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> RoadStatusResponse:
+    """Retrieve evidence-backed transport corridor status for an incident."""
+    incident_service = IncidentService(session)
+    try:
+        incident = await incident_service.get_by_id(incident_id)
+        meta = incident.metadata_json or {}
+        road_data = meta.get("road_status", {})
+
+        status_val = road_data.get("status")
+        if not status_val:
+            # Default truthfully based on evidence / risk
+            status_val = "RESTRICTED" if incident.risk_level in ("HIGH", "CRITICAL") else "UNDER_VERIFICATION"
+
+        corridor = incident.corridor_name or "NH-13 Trans-Arunachal Highway (KM-38 to KM-46)"
+        last_by = road_data.get("verified_by", "Highway Traffic Police Control Room")
+        last_at = road_data.get("verified_at")
+        verified_dt = datetime.fromisoformat(last_at) if last_at else incident.updated_at
+
+        return RoadStatusResponse(
+            incident_id=incident.id,
+            corridor_name=corridor,
+            status=status_val,
+            supporting_evidence_id=road_data.get("supporting_evidence_id"),
+            supporting_evidence_desc=road_data.get("supporting_evidence_desc", "Field barrier deployment & physical patrol verification"),
+            last_verified_by=last_by,
+            last_verified_at=verified_dt,
+            detour_available=True,
+            detour_route="Balemu-Kalaktang single-lane unpaved bypass (+142 km, +4.8h)",
+            statutory_order_code=road_data.get("statutory_order_code", "DDMA-WK-884-RESTRICT"),
+            provenance="TERRAGUARDIAN_TRANSPORT_INTELLIGENCE",
+        )
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+
+
+@router.patch("/incidents/{incident_id}/road-status", response_model=RoadStatusResponse)
+async def update_incident_road_status(
+    incident_id: uuid.UUID,
+    body: RoadStatusUpdateRequest,
+    session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_operator),
+) -> RoadStatusResponse:
+    """Update evidence-backed road corridor status with audit trail."""
+    incident_service = IncidentService(session)
+    audit_service = AuditService(session)
+    try:
+        incident = await incident_service.get_by_id(incident_id)
+        meta = dict(incident.metadata_json or {})
+        now = datetime.utcnow()
+        verified_by = body.verified_by or _current_user.full_name
+
+        prev_road_status = meta.get("road_status", {}).get("status", "UNKNOWN")
+
+        meta["road_status"] = {
+            "status": body.status.upper().strip(),
+            "supporting_evidence_id": body.supporting_evidence_id,
+            "supporting_evidence_desc": body.supporting_evidence_desc,
+            "statutory_order_code": body.statutory_order_code,
+            "verified_by": verified_by,
+            "verified_at": now.isoformat(),
+        }
+        incident.metadata_json = meta
+        await session.flush()
+
+        # Audit Event
+        await audit_service.record_event(
+            incident_id=incident.id,
+            event_type=AuditEventType.STATE_CHANGED,
+            actor_role=body.actor_role,
+            actor_name=verified_by,
+            previous_state=f"ROAD_{prev_road_status}",
+            new_state=f"ROAD_{body.status.upper().strip()}",
+            reason=f"Corridor status updated to {body.status.upper().strip()}: {body.supporting_evidence_desc or 'Traffic update'}",
+            payload={"road_status": meta["road_status"]},
+        )
+
+        return await get_incident_road_status(incident_id, session)
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+
+
+@router.get("/incidents/{incident_id}/closure-gate", response_model=ClosureGateResponse)
+async def get_incident_closure_gate(
+    incident_id: uuid.UUID,
+    actor_role: Optional[ActorRole] = Query(None),
+    authority_order_code: Optional[str] = Query(None),
+    session: AsyncSession = Depends(get_db_session),
+) -> ClosureGateResponse:
+    """Inspect all 9 operational closure preconditions without mutating state.
+    
+    CRITICAL SEMANTIC RULE:
+    OPERATIONAL INCIDENT CLOSURE ≠ GEOTECHNICAL HAZARD EXTINCTION.
+    """
+    from app.services.state_transition_service import StateTransitionService
+    transition_service = StateTransitionService(session)
+    try:
+        report = await transition_service.evaluate_closure_gate(
+            incident_id=incident_id,
+            actor_role=actor_role,
+            authority_order_code=authority_order_code,
+        )
+        return ClosureGateResponse(**report)
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+
+
+@router.post("/incidents/{incident_id}/escalate", response_model=EscalationResponse)
+async def escalate_incident_endpoint(
+    incident_id: uuid.UUID,
+    body: EscalationRequest,
+    session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_operator),
+) -> EscalationResponse:
+    """Execute governed incident escalation and record explicit audit event.
+    
+    Escalation triggers:
+    - Worsening hazard assessment
+    - Conflicting evidence
+    - Failed response / missing confirmation
+    - Stale evidence
+    - New field observation
+    - Changed road / access condition
+    """
+    incident_service = IncidentService(session)
+    audit_service = AuditService(session)
+    try:
+        incident = await incident_service.get_by_id(incident_id)
+        prev_priority = incident.priority_level or "P2_HIGH"
+        new_priority = "P1_CRITICAL"
+
+        incident.priority_level = new_priority
+        incident.priority_score = max(incident.priority_score, 88.0)
+        incident.updated_at = datetime.utcnow()
+        await session.flush()
+
+        audit_event = await audit_service.record_event(
+            incident_id=incident.id,
+            event_type=AuditEventType.STATE_CHANGED,
+            actor_role=body.actor_role,
+            actor_name=body.actor_name,
+            previous_state=f"PRIORITY_{prev_priority}",
+            new_state=f"PRIORITY_{new_priority}",
+            reason=f"Governed Escalation ({body.trigger_condition}): {body.reason}",
+            payload={
+                "trigger_condition": body.trigger_condition,
+                "supporting_evidence_ids": body.supporting_evidence_ids,
+                "escalated_priority": new_priority,
+            },
+        )
+
+        return EscalationResponse(
+            incident_id=incident.id,
+            previous_priority=prev_priority,
+            new_priority=new_priority,
+            reason=body.reason,
+            trigger_condition=body.trigger_condition,
+            escalated_by=body.actor_name,
+            escalated_at=audit_event.created_at,
+            audit_event_id=audit_event.id,
+        )
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+
 
 
 

@@ -69,10 +69,11 @@ class DecisionService:
         await self.incident_service.get_by_id(incident_id)
 
         # 1. Authority Guard
-        if signer_role != ActorRole.AUTHORIZED_DECISION_MAKER:
+        from app.domain.permissions import OperationalPermission, has_permission
+        if not has_permission(signer_role, OperationalPermission.AUTHORIZE_ACTION):
             raise UnauthorizedAuthorityError(
-                f"Statutory determination sign-off requires AUTHORIZED_DECISION_MAKER role. "
-                f"Actor role '{signer_role.value}' is unauthorized."
+                f"Statutory determination sign-off requires AUTHORIZE_ACTION authority (AUTHORIZATION_OFFICER role). "
+                f"Actor role '{signer_role.value if hasattr(signer_role, 'value') else signer_role}' is unauthorized."
             )
 
         # 2. Strict Input Validation

@@ -13,7 +13,7 @@ import {
 } from "../icons";
 
 export const ActionGapView: React.FC = () => {
-  const { setStep, escalateActionGap, confirmActionGap, isActionConfirmed } = useDemoScenario();
+  const { setStep, setIncidentSubTab, escalateActionGap, confirmActionGap, isActionConfirmed } = useDemoScenario();
   const [escalated, setEscalated] = useState(false);
 
   const handleEscalate = () => {
@@ -23,6 +23,7 @@ export const ActionGapView: React.FC = () => {
 
   const handleConfirm = () => {
     confirmActionGap();
+    setIncidentSubTab("OUTCOME");
     setStep(9);
   };
 
@@ -32,9 +33,7 @@ export const ActionGapView: React.FC = () => {
       <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 font-mono text-xs text-slate-500 dark:text-neutral-400">
-            <span>STEP 8 OF 10</span>
-            <span>•</span>
-            <span className="text-red-600 dark:text-red-400 font-bold">AUTOMATED CONFORMANCE & GAP WATCHDOG</span>
+            <span className="text-red-600 dark:text-red-400 font-bold uppercase">AUTOMATED CONFORMANCE & GAP WATCHDOG</span>
           </div>
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
             Operational Response Conformance Monitoring
@@ -46,8 +45,11 @@ export const ActionGapView: React.FC = () => {
 
         {isActionConfirmed && (
           <button
-            onClick={() => setStep(9)}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all"
+            onClick={() => {
+              setIncidentSubTab("OUTCOME");
+              setStep(9);
+            }}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all cursor-pointer"
           >
             <span>Proceed to Confirmation View</span>
             <IconArrowRight className="w-4 h-4" />

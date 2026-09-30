@@ -76,9 +76,15 @@ class HypothesisStatus(str, enum.Enum):
 
     ACTIVE = "ACTIVE"
     SUPPORTED = "SUPPORTED"
+    SUPPORTING = "SUPPORTING"
     CONTRADICTED = "CONTRADICTED"
+    CONTRADICTING = "CONTRADICTING"
     DISFAVORED = "DISFAVORED"
     VIABLE = "VIABLE"
+    UNKNOWN = "UNKNOWN"
+    UNRESOLVED = "UNRESOLVED"
+    SELECTED_FOR_REVIEW = "SELECTED_FOR_REVIEW"
+    REJECTED = "REJECTED"
 
 
 class InterventionContextState(str, enum.Enum):
@@ -124,6 +130,9 @@ class HypothesisEvidenceBinding(BaseModel):
 class CompetingHypothesisItem(BaseModel):
     """Authoritative representation of one of the 7 competing operational hypotheses."""
 
+    hypothesis_id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    incident_id: Optional[uuid.UUID] = None
+    hypothesis_code: Optional[str] = None
     hypothesis_type: HypothesisType
     status: HypothesisStatus = HypothesisStatus.VIABLE
     title: str
@@ -131,10 +140,17 @@ class CompetingHypothesisItem(BaseModel):
     supporting_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
     contradicting_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
     unknown_evidence_ids: list[uuid.UUID] = Field(default_factory=list)
+    supporting_evidence: list[str] = Field(default_factory=list)
+    contradicting_evidence: list[str] = Field(default_factory=list)
+    unknown_evidence: list[str] = Field(default_factory=list)
     evidence_bindings: list[HypothesisEvidenceBinding] = Field(default_factory=list)
-    rationale: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    rationale: str = ""
+    next_best_information: list[str] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
+
 
 
 class OutcomePolicyConfig(BaseModel):

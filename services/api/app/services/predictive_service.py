@@ -14,8 +14,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.db.models import AuditEventModel, IncidentModel
+from app.db.models import AuditEventModel, IncidentFeaturesModel, IncidentModel
 from app.domain.enums import AuditEventType
+
 from app.domain.risk import ModelMetadata, PredictiveRiskAssessment
 from app.services.audit_service import AuditService
 from app.services.feature_pipeline import FeaturePipeline
@@ -53,7 +54,7 @@ class PredictiveService:
         # 2. Predictive Baseline Inference
         inference_result = LandslidePredictiveBaseline.infer(feature_vector)
 
-        # 3. Update Incident Model metrics
+        # 3. Update Incident Model metrics and increment monotonic assessment version (TG-003)
         prev_risk_score = incident.risk_score
         prev_confidence_score = incident.confidence_score
 
@@ -61,12 +62,15 @@ class PredictiveService:
         incident.risk_level = inference_result.risk_level.value
         incident.confidence_score = inference_result.confidence_score
         incident.confidence_level = inference_result.confidence_level.value
+        incident.assessment_version = (getattr(incident, "assessment_version", 0) or 0) + 1
+        incident.last_evaluated_at = datetime.utcnow()
         incident.updated_at = datetime.utcnow()
 
         # 4. Construct Structured Domain Assessment with Complete Lineage
         assessment = PredictiveRiskAssessment(
             id=uuid.uuid4(),
             incident_id=incident.id,
+            assessment_version=incident.assessment_version,
             risk_score=inference_result.risk_score,
             risk_level=inference_result.risk_level,
             confidence_score=inference_result.confidence_score,
@@ -85,26 +89,40 @@ class PredictiveService:
             assessed_by=actor_name,
         )
 
+        # 5. Persist Normalized Feature Vector to SQLite Database Table (TG-008)
+        feature_record = IncidentFeaturesModel(
+            incident_id=incident.id,
+            assessment_version=incident.assessment_version,
+            feature_schema_version=feature_vector.feature_schema_version,
+            features_json=feature_vector.raw_feature_map,
+            data_quality_json=feature_vector.data_quality.model_dump(mode="json") if hasattr(feature_vector.data_quality, "model_dump") else {},
+            evidence_lineage_json=[item.model_dump(mode="json") if hasattr(item, "model_dump") else item for item in feature_vector.evidence_lineage],
+            calculated_at=datetime.utcnow(),
+        )
+        self.session.add(feature_record)
+
         # Update Incident Metadata with Latest Prediction Lineage
         meta = incident.metadata_json or {}
         meta["latest_prediction_id"] = str(assessment.id)
         meta["latest_prediction_model"] = assessment.model_metadata.model_name
         meta["latest_prediction_version"] = assessment.model_metadata.model_version
+        meta["latest_assessment_version"] = incident.assessment_version
         meta["latest_prediction_evidence_ids"] = [str(eid) for eid in feature_vector.input_evidence_ids]
         meta["latest_prediction_assessed_at"] = assessment.assessed_at.isoformat()
         incident.metadata_json = meta
 
-        # 5. Append Audit Event with Lineage Snapshot
+        # 6. Append Audit Event with Lineage Snapshot
         await self.audit_service.record_event(
             incident_id=incident.id,
             event_type=AuditEventType.RISK_ASSESSED,
             actor_role=actor_role,
             actor_name=actor_name,
-            previous_state=f"Risk:{prev_risk_score} | Conf:{prev_confidence_score}",
-            new_state=f"Risk:{inference_result.risk_score} ({inference_result.risk_level.value}) | Conf:{inference_result.confidence_score} ({inference_result.confidence_level.value})",
+            previous_state=f"Risk:{prev_risk_score} | Conf:{prev_confidence_score} | Ver:{incident.assessment_version - 1}",
+            new_state=f"Risk:{inference_result.risk_score} ({inference_result.risk_level.value}) | Conf:{inference_result.confidence_score} ({inference_result.confidence_level.value}) | Ver:{incident.assessment_version}",
             reason="Predictive baseline hazard assessment executed over multi-source evidence fabric.",
             payload={
                 "prediction_id": str(assessment.id),
+                "assessment_version": incident.assessment_version,
                 "risk_score": inference_result.risk_score,
                 "risk_level": inference_result.risk_level.value,
                 "confidence_score": inference_result.confidence_score,
@@ -121,6 +139,17 @@ class PredictiveService:
 
         await self.session.commit()
         return assessment
+
+    async def get_latest_features(self, incident_id: uuid.UUID) -> Optional[IncidentFeaturesModel]:
+        """Fetch the latest persisted features row from incident_features table."""
+        stmt = (
+            select(IncidentFeaturesModel)
+            .where(IncidentFeaturesModel.incident_id == incident_id)
+            .order_by(IncidentFeaturesModel.calculated_at.desc())
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
 
     async def get_latest_prediction(self, incident_id: uuid.UUID) -> PredictiveRiskAssessment:
         """Derive or fetch the latest predictive risk assessment for an incident."""
@@ -141,7 +170,9 @@ class PredictiveService:
         return PredictiveRiskAssessment(
             id=uuid.uuid4(),
             incident_id=incident.id,
+            assessment_version=getattr(incident, "assessment_version", 1) or 1,
             risk_score=inference_result.risk_score,
+
             risk_level=inference_result.risk_level,
             confidence_score=inference_result.confidence_score,
             confidence_level=inference_result.confidence_level,

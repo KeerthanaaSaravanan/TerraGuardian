@@ -28,7 +28,7 @@ class LoginRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
-    """Sanitized user identity representation. Password hash is strictly excluded."""
+    """Sanitized user identity representation with explicit operational permissions."""
     id: uuid.UUID
     username: str
     email: str
@@ -37,8 +37,14 @@ class UserResponse(BaseModel):
     agency: Optional[str] = None
     badge_number: Optional[str] = None
     is_active: bool
+    permissions: list[str] = []
 
     model_config = {"from_attributes": True}
+
+    def model_post_init(self, __context: Any) -> None:
+        if not self.permissions:
+            from app.domain.permissions import get_role_permissions
+            self.permissions = get_role_permissions(self.role)
 
 
 class TokenResponse(BaseModel):

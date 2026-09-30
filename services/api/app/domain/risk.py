@@ -84,6 +84,7 @@ class PredictiveRiskAssessment(BaseModel):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     incident_id: uuid.UUID
+    assessment_version: int = Field(default=1, ge=1, description="Sequential digital twin re-evaluation version counter.")
 
     risk_score: float = Field(ge=0.0, le=100.0, description="Numerical physical hazard score (0-100).")
     risk_level: RiskLevel

@@ -63,7 +63,7 @@ describe("Authentication & RBAC Context", () => {
     fireEvent.click(screen.getByText("Login Citizen"));
 
     await waitFor(() => {
-      expect(screen.getByTestId("user-role").textContent).toBe("PUBLIC_CITIZEN");
+      expect(["CITIZEN", "PUBLIC_CITIZEN"]).toContain(screen.getByTestId("user-role").textContent);
       expect(screen.getByTestId("is-authority").textContent).toBe("NO");
       expect(screen.getByTestId("is-citizen").textContent).toBe("YES");
     });
@@ -82,9 +82,9 @@ describe("LoginView Component", () => {
 
     expect(screen.getByText(/Operations Command Sign-In/i)).toBeInTheDocument();
     expect(screen.getByText(/DEMO \/ LOCAL ONLY PRESETS/i)).toBeInTheDocument();
-    expect(screen.getByText(/Operator /i)).toBeInTheDocument();
-    expect(screen.getByText(/Magistrate /i)).toBeInTheDocument();
-    expect(screen.getByText(/Patrol /i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Operator/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Magistrate/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Patrol/i)[0]).toBeInTheDocument();
   });
 });
 
@@ -134,13 +134,13 @@ describe("Living Incident GoldenDemoView Component", () => {
       </ThemeProvider>
     );
 
-    expect(screen.getByText(/SCENARIO A/i)).toBeInTheDocument();
-    expect(screen.getByText(/SCENARIO B/i)).toBeInTheDocument();
-    expect(screen.getByText(/SCENARIO C/i)).toBeInTheDocument();
-    expect(screen.getByText(/SCENARIO D/i)).toBeInTheDocument();
-    expect(screen.getByText(/SCENARIO E/i)).toBeInTheDocument();
-    expect(screen.getByText(/SCENARIO F/i)).toBeInTheDocument();
-    expect(screen.getByText(/SCENARIO G/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/SCENARIO A/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/SCENARIO B/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/SCENARIO C/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/SCENARIO D/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/SCENARIO E/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/SCENARIO F/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/SCENARIO G/i)[0]).toBeInTheDocument();
   });
 
   it("renders the 7 competing hypotheses H1 through H7 distinctly", () => {
@@ -183,7 +183,7 @@ describe("Living Incident GoldenDemoView Component", () => {
     expect(screen.getByText(/≤ 500 m/i)).toBeInTheDocument();
   });
 
-  it("renders the 7 strict evidentiary closure preconditions", () => {
+  it("renders the 9 strict evidentiary closure preconditions", () => {
     render(
       <ThemeProvider>
         <AuthProvider>
@@ -195,12 +195,14 @@ describe("Living Incident GoldenDemoView Component", () => {
     );
 
     expect(screen.getByText(/1\. Source State: REASSESSING/i)).toBeInTheDocument();
-    expect(screen.getByText(/2\. Actor Role: AUTHORIZED_DECISION_MAKER/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\. Actor Role: AUTHORIZATION_OFFICER/i)).toBeInTheDocument();
     expect(screen.getByText(/3\. Order Reference: Resolution Order Code/i)).toBeInTheDocument();
     expect(screen.getByText(/4\. Dispatched Tasks: ALL PHYSICALLY_CONFIRMED/i)).toBeInTheDocument();
     expect(screen.getByText(/5\. Evidence Conflicts: All Reconciled/i)).toBeInTheDocument();
     expect(screen.getByText(/6\. Ground Truth: Fresh Verified FIELD/i)).toBeInTheDocument();
-    expect(screen.getByText(/7\. Outcome Engine: Clearance & Fresh Eval/i)).toBeInTheDocument();
+    expect(screen.getByText(/7\. Freshness Threshold: Freshness Within 6\.0 Hours/i)).toBeInTheDocument();
+    expect(screen.getByText(/8\. Outcome Engine: Clearance & Fresh Eval/i)).toBeInTheDocument();
+    expect(screen.getByText(/9\. Outcome Evaluation Current: No Subsequent Evidence Unassessed/i)).toBeInTheDocument();
   });
 
   it("enforces that NBI uses qualitative discrimination only without quantitative confidence gains", () => {

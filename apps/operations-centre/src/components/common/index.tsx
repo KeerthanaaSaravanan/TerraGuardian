@@ -2,6 +2,9 @@ import React, { type ReactNode } from "react";
 import { useTheme } from "../../context/ThemeContext";
 import { riskTokens, confidenceTokens, priorityTokens, lifecycleTokens } from "../../design-system/tokens";
 import { IconCheckCircle2, IconAlertTriangle, IconShieldCheck, IconClock, IconActivity } from "../icons";
+export { TruthBadge, MaturityBadge } from "../../design-system/components/TruthMaturityBadge";
+export { OperationalStateBadge, AlertLifecycleBadge } from "../../design-system/components/OperationalStateBadge";
+export { WhatChangedPanel } from "./WhatChangedPanel";
 
 // ── StatusBadge Component ──
 interface StatusBadgeProps {

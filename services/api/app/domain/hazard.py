@@ -168,3 +168,48 @@ class HazardLineageSummary(BaseModel):
     total_reassessments_performed: int
     continuity_intact: bool
     lineage_tree: list[dict[str, Any]] = Field(default_factory=list)
+    evidence_lineage: list[dict[str, Any]] = Field(default_factory=list)
+    operational_lineage: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class EvidenceLineageNode(BaseModel):
+    """Node in the evidence lineage graph (DATA -> FEATURE -> ASSESSMENT -> CONCLUSION)."""
+
+    id: str
+    node_type: str  # DATA | FEATURE | ASSESSMENT | CONCLUSION
+    name: str
+    details: Optional[str] = None
+    provenance: Optional[str] = None
+
+
+class EvidenceLineageRelation(BaseModel):
+    """Relation connecting nodes in the evidence lineage graph."""
+
+    source_id: str
+    target_id: str
+    relation_type: str  # DERIVED_FROM | SUPPORTS | SUPERSEDES
+
+
+class EvidenceLineageGraph(BaseModel):
+    """Graph representation of multi-modal evidence lineage."""
+
+    nodes: list[EvidenceLineageNode] = Field(default_factory=list)
+    relations: list[EvidenceLineageRelation] = Field(default_factory=list)
+
+
+class OperationalLineageNode(BaseModel):
+    """Stage in the operational lineage chain."""
+
+    step: int
+    stage: str  # HAZARD | EXPOSURE | CONSEQUENCE | PRIORITY | DECISION | ACTION | CONFIRMATION | OUTCOME | REASSESSMENT
+    label: str
+    status: str
+    details: str
+
+
+class OperationalLineageChain(BaseModel):
+    """Sequential closed-loop operational lineage chain."""
+
+    incident_id: str
+    chain: list[OperationalLineageNode] = Field(default_factory=list)
+

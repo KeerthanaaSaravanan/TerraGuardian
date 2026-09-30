@@ -203,6 +203,39 @@ export interface OperationalAction {
   state: ActionState;
   assigned_to: string;
   is_action_gap_trigger: boolean;
+
+  action_type?: string;
+  priority?: string;
+  urgency?: string;
+  requires_authorization?: boolean;
+  affected_area?: string | null;
+  rationale?: string | null;
+  prerequisites?: string[];
+  supporting_evidence_ids?: string[];
+  workflow_type?: string;
+
+  // Statutory authorization tracking
+  authority_order_code?: string | null;
+  authorized_by?: string | null;
+  authorized_at?: string | null;
+  authorization_reason?: string | null;
+
+  // Dispatch tracking
+  dispatch_reference?: string | null;
+  dispatch_channel?: string | null;
+  dispatch_status?: string | null;
+  target_agency?: string | null;
+
+  // Field acknowledgement tracking
+  acknowledged_by?: string | null;
+  acknowledgement_status?: string | null;
+  acknowledgement_reason?: string | null;
+
+  // Execution tracking
+  execution_actor?: string | null;
+  execution_notes?: string | null;
+  execution_location?: string | null;
+
   dispatched_at?: string | null;
   acknowledged_at?: string | null;
   completed_at?: string | null;
@@ -235,13 +268,51 @@ export const PRIORITY_LEVELS = ["P1_CRITICAL", "P2_HIGH", "P3_MODERATE", "P4_LOW
 export type PriorityLevel = (typeof PRIORITY_LEVELS)[number];
 
 export const ACTOR_ROLES = [
-  "PUBLIC_CITIZEN",
-  "SYSTEM_AI",
-  "FIELD_VERIFIER",
+  // 7 Canonical Operational Roles (Phase 2)
+  "CITIZEN",
   "OPERATOR",
+  "ASSESSMENT_OFFICER",
+  "FIELD_RESPONDER",
+  "AUTHORIZATION_OFFICER",
+  "REVIEWER",
+  "ADMINISTRATOR",
+  // Compatibility Aliases & System Roles
+  "PUBLIC_CITIZEN",
+  "FIELD_VERIFIER",
   "AUTHORIZED_DECISION_MAKER",
+  "ADMIN",
+  "SYSTEM_AI",
 ] as const;
 export type ActorRole = (typeof ACTOR_ROLES)[number];
+
+export const OPERATIONAL_PERMISSIONS = [
+  "READ",
+  "ASSESS",
+  "RECONCILE_EVIDENCE",
+  "PROPOSE_ACTION",
+  "AUTHORIZE_ACTION",
+  "EXECUTE_ACTION",
+  "CONFIRM_PHYSICAL_COMPLETION",
+  "RECORD_OUTCOME",
+  "REVIEW",
+  "ADMINISTER",
+] as const;
+export type OperationalPermission = (typeof OPERATIONAL_PERMISSIONS)[number];
+
+export const PERMISSION_MATRIX: Record<ActorRole, OperationalPermission[]> = {
+  CITIZEN: ["READ"],
+  PUBLIC_CITIZEN: ["READ"],
+  OPERATOR: ["READ", "ASSESS", "RECONCILE_EVIDENCE", "PROPOSE_ACTION", "EXECUTE_ACTION", "RECORD_OUTCOME", "REVIEW"],
+  ASSESSMENT_OFFICER: ["READ", "ASSESS", "RECONCILE_EVIDENCE", "PROPOSE_ACTION", "RECORD_OUTCOME", "REVIEW"],
+  FIELD_RESPONDER: ["READ", "RECONCILE_EVIDENCE", "EXECUTE_ACTION", "CONFIRM_PHYSICAL_COMPLETION"],
+  FIELD_VERIFIER: ["READ", "RECONCILE_EVIDENCE", "EXECUTE_ACTION", "CONFIRM_PHYSICAL_COMPLETION"],
+  AUTHORIZATION_OFFICER: ["READ", "ASSESS", "RECONCILE_EVIDENCE", "PROPOSE_ACTION", "AUTHORIZE_ACTION", "RECORD_OUTCOME", "REVIEW"],
+  AUTHORIZED_DECISION_MAKER: ["READ", "ASSESS", "RECONCILE_EVIDENCE", "PROPOSE_ACTION", "AUTHORIZE_ACTION", "RECORD_OUTCOME", "REVIEW"],
+  REVIEWER: ["READ", "REVIEW"],
+  ADMINISTRATOR: ["READ", "REVIEW", "ADMINISTER"],
+  ADMIN: ["READ", "REVIEW", "ADMINISTER"],
+  SYSTEM_AI: ["READ", "ASSESS", "RECONCILE_EVIDENCE"],
+};
 
 export interface AuditEvent {
   id: string;
@@ -574,6 +645,7 @@ export interface UserProfile {
   agency?: string | null;
   badge_number?: string | null;
   is_active: boolean;
+  permissions?: string[];
 }
 
 export interface AuthTokenResponse {

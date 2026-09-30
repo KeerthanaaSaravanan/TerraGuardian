@@ -6,7 +6,7 @@
 ### Landslide Operational Intelligence System
 **From Warning to Verified Response**
 
-[![Runtime Tests](https://img.shields.io/badge/Backend%20Tests-149%2F149%20Passing%20(100%25)-emerald?style=for-the-badge&logo=pytest)](https://github.com/KeerthanaaSaravanan/TerraGuardian)
+[![Runtime Tests](https://img.shields.io/badge/Backend%20Tests-319%2F319%20Passing%20(100%25)-emerald?style=for-the-badge&logo=pytest)](https://github.com/KeerthanaaSaravanan/TerraGuardian)
 [![Frontend Status](https://img.shields.io/badge/Frontend%20Builds-Operations%20Centre%20%7C%20Safe%20Citizen%20(Verified)-blue?style=for-the-badge&logo=vite)](https://terraguardian.vercel.app/)
 [![Lifecycle Engine](https://img.shields.io/badge/FSM-11--State%20Server--Enforced-purple?style=for-the-badge)](https://github.com/KeerthanaaSaravanan/TerraGuardian)
 [![Maturity](https://img.shields.io/badge/Implementation%20Maturity-Demonstration--Ready%20Prototype-amber?style=for-the-badge)](https://github.com/KeerthanaaSaravanan/TerraGuardian)
@@ -122,25 +122,27 @@ In reality, the absence of an observed failure may be caused by:
 
 ## 3. NON-NEGOTIABLE SEMANTIC SAFEGUARDS
 
-The integrity of TerraGuardian rests on 15 non-negotiable semantic invariants enforced across the backend schemas, services, API boundaries, and UI components:
+The integrity of TerraGuardian rests on 15 non-negotiable semantic invariants (Product Laws) enforced across the backend schemas, services, API boundaries, and UI components:
 
 $$\begin{aligned}
 \text{Risk} &\neq \text{Confidence} \\
 \text{Hazard} &\neq \text{Priority} \\
+\text{Prediction} &\neq \text{Ground Truth} \\
 \text{Recommendation} &\neq \text{Authorization} \\
 \text{Authorization} &\neq \text{Execution} \\
 \text{Execution} &\neq \text{Physical Confirmation} \\
 \text{Observation} &\neq \text{Interpretation} \\
 \text{Non-Event} &\neq \text{False Alarm} \\
+\text{Missing Evidence} &\neq \text{Resolution} \\
 \text{Intervention} + \text{Non-Event} &\neq \text{Proven Prevention} \\
-\text{Missing Evidence} &\neq \text{Hazard Resolution} \\
-\text{Stale Assessment} &\neq \text{Current Reality} \\
-\text{Model Output} &\neq \text{Ground Truth} \\
-\text{Prediction} &\neq \text{Operational Order} \\
 \text{External Source Availability} &\neq \text{Successful Ingestion} \\
 \text{Model Complexity} &\neq \text{Validation Quality} \\
-\text{Operational Incident Closure} &\neq \text{Geotechnical Hazard Extinction}
+\text{Operational Incident Closure} &\neq \text{Geotechnical Hazard Extinction} \\
+\text{Citizen Evidence} &\neq \text{Verified Ground Truth} \\
+\text{Stale Evidence} &\neq \text{Current Reality}
 \end{aligned}$$
+
+Alongside these 15 invariants, the system strictly defines $\text{NBI} \equiv \textbf{Next Best Information}$ (an epistemic diagnostic selection tool, with zero economic or net-benefit computation).
 
 ---
 
@@ -203,6 +205,19 @@ TerraGuardian is structured into three clean, decoupled architectural planes, en
 └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Primary Product Surfaces
+
+TerraGuardian provides two purpose-built, role-differentiated operational surfaces:
+
+1. **Operations Centre (`apps/operations-centre`)**:
+   * Desktop and command-tablet operational cockpit designed for District Disaster Management Authorities (DDMA), Emergency Operations Centres (EOC), and Incident Commanders.
+   * **Key Capabilities**: Regional Situational Overview, Priority Queue (5-factor consequence ranking), Interactive GIS Map Command Mode across all 8 NER states, Incident Twin deep inspection, Evidence Lineage audit, Qualitative Next-Best-Information (NBI) diagnostic engine, Governed Action tracking with dual physical confirmation, and the 7-precondition Closure Gate.
+   * **Operational Copilot**: An integrated, read-only decision-support assistant. Strictly non-authorizing, constrained to a finite operational advisory registry, and bound by statutory guardrails citing the **Disaster Management Act, 2005 — Section 34**.
+
+2. **TerraGuardian Safe (`apps/terra-guardian-safe`)**:
+   * Mobile-first Progressive Web App (PWA) designed for citizens, local community wardens, and frontline field verifiers.
+   * **Key Capabilities**: Offline application shell caching via Service Worker (`src/sw.ts`), high-precision device GPS geolocation reporting with real-time accuracy indicators, audio voice notes, photo evidence capture with transparent client-side computer vision heuristics (with clear disclaimer of client-side demonstration bounds), emergency SOS routing, and multilingual readiness.
+
 ---
 
 ## 6. SERVER-ENFORCED 11-STATE FINITE STATE MACHINE
@@ -259,7 +274,7 @@ The core research contribution implemented in TerraGuardian is **Intervention-Co
 
 | Hypothesis Code | Authoritative Title | Operational Semantic Meaning | Evaluation Statuses |
 |---|---|---|---|
-| **`H1_FALSE_ALARM`** | *False Alarm (Ungrounded Forecast)* | Initial hazard prediction was an over-prediction or false positive; slope was never in imminent failure conditions. | `ACTIVE`, `SUPPORTED`, `CONTRADICTED`, `DISFAVORED`, `VIABLE` |
+| **`H1_FALSE_ALARM`** | *False Alarm (Ungrounded Forecast)* | Initial hazard prediction was an over-prediction or false positive; slope was never in critical failure conditions. | `ACTIVE`, `SUPPORTED`, `CONTRADICTED`, `DISFAVORED`, `VIABLE` |
 | **`H2_INTERVENTION_CONDITIONED_NON_EVENT`** | *Intervention-Conditioned Non-Event* | Expected slope failure was not observed following deployment of mitigating actions. **Causal prevention remains unestablished.** | `ACTIVE`, `SUPPORTED`, `CONTRADICTED`, `DISFAVORED`, `VIABLE` |
 | **`H3_DELAYED_FAILURE`** | *Delayed Failure (Hydrologic Lag)* | Failure has not occurred yet due to hydrologic lag, deep percolation, or slow sub-surface shear strain accumulation. | `ACTIVE`, `SUPPORTED`, `CONTRADICTED`, `DISFAVORED`, `VIABLE` |
 | **`H4_SHIFTED_HAZARD`** | *Shifted Hazard (Spatial Divergence)* | Slope displacement or tension cracking manifested on an adjacent corridor flank within the $5.0\text{ km}$ corridor envelope. | `ACTIVE`, `SUPPORTED`, `CONTRADICTED`, `DISFAVORED`, `VIABLE` |
@@ -284,7 +299,16 @@ The core research contribution implemented in TerraGuardian is **Intervention-Co
 
 ## 8. QUALITATIVE NEXT-BEST-INFORMATION (NBI)
 
-Rather than recommending generic monitoring, TerraGuardian's **Next-Best-Information Engine** ([`services/api/app/domain/decision.py`](file:///c:/Users/ksaravanan/TerraGuardian/services/api/app/domain/decision.py)) generates targeted, hypothesis-separating information gathering orders:
+In TerraGuardian, **NBI stands strictly and exclusively for Next Best Information**. It is an operational epistemic diagnostic tool—**not** an economic or monetary calculation (zero net benefit of intervention, zero cost-benefit ratios, zero financial ROI).
+
+Rather than recommending generic monitoring, TerraGuardian's **Next-Best-Information Engine** ([`services/api/app/domain/decision.py`](file:///c:/Users/ksaravanan/TerraGuardian/services/api/app/domain/decision.py)) systematically answers six operational diagnostic questions to generate targeted, hypothesis-separating information gathering orders:
+
+1. **What is the operational uncertainty?** (Which competing outcome hypotheses H1–H7 remain active or confounded).
+2. **What critical information is missing?** (Unpatrolled slope flank, unverified citizen report, or cloud-obscured satellite pass).
+3. **Why does this missing information matter?** (Prevents premature de-escalation while a lifeline remains exposed).
+4. **What is the next best information to collect?** (Targeted ground reconnaissance, geo-tagged toe crack inspection, or UAV survey).
+5. **How should that information be gathered?** (Physical foot patrol, localized drone flight, or piezometric sensor inspection).
+6. **What operational decision does this information directly support?** (Corridor reopening, evacuation continuation, or action escalation).
 
 ```text
 AMBIGUOUS OUTCOME: [H1_FALSE_ALARM vs. H5_OBSERVATION_GAP]
@@ -296,9 +320,10 @@ NBI DIRECTIVE: "Deploy ground foot-patrol with geo-tagged photo inspection at KM
 DISCRIMINATION: Separates H1 from H5 with HIGH qualitative power.
 ```
 
-* **Non-Authorizing**: NBI recommendations are advisory; they suggest the most informative diagnostic task.
+* **Epistemic Diagnostic Nature**: NBI recommendations are advisory; they suggest the most informative diagnostic task to resolve uncertainty.
 * **Qualitative Ratings**: Uses bounded qualitative discrimination ratings (`HIGH`, `MEDIUM`, `LOW`).
-* **No Manufactured Probabilities**: The system does **not** generate fabricated Bayesian posteriors, quantitative information-gain percentages, or pseudo-scientific confidence deltas.
+* **Zero Manufactured Probabilities**: The system does **not** generate fabricated Bayesian posteriors, quantitative information-gain percentages, or pseudo-scientific confidence deltas.
+* **Strictly Non-Authorizing**: NBI output never triggers field actions autonomously; an authorized human decision-maker must issue any resulting orders.
 
 ---
 
@@ -327,26 +352,61 @@ $$\text{Confidence Score} = \text{clamp}\Big(\text{Base Completeness} \cdot 75.0
 * $P_{\text{stale}} = N_{\text{stale}} \times 4.0$
 * $B_{\text{field}} = +35.0$ bonus upon verified human ground-patrol report.
 
+### Consequence Priority Model (5-Factor Operational Synthesis)
+Operational urgency is decoupled from raw hazard likelihood via a 5-factor consequence priority model ([`services/api/app/services/impact_service.py`](file:///c:/Users/ksaravanan/TerraGuardian/services/api/app/services/impact_service.py)). **Priority is an operational ranking score ($0\text{--}100$), NOT a statistical probability**:
+
+$$\text{Priority Score} = 0.25 \cdot \text{Hazard} + 0.25 \cdot \text{Exposure} + 0.25 \cdot \text{Criticality} + 0.15 \cdot \text{Connectivity} + 0.10 \cdot \text{Response Difficulty}$$
+
+Where:
+* $\text{Hazard}$: Normalized physical hazard probability score ($0\text{--}100$).
+* $\text{Exposure}$: Populated settlement and traffic density envelope.
+* $\text{Criticality}$: Strategic lifeline asset weight (e.g., NH-13 arterial highway, military logistics, hospital access).
+* $\text{Connectivity}$: Detour availability and corridor isolation severity penalty.
+* $\text{Response Difficulty}$: Monsoon access friction, terrain steepness, and response travel time.
+
 ```text
-DEMONSTRATION RUNTIME VERIFICATION (Incident TG-2048):
-• Hazard Risk Score:       86.0 / 100.0  (RiskLevel.HIGH)
-• Evidential Confidence:   54.0 / 100.0  (ConfidenceLevel.MODERATE)
-• Consequence Priority:    74.0 / 100.0  (PriorityLevel.P2_HIGH)
+DEMONSTRATION RUNTIME VERIFICATION (Incident TG-2048 — NH-13 KM-42):
+• Hazard Risk Score:               86.0 / 100.0  (RiskLevel.HIGH)
+• Initial Evidential Confidence:   54.0 / 100.0  (ConfidenceLevel.MODERATE — Baseline V0, remote sensing with 88% cloud cover)
+• Field-Verified Confidence:       82.5 / 100.0  (ConfidenceLevel.HIGH — Reassessment V1, post SDRF ground patrol confirmation)
+• Consequence Priority Score:      89.2 / 100.0  (PriorityLevel.P1_CRITICAL — Decoupled 5-factor operational priority)
 ```
 
 ---
 
 ## 10. DATA PROVENANCE & SOURCE CLASSIFICATION
 
-TerraGuardian enforces a strict provenance ledger for every data point ingested into the Incident Twin:
+TerraGuardian enforces a strict provenance ledger for every data point ingested into the Incident Twin, maintaining an uncompromised boundary between verified historical ground truth and controlled demonstration scenarios:
+
+```text
+FROZEN NER PROVENANCE LEDGER:
+• 6 REAL_HISTORICAL      (Verified real-world landslide occurrences with authoritative GSI / SDMA records)
+• 12 CONTROLLED_DEMO     (Synthetic multi-source stress test fixtures exercising edge cases)
+• 0 RECENT_REPORTED      (Unverified crowdsourced rumors rejected from core incident twin)
+• 0 LIVE                 (Zero live automated scraping or uncontrolled telemetry streams)
+• 0 REPLAY               (Deterministic static evaluation fixtures)
+• 18 NO_LIVE_FEED        (All 18 records explicitly declare: no live external telemetry feeds active)
+```
+
+### The 6 Verified Real Historical Records
+1. **Haflong, Dima Hasao, Assam (May 2022)**: Catastrophic debris flow and railway formation breach (*Source: GSI / ASDMA Post-Disaster Report*).
+2. **Tupul Yard, Noney, Manipur (June 2022)**: Massive slope failure and NF Railway construction camp burial (*Source: GSI / Manipur SDMA / NDRF Post-Event Geotechnical Investigation*).
+3. **Aizawl Melthum, Mizoram (May 2024)**: Cyclone Remal induced catastrophic stone quarry collapse and debris flow (*Source: Mizoram Disaster Management & Rehabilitation / GSI Report*).
+4. **Pagla Pahar, NH-29, Dimapur-Kohima, Nagaland (July 2023)**: Heavy monsoonal rockslide/rockfall crushing vehicles and severing the arterial corridor (*Source: Nagaland NSDMA / NHIDCL Site Bulletin*).
+5. **Teesta Basin / Chungthang, Sikkim (October 2023)**: South Lhonak GLOF with cascading valley-wall flank washouts along NH-10 (*Source: Sikkim SSDMA / GSI / CWC Post-Flood Assessment*).
+6. **Mangan / Dzongu, North Sikkim (June 2024)**: Monsoonal rotational slides and flash-flooding severing road and bridge connectivity (*Source: Sikkim SSDMA / BRO Project Swastik*).
+
+### Provenance Audit Ledger
 
 | Data Category | Prototype Classification | Representation in System | Production Boundary Disclosure |
 |---|---|---|---|
+| **Real Historical Incidents (6)** | `REAL_HISTORICAL` | Documented NER disasters (Assam, Manipur, Mizoram, Nagaland, Sikkim) | Real-world historical records; verified against official GSI / SDMA bulletins. |
+| **Demo Scenarios (12)** | `CONTROLLED_DEMO` | Multi-source montane stress scenarios across 8 NER states | Seeded synthetic fixtures exercising edge cases; not unverified live disasters. |
 | **Highway Coordinates** | `AUTHENTIC GEOGRAPHIC REFERENCE` | NH-13 Trans-Arunachal Highway ($27.0842^\circ\text{N}, 92.5681^\circ\text{E}$) | Authentic geographic location in West Kameng District. |
 | **Terrain Elevation** | `STATIC REFERENCE` | DEM 30m contour gradients & GSI lithology ratings | Static reference parameters; not real-time InSAR. |
 | **Precipitation** | `SIMULATED NUMERICAL` | 7-day cumulative rainfall surcharge ($168.4\text{ mm}$) | Synthetic feature vectors representing monsoon conditions. |
 | **Drone / Satellite** | `SIMULATED OBSERVATION` | Optical obscuration percentage ($88\%$ cloud cover) | Synthetic sensor readings for evaluation. |
-| **Incident TG-2048** | `SEEDED DEMONSTRATION FIXTURE` | Bhalukpong-Tenga Corridor Slope Debris Flow | Controlled demonstration fixture exercising lifecycle. |
+| **Incident TG-2048** | `CONTROLLED DEMONSTRATION FIXTURE` | Bhalukpong-Tenga Corridor Slope Debris Flow | Controlled demonstration fixture exercising lifecycle. |
 | **Field Actors** | `SEEDED DEMONSTRATION FIXTURE` | `ACT-001` (Magistrate), `ACT-002` (Patrol Lead) | Synthetic test actors for RBAC and audit logging. |
 | **Radio Channels** | `API DISPATCH METADATA` | `TETRA_RADIO`, `ERSS_112`, `MOBILE` | Structured metadata enum; no physical RF stack. |
 
@@ -354,7 +414,7 @@ TerraGuardian enforces a strict provenance ledger for every data point ingested 
 
 ## 11. GOVERNED ACTION LIFECYCLE & PHYSICAL CONFIRMATION
 
-Issuing a disaster directive does not mean the road is blocked or the village is evacuated. TerraGuardian enforces a strict 7-state operational action machine ([`services/api/app/domain/action.py`](file:///c:/Users/ksaravanan/TerraGuardian/services/api/app/domain/action.py)):
+Issuing a disaster directive does not mean the road is blocked or the village is evacuated. All operational directives, highway closures, and evacuation orders are anchored in statutory governance under the **Disaster Management Act, 2005 — Section 34** (powers of District Authority / Incident Commander). TerraGuardian enforces a strict 7-state operational action machine ([`services/api/app/domain/action.py`](file:///c:/Users/ksaravanan/TerraGuardian/services/api/app/domain/action.py)):
 
 ```text
 PROPOSED ──▶ APPROVED ──▶ DISPATCHED ──▶ ACKNOWLEDGED ──▶ IN_PROGRESS ──▶ COMPLETED
@@ -395,7 +455,7 @@ CLOSURE PRECONDITION AUDIT (Executed atomically in a single DB transaction):
 
 ## 13. GEOSPATIAL CORRIDOR LOGIC & SPATIAL DIVERGENCE
 
-TerraGuardian monitors montane transit alignments using configurable corridor envelopes ([`services/api/app/domain/outcome.py`](file:///c:/Users/ksaravanan/TerraGuardian/services/api/app/domain/outcome.py)):
+TerraGuardian monitors montane transit alignments across all 8 North Eastern states (Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Sikkim, Tripura), with deep demonstration on the strategic NH-13 Trans-Arunachal Highway corridor using configurable spatial envelopes ([`services/api/app/domain/outcome.py`](file:///c:/Users/ksaravanan/TerraGuardian/services/api/app/domain/outcome.py)):
 
 * **$5.0\text{ km}$ Corridor Envelope**: Ground distress detected within $5\text{ km}$ of the predicted centroid along the highway alignment is tracked within the **SAME LIVING INCIDENT**, triggering divergence reassessment rather than fragmenting into duplicate incident tickets.
 * **$500\text{ m}$ Spatial Divergence Threshold**: If observed deformation occurs between $500\text{ m}$ and $5000\text{ m}$ from the prediction centroid, the Outcome Engine flags **`H4_SHIFTED_HAZARD`** (Corridor Flank Shift), preventing false-alarm closure and redirecting drone reconnaissance to the active flank.
@@ -405,19 +465,19 @@ TerraGuardian monitors montane transit alignments using configurable corridor en
 
 ## 14. GOLDEN INCIDENT RUNTIME TRACE (TG-2048)
 
-The complete end-to-end lifecycle has been verified against the live ASGI FastAPI backend using SQLite in-memory transactions across 15 chronological steps:
+The complete end-to-end lifecycle has been verified against the live ASGI FastAPI backend using SQLite in-memory transactions across 15 chronological steps on the seeded **Controlled Demonstration Fixture** (TG-2048):
 
 ```text
 [T0]  System Health Check                              ──▶ HTTP 200 OK (Healthy)
 [T1]  Seed Demo Users & Authentication                 ──▶ HTTP 200 OK (Tokens issued for Operator & Magistrate)
-[T2]  Seed Incident TG-2048 (NH-13 KM-42 Corridor)     ──▶ HTTP 201 Created (DETECTED)
-[T3]  Predictive Risk Assessment Inferred              ──▶ HTTP 200 OK (Risk=86.0, Conf=54.0, Priority=74.0)
+[T2]  Seed Incident TG-2048 (Controlled Demo: NH-13)   ──▶ HTTP 201 Created (DETECTED)
+[T3]  Predictive Risk Assessment Inferred              ──▶ HTTP 200 OK (Risk=86.0, Conf=54.0, Priority=89.2)
 [T4]  State Transition: DETECTED → ASSESSING           ──▶ HTTP 200 OK (Triage initiated)
 [T5]  State Transition: ASSESSING → VERIFYING          ──▶ HTTP 200 OK (Ground patrol dispatched)
-[T6]  State Transition: VERIFYING → VERIFIED           ──▶ HTTP 200 OK (Field evidence verified)
+[T6]  State Transition: VERIFYING → VERIFIED           ──▶ HTTP 200 OK (Field evidence verified; Conf rises from 54.0 to 82.5)
 [T7]  State Transition: VERIFIED → DECISION_REQUIRED   ──▶ HTTP 200 OK (Decision options synthesized)
 [T8]  ADVERSARIAL ATTACK: AI Attempts Direct Order     ──▶ HTTP 403 Forbidden (AI_AGENT_CANNOT_AUTHORIZE)
-[T9]  Statutory Authorization Signed by Magistrate     ──▶ HTTP 200 OK (Order: DDMA-WK-2026/884-A)
+[T9]  Statutory Authorization Signed by Magistrate     ──▶ HTTP 200 OK (Order: DDMA-WK-2026/884-A under Disaster Management Act, 2005 — Section 34)
 [T10] Action Dispatch: Evacuation & Traffic Stoppage   ──▶ HTTP 200 OK (State: RESPONDING)
 [T11] Physical Confirmation: Patrol Radio Inspection   ──▶ HTTP 200 OK (State: MONITORING)
 [T12] Watchdog Divergence: Tension Cracks at Flank     ──▶ HTTP 200 OK (State: REASSESSING, Shift=650m)
@@ -515,8 +575,8 @@ Mapping against Problem Statement **SIH26001 / PS26001** (MDoNER / Disaster Mana
 
 ## 18. SECURITY, AUTHORITY BOUNDARIES & AUDIT INTEGRITY
 
-### Prototype RBAC vs. Real Government Infrastructure
-* **Implemented Prototype RBAC**: Role-based access control enforced at the FastAPI router and domain service layers. Validates authenticated JWT tokens for designated software roles (`PUBLIC_CITIZEN`, `OPERATOR`, `FIELD_VERIFIER`, `AUTHORIZED_DECISION_MAKER`).
+### Server-Enforced Prototype RBAC vs. Real Government Infrastructure
+* **Server-Enforced Prototype RBAC**: Role-based access control strictly enforced at the FastAPI router and domain service layers. Validates authenticated JWT tokens against server-derived identities and permissions across canonical software roles (`PUBLIC_CITIZEN`, `OPERATOR`, `FIELD_VERIFIER`, `AUTHORIZED_DECISION_MAKER`). Blocks AI agents and unauthorized operators at the database transaction layer with HTTP 403 Forbidden.
 * **Boundary Disclosure**: Does **not** interface with government identity platforms (e-Pramaan / Jan Parichay) or police emergency CAD systems.
 
 ### Audit Trail Integrity
@@ -537,14 +597,17 @@ CODE EXISTS ──▶ TESTED ──▶ RUNTIME VERIFIED ──▶ DEMONSTRATION-
 |---|---|---|
 | **11-State Incident FSM** | `RUNTIME VERIFIED` | `tests/unit/test_domain_incident.py`, `test_state_machine.py` |
 | **Risk $\neq$ Confidence Decoupling** | `RUNTIME VERIFIED` | `tests/unit/test_predictive_intelligence.py` |
+| **5-Factor Consequence Priority Queue** | `RUNTIME VERIFIED` | `tests/unit/test_impact_priority.py`, `PriorityQueueView.tsx` |
 | **Governed Action Lifecycle** | `RUNTIME VERIFIED` | `tests/unit/test_governed_action_workflow.py` |
-| **Adversarial AI RBAC Rejection** | `RUNTIME VERIFIED` | `test_authorization_boundary_and_guards` (HTTP 403) |
+| **Adversarial AI RBAC Rejection** | `RUNTIME VERIFIED` | `test_adversarial_intelligence.py` (HTTP 403) |
 | **Outcome Engine (H1–H7)** | `RUNTIME VERIFIED` | `tests/unit/test_outcome_engine.py` (26 tests passing) |
+| **Qualitative Next-Best-Information (NBI)** | `RUNTIME VERIFIED` | `tests/unit/test_outcome_engine.py`, `decision.py` |
+| **Operational Copilot (Advisory Aid)** | `RUNTIME VERIFIED` | `tests/unit/test_copilot.py` (Finite advisory registry, Disaster Management Act, 2005 — Section 34 guardrails) |
 | **Closure Evidentiary Gate** | `RUNTIME VERIFIED` | `tests/unit/test_closure_evidentiary_gate.py` (14 tests passing) |
-| **Operations Centre UI** | `DEMONSTRATION-READY` | Vite v6 production release build verified ($491\text{ kB}$ bundle) |
+| **Operations Centre UI** | `DEMONSTRATION-READY` | Vite v6 production release build verified ($502.82\text{ kB}$ bundle) |
 | **Safe Citizen PWA Interface** | `DEMONSTRATION-READY` | Vitest 3/3 smoke tests passing, service worker verified |
 | **PostgreSQL / PostGIS Engine** | `ARCHITECTURE` | Migrations defined; unit execution verified on SQLite (`aiosqlite`) |
-| **Live Government Ingestion** | `NOT CLAIMED` | Simulated and seeded demo fixtures only |
+| **Live Government Ingestion** | `NOT CLAIMED` | Simulated and seeded demo fixtures only (18 NO_LIVE_FEED) |
 | **Cryptographic Ledger** | `NOT CLAIMED` | Relational database append-only log only |
 
 ---
@@ -554,30 +617,45 @@ CODE EXISTS ──▶ TESTED ──▶ RUNTIME VERIFIED ──▶ DEMONSTRATION-
 ### 1. Full Backend Test Suite
 ```powershell
 pytest tests/ -q
-# Result: 149 passed, 10 warnings in 49.75s (100% Passing)
+# Result: 319 passed, 10 warnings in 82.80s (100% Passing)
 ```
 
-The 16 verified test suites:
+The 31 verified test suites:
 * `tests/unit/test_action_confirmation_security.py` — Dual verification & bypass closure
 * `tests/unit/test_adversarial_intelligence.py` — Adversarial safety invariants & boundary guards
+* `tests/unit/test_alert_truth_and_priority_decoupling.py` — Alert lifecycle & consequence decoupling
 * `tests/unit/test_api_health.py` — Telemetry & ASGI application health endpoints
 * `tests/unit/test_api_incidents.py` — REST routes & authorized state transitions
+* `tests/unit/test_assessment_convergence.py` — Multimodal assessment convergence & stability
 * `tests/unit/test_auth_security.py` — JWT security & role-based authority boundaries
 * `tests/unit/test_closure_evidentiary_gate.py` — 7 server-enforced closure preconditions
+* `tests/unit/test_copilot.py` — Operational Copilot finite advisory registry & Disaster Management Act, 2005 — Section 34 guardrails
+* `tests/unit/test_data_adapters.py` — External feed adapters & schema normalization
 * `tests/unit/test_domain_incident.py` — Domain schemas, enums & state validation
 * `tests/unit/test_evidence_reconciliation.py` — Cross-source conflict & discordance
+* `tests/unit/test_gis_spatial_engine.py` — Geospatial corridor envelopes & distance metrics
 * `tests/unit/test_governed_action_workflow.py` — 7-state action lifecycle & confirmation
 * `tests/unit/test_hazard_evolution.py` — Hazard state evolution & spatial divergence
-* `tests/unit/test_impact_priority.py` — Consequence synthesis & lifeline exposure
+* `tests/unit/test_impact_priority.py` — Consequence synthesis & 5-factor priority formula
 * `tests/unit/test_intelligence_contracts.py` — Pydantic schema validation & contracts
+* `tests/unit/test_macro_phase2_geospatial_scientific.py` — Phase 2 geospatial & scientific contracts
+* `tests/unit/test_macro_phase3_incident_intelligence.py` — Phase 3 incident twin & impact intelligence
+* `tests/unit/test_macro_phase4_operational_loop.py` — Phase 4 operational closed loop & dispatch
+* `tests/unit/test_ner_landslides_and_header_acceptance.py` — 8-state NER landslides & provenance audit
+* `tests/unit/test_operational_dispatch_loop.py` — Operational dispatch & field radio confirmation
 * `tests/unit/test_outcome_engine.py` — Intervention-conditioned H1–H7 & qualitative NBI
 * `tests/unit/test_persistence.py` — Relational persistence, sessions & cascades
+* `tests/unit/test_phase2_identity_and_roles.py` — Authority identities & RBAC validation
+* `tests/unit/test_phase4r_gis_api.py` — GIS REST endpoints & spatial query contracts
+* `tests/unit/test_phase5_operational_intelligence.py` — Operational intelligence integration & truth
 * `tests/unit/test_predictive_intelligence.py` — Interpretable ML baseline pipeline
+* `tests/unit/test_scientific_foundation.py` — Physics-informed slope stability formulations
 * `tests/unit/test_state_machine.py` — Canonical 11-state transition matrix & guards
+* `tests/unit/test_what_changed_hardening.py` — Differential telemetry audit & regression guards
 
 ### 2. Frontend Production-Mode Release Builds
-* **Operations Centre**: Vite v6 release build clean in $2.27\text{s}$ (`dist/assets/index-fypOpAJW.js`: $491.24\text{ kB}$).
-* **Safe Citizen**: `tsc -b && vite build` clean in $1.51\text{s}$ (`dist/assets/index-x4ihVgEv.js`: $196.55\text{ kB}$).
+* **Operations Centre**: Vite v6 release build clean in $2.27\text{s}$ (`dist/assets/index-D87j3d5W.js`: $502.82\text{ kB}$).
+* **Safe Citizen**: `tsc -b && vite build` clean in $1.05\text{s}$ (`dist/assets/index-x4ihVgEv.js`: $196.55\text{ kB}$).
 * **Safe Citizen Unit Tests**: `vitest run --run` $\to$ **3 passed in 3.72s**.
 
 ### 3. Golden Incident Live Runtime Execution
@@ -613,7 +691,7 @@ TerraGuardian/
 │   └── baseline.py                      # LandslidePredictiveBaseline (Logistic slope stability)
 │
 ├── tests/
-│   └── unit/                            # 16 authoritative test suites (149 passing automated tests)
+│   └── unit/                            # 31 authoritative test suites (319 passing automated tests)
 │
 ├── docs/                                # Technical specifications, research dossiers & architecture contracts
 ├── vercel.json                          # Vercel deployment build & rewrite configuration
@@ -648,7 +726,7 @@ source .venv/bin/activate
 pip install -r services/api/requirements.txt
 pip install pytest pytest-asyncio httpx
 
-# Run the complete 149-test verification suite
+# Run the complete 319-test verification suite
 pytest tests/ -v
 ```
 
@@ -697,12 +775,13 @@ npm run dev
 To ensure scientific integrity and prevent claim inflation, TerraGuardian explicitly publishes its current technical limitations:
 
 1. **Synthetic Demonstration Calibration**: The predictive baseline is calibrated on theoretical slope stability equations ($F_s \propto \tan\phi / \tan\theta$); it has **not** been backtested or empirically validated on historical geotechnical landslide inventories from the Geological Survey of India.
-2. **Simulated Sensor & Satellite Feeds**: InSAR radar coherence anomalies, piezometric pore-pressures, and optical satellite cloud obscurations are simulated demonstration inputs. No live IoT telemetry or satellite ground stations are connected.
-3. **No Live Government API Integrations**: The system does not interface with live, production endpoints of GSI Bhusanket, IMD Radar, NDMA Sachet, or national emergency dispatch CADs.
-4. **Prototype Software Authority**: Role-based access control enforces prototype safety policies; it does not connect to government single sign-on (e-Pramaan / Jan Parichay) or convey statutory legal authority.
+2. **Simulated Sensor & Satellite Feeds**: InSAR radar coherence anomalies, piezometric pore-pressures, and optical satellite cloud obscurations are simulated demonstration inputs. No live IoT telemetry, physical ground stations, or continuous satellite uplinks are connected.
+3. **No Live Government API Integrations**: The system does not interface with live, production endpoints of GSI Bhusanket, IMD Radar, NDMA Sachet, or national emergency dispatch CADs. External live feeds are disconnected (`18 NO_LIVE_FEED`).
+4. **Server-Enforced Prototype RBAC & Authority Boundaries**: Server-enforced role and permission controls govern prototype safety policies and authorization gates; they do not connect to government single sign-on (e-Pramaan / Jan Parichay) or convey statutory legal authority. All actions must be signed by an authorized human decision-maker citing the **Disaster Management Act, 2005 — Section 34**.
 5. **No Direct RF Trunk**: Communication channel tags (`TETRA_RADIO`, `VHF_RADIO`) are stored as API dispatch audit metadata; no physical VHF/TETRA transceiver hardware is connected.
 6. **Relational Append-Only Audit**: Audit logs are preserved via append-only database tables, not cryptographic blockchain ledgers or WORM media.
-7. **Offline-Oriented PWA**: The Safe Citizen app caches application shell assets via service worker and saves draft forms locally, but requires an active HTTP/REST connection to submit observations to the Incident Twin.
+7. **Offline-Oriented PWA & Client-Side CV**: The Safe Citizen app caches application shell assets via service worker and saves draft forms locally, but requires an active HTTP/REST connection to submit observations to the Incident Twin. Edge computer vision heuristics run client-side in the browser for demo purposes and do not invoke high-compute server-side neural vision backbones.
+8. **Strict Provenance Demarcation**: Complete separation between real historical reference events (6 verified NER events) and seeded controlled demonstration scenarios (12 controlled fixtures). No synthetic or controlled scenario is ever portrayed as an unverified live real-world disaster.
 
 ---
 
@@ -730,7 +809,7 @@ To ensure scientific integrity and prevent claim inflation, TerraGuardian explic
 ### TERRAGUARDIAN AI
 $$\textbf{From Warning to Verified Response}$$
 
-`PREDICT` → `EVIDENCE` → `ASSESS` → `PRIORITIZE` → `DECIDE` → `AUTHORIZE` → `ACT` → `CONFIRM` → `OBSERVE` → `INTERPRET` → `REASSESS`
+`PREDICT` → `EVIDENCE` → `ASSESS` → `PRIORITIZE` → `DECIDE` → `AUTHORIZE` → `ACT` → `CONFIRM` → `OBSERVE` → `INTERPRET` → `REASSESS` → `CONTINUE / ESCALATE / CLOSURE`
 
 *Built for Smart India Hackathon 2026 · MDoNER · Disaster Management · Software Track*
 

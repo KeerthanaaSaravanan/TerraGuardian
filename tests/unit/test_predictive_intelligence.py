@@ -293,8 +293,9 @@ async def test_feature_evidence_lineage_and_snapshot(test_client: AsyncClient):
     assert "feature_snapshot" in data
     assert len(data["feature_snapshot"]) == 7
     rain_snapshot = next(f for f in data["feature_snapshot"] if f["feature_name"] == "antecedent_rainfall_7d_mm")
-    assert rain_snapshot["raw_value"] == 184.0
+    assert round(rain_snapshot["raw_value"], 1) == 184.6
     assert rain_snapshot["is_missing"] is False
+
     assert len(rain_snapshot["contributing_evidence_ids"]) > 0
 
 
@@ -385,3 +386,98 @@ def test_deterministic_inference_reproducibility():
         assert c1.feature_name == c2.feature_name
         assert c1.contribution_pct == c2.contribution_pct
         assert c1.normalized_value == c2.normalized_value
+
+
+@pytest.mark.asyncio
+async def test_tg013_typed_feature_extraction_without_hardcoded_regex():
+    """Verify feature pipeline extracts typed numbers directly and dynamically without regex hardcoding (TG-013)."""
+    inc = IncidentModel(
+        id=uuid.uuid4(),
+        code="TG-TYPED-01",
+        title="Custom Sensor Slope",
+        latitude=27.1,
+        longitude=92.5,
+    )
+    # Custom non-seed values
+    inc.evidence_items = [
+        EvidenceModel(
+            id=uuid.uuid4(),
+            incident_id=inc.id,
+            source=EvidenceSource.WEATHER.value,
+            source_name="AWS Custom",
+            evidence_type="precipitation",
+            observation="Rain gauge reading",
+            metric="Measured 78.4 mm / 24h",
+            observed_at=datetime.utcnow(),
+            raw_data={"rainfall_mm_24h": 78.4, "antecedent_rainfall_7d_mm": 210.2, "rainfall_peak_rate_mm_hr": 35.0},
+        ),
+        EvidenceModel(
+            id=uuid.uuid4(),
+            incident_id=inc.id,
+            source=EvidenceSource.TERRAIN.value,
+            source_name="DEM Horn Gradient",
+            evidence_type="slope",
+            observation="Horn finite difference",
+            metric="Slope: 37.8°",
+            observed_at=datetime.utcnow(),
+            raw_data={"slope_deg": 37.8, "geological_susceptibility": 0.65, "soil_saturation": 0.70},
+        ),
+    ]
+
+    features = FeaturePipeline.extract_features(inc)
+    # Values should exactly match raw_data inputs, NOT any hardcoded 184 or 44.2
+    assert features.short_window_rainfall_24h_mm == 78.4
+    assert features.antecedent_rainfall_7d_mm == 210.2
+    assert features.rainfall_intensity_mmh == 35.0
+    assert features.slope_gradient_deg == 37.8
+    assert features.geological_susceptibility == 0.65
+    assert features.soil_saturation_index == 0.70
+
+
+@pytest.mark.asyncio
+async def test_tg008_incident_features_persistence(db_session):
+    """Verify extracted features are persisted in SQLite incident_features table (TG-008)."""
+    from app.services.seed_service import SeedService
+    from app.services.predictive_service import PredictiveService
+
+    seed_service = SeedService(db_session)
+    seeded = await seed_service.seed_tg_2048(force_reset=True)
+
+    pred_service = PredictiveService(db_session)
+    assessment = await pred_service.assess_incident_risk(seeded.id)
+    assert assessment.risk_score > 0
+
+    # Retrieve from persistent store
+    features_record = await pred_service.get_latest_features(seeded.id)
+    assert features_record is not None
+    assert features_record.incident_id == seeded.id
+    assert "antecedent_rainfall_7d_mm" in features_record.features_json
+    assert features_record.features_json["slope_gradient_deg"] == 44.2
+    assert features_record.assessment_version == 1
+
+
+@pytest.mark.asyncio
+async def test_tg003_digital_twin_assessment_version_increment(db_session):
+    """Verify repeated twin evaluation increments assessment_version monotonically (TG-003)."""
+    from app.services.seed_service import SeedService
+    from app.services.predictive_service import PredictiveService
+    from sqlalchemy import select
+
+    seed_service = SeedService(db_session)
+    seeded = await seed_service.seed_tg_2048(force_reset=True)
+
+    pred_service = PredictiveService(db_session)
+    a1 = await pred_service.assess_incident_risk(seeded.id)
+    assert a1.assessment_version == 1
+
+    a2 = await pred_service.assess_incident_risk(seeded.id)
+    assert a2.assessment_version == 2
+
+    a3 = await pred_service.assess_incident_risk(seeded.id)
+    assert a3.assessment_version == 3
+
+    # Verify single active twin state without orphaned duplicates
+    all_twins = (await db_session.execute(select(IncidentModel).where(IncidentModel.code == "TG-2048"))).scalars().all()
+    assert len(all_twins) == 1
+    assert all_twins[0].assessment_version == 3
+

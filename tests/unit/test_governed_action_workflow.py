@@ -58,7 +58,7 @@ async def test_magistrate_can_enact_statutory_decision(async_client: AsyncClient
     assert dec_res.status_code == 201
     dec_data = dec_res.json()
     assert dec_data["order_code"] == "DDMA-WK-2026/884-A"
-    assert dec_data["signer_role"] == "AUTHORIZED_DECISION_MAKER"
+    assert dec_data["signer_role"] in ("AUTHORIZATION_OFFICER", "AUTHORIZED_DECISION_MAKER")
     assert "P. Tsering" in dec_data["signer_name"]
 
     # List decisions

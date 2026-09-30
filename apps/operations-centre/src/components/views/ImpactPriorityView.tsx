@@ -18,6 +18,7 @@ import {
 export const ImpactPriorityView: React.FC = () => {
   const {
     setStep,
+    setIncidentSubTab,
     riskScore,
     riskLevel,
     confidenceScore,
@@ -74,9 +75,7 @@ export const ImpactPriorityView: React.FC = () => {
       <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 font-mono text-xs text-slate-500 dark:text-neutral-400">
-            <span>STEP 4 OF 10</span>
-            <span>•</span>
-            <span className="text-red-600 dark:text-red-400 font-bold">
+            <span className="text-red-600 dark:text-red-400 font-bold uppercase">
               IMPACT INTELLIGENCE & OPERATIONAL PRIORITY ENGINE
             </span>
           </div>
@@ -100,7 +99,10 @@ export const ImpactPriorityView: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setStep(5)}
+            onClick={() => {
+              setIncidentSubTab("ACTIONS");
+              setStep(5);
+            }}
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all cursor-pointer"
           >
             <span>Proceed to Field Verification</span>
@@ -110,16 +112,17 @@ export const ImpactPriorityView: React.FC = () => {
       </div>
 
       {/* ── 2. Core Operational Callout: HIGHEST HAZARD ≠ HIGHEST OPERATIONAL PRIORITY ── */}
+      {/* ── 2. Core Operational Callout: HIGHEST HAZARD ≠ HIGHEST OPERATIONAL PRIORITY ── */}
       <PrincipleBanner
         principle="HIGHEST HAZARD ≠ HIGHEST PRIORITY"
         title={`Why TG-2048 is Rated ${priorityLevel}`}
-        explanation="In raw geological volume, a 50,000 m³ rock avalanche in the unpopulated Upper Dibang gorge has higher hazard magnitude. However, it threatens zero humans or lifelines (Priority: P3_MODERATE). Conversely, TG-2048 represents a 450 m³ debris flow that directly severs NH-13—the sole heavy transport and oxygen lifeline into West Kameng and Tawang—while threatening 1,420 downstream residents. Formula: Priority = 25% Hazard (86.0) + 25% Exposure (90.5) + 25% Criticality (95.0) + 15% Connectivity (92.0) + 10% Response Difficulty (80.0) → 89.7 / 100 (P1_CRITICAL)."
+        explanation="In raw geological volume, a 50,000 m³ rock avalanche in the unpopulated Upper Dibang gorge has higher physical hazard magnitude. However, it threatens zero humans or lifelines (Priority: P3_MODERATE). Conversely, TG-2048 represents a 450 m³ debris flow that directly severs NH-13—the sole heavy transport and oxygen lifeline into West Kameng and Tawang—while threatening 1,420 downstream residents. Formula: Five-Factor Operational Priority = 25% Physical Hazard (86.0) + 25% Population Exposure (90.5) + 25% Critical Infrastructure (95.0) + 15% Connectivity Severance (92.0) + 10% Response Difficulty (80.0) → 89.7 / 100 (P1_CRITICAL). The five-factor score measures multi-agency consequence and operational urgency, never physical hazard danger alone."
         variant="red"
       />
 
       {/* ── 3. Four-Metric Operational State Matrix ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Hazard Risk */}
+        {/* Metric 1: Physical Hazard Risk */}
         <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-neutral-400 uppercase">
@@ -138,7 +141,7 @@ export const ImpactPriorityView: React.FC = () => {
             </div>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-neutral-400 leading-tight">
-            Geological slide probability based on slope saturation & rainfall threshold.
+            Physical hazard score based on slope saturation & rainfall trigger (0–100 physical hazard index, not a calibrated probability).
           </p>
         </div>
 
@@ -165,7 +168,7 @@ export const ImpactPriorityView: React.FC = () => {
           </p>
         </div>
 
-        {/* Metric 3: Downstream Impact */}
+        {/* Metric 3: Downstream Consequence */}
         <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-neutral-400 uppercase">
@@ -188,11 +191,11 @@ export const ImpactPriorityView: React.FC = () => {
           </p>
         </div>
 
-        {/* Metric 4: Operational Priority */}
+        {/* Metric 4: Five-Factor Operational Priority */}
         <div className="bg-white dark:bg-neutral-900 border-2 border-red-500 dark:border-red-600 rounded-xl p-4 shadow-md flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-red-600 dark:text-red-400 uppercase">
-              4. Operational Priority
+              4. Five-Factor Operational Priority
             </span>
             <span className="p-1.5 rounded-md bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400">
               <IconShieldAlert className="w-4 h-4" />
@@ -207,17 +210,17 @@ export const ImpactPriorityView: React.FC = () => {
             </div>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-neutral-400 leading-tight">
-            Composite score {compositeScore.toFixed(1)} / 100 • Immediate multi-agency mobilization required.
+            Five-factor weighted operational priority score ({compositeScore.toFixed(1)} / 100) combining hazard, exposure, criticality, connectivity & difficulty.
           </p>
         </div>
       </div>
 
-      {/* ── 4. Four-Stage Causal Consequence Cascade Chain ── */}
+      {/* ── 4. Four-Stage Operational Consequence Cascade Chain ── */}
       <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3 gap-2">
           <h3 className="text-sm font-bold font-mono text-slate-900 dark:text-white flex items-center gap-2">
             <IconActivity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            CAUSAL CONSEQUENCE CASCADE: HAZARD → EXPOSURE → CRITICALITY → LIFELINE
+            DOWNSTREAM CONSEQUENCE CASCADE: HAZARD → EXPOSURE → CRITICALITY → LIFELINE
           </h3>
           <span className="text-xs font-mono text-slate-500 dark:text-neutral-400">
             4-STAGE PROPAGATION CASCADE (WEST KAMENG CORRIDOR)
@@ -362,11 +365,11 @@ export const ImpactPriorityView: React.FC = () => {
 
           <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-lg">
             <div className="flex items-center justify-between text-xs font-mono font-bold text-red-900 dark:text-red-300">
-              <span>WEIGHTED COMPOSITE SCORE</span>
+              <span>FIVE-FACTOR OPERATIONAL PRIORITY SCORE</span>
               <span className="text-sm">{compositeScore.toFixed(1)} / 100</span>
             </div>
             <p className="text-[11px] text-red-800 dark:text-red-400 mt-1">
-              Score ≥ 80.0 qualifies as <span className="font-bold">P1_CRITICAL</span> operational urgency.
+              Operational response urgency (not a physical hazard danger index). Score ≥ 80.0 qualifies as <span className="font-bold">P1_CRITICAL</span> operational urgency.
             </p>
           </div>
         </div>
@@ -453,7 +456,7 @@ export const ImpactPriorityView: React.FC = () => {
             </p>
           </div>
           <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800">
-            DETERMINISTIC DEMONSTRATION DATA
+            MULTI-SITE COMPARATIVE INTELLIGENCE
           </span>
         </div>
 

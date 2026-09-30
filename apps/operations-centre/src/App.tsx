@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
 import { DemoScenarioProvider, useDemoScenario } from "./context/DemoScenarioContext";
 import { PublicReportProvider, usePublicReport } from "./context/PublicReportContext";
-import { DemoHeader } from "./components/DemoHeader";
+import { CommandHeader } from "./components/CommandHeader";
+import { CommandSidebar } from "./components/CommandSidebar";
 import { CommandCentreView } from "./components/views/CommandCentreView";
 import { IncidentWorkspaceView } from "./components/views/IncidentWorkspaceView";
 import { EvidenceReconciliationView } from "./components/views/EvidenceReconciliationView";
@@ -14,8 +15,17 @@ import { ActionGapView } from "./components/views/ActionGapView";
 import { ConfirmationView } from "./components/views/ConfirmationView";
 import { IncidentReplayView } from "./components/views/IncidentReplayView";
 import { GoldenDemoView } from "./components/views/GoldenDemoView";
+import { TacticalMapView } from "./components/views/TacticalMapView";
+import { PriorityQueueView } from "./components/views/PriorityQueueView";
+import { ReviewWorkspaceView } from "./components/views/ReviewWorkspaceView";
+import { AlertsWorkspaceView } from "./components/views/AlertsWorkspaceView";
+import { FieldWorkspaceView } from "./components/views/FieldWorkspaceView";
+import { OutcomesWorkspaceView } from "./components/views/OutcomesWorkspaceView";
+import { AdminWorkspaceView } from "./components/views/AdminWorkspaceView";
 import { LoginView } from "./components/auth/LoginView";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { OperationalCopilot } from "./components/common/OperationalCopilot";
+import { IconSparkles } from "./components/icons";
 import {
   PublicLandingView,
   PublicAccessView,
@@ -40,164 +50,84 @@ import {
 type AppMode = "public" | "operator";
 
 const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitchToPublic }) => {
-  const { currentStep, setStep } = useDemoScenario();
+  const {
+    currentStep,
+    setStep,
+    activeNavTab,
+    setActiveNavTab,
+    navigationMode,
+    incidentViewMode,
+    openIncident,
+    closeIncident,
+    incidentCode,
+  } = useDemoScenario();
   const [showCitizenModal, setShowCitizenModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showCopilot, setShowCopilot] = useState(false);
+
+  const handleCopilotNavigate = (view: string, payload?: any) => {
+    if (view === "priority-queue") {
+      setActiveNavTab("QUEUE");
+    } else if (view === "tactical-map") {
+      setActiveNavTab("MAP");
+    } else if (view === "incident-twin") {
+      setActiveNavTab("INCIDENTS");
+    } else if (view === "evidence-reconciliation") {
+      setActiveNavTab("EVIDENCE");
+    } else if (view === "review-workspace" || view === "replay") {
+      setActiveNavTab("REVIEW");
+    } else if (view === "field-operations") {
+      setActiveNavTab("FIELD");
+    } else if (view === "alerts") {
+      setActiveNavTab("ALERTS");
+    }
+  };
 
   return (
     <div className="flex h-screen w-full max-w-full bg-slate-100 dark:bg-neutral-950 text-slate-900 dark:text-neutral-100 overflow-hidden font-sans">
-      {/* Sleek Government-Grade Rail Sidebar */}
-      <aside className="hidden md:flex w-16 flex-col items-center justify-between border-r border-slate-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 py-4 z-40 transition-colors">
-        <div className="flex flex-col items-center gap-6">
-          <div
-            onClick={() => setStep(1)}
-            title="Command Centre (Step 1)"
-            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-white border border-slate-200 shadow-sm p-1 transition-transform hover:scale-105 overflow-hidden"
-          >
-            <img src="/logo-shield.png" alt="TerraGuardian Logo" className="h-full w-full object-contain" />
-          </div>
-
-          {/* Quick-Jump Nav Icons */}
-          <nav className="flex flex-col items-center gap-2.5 text-slate-500 dark:text-neutral-400" aria-label="Operations Shortcuts">
-            <button
-              onClick={() => setStep(1)}
-              title="Step 1: Regional Command Centre"
-              className={`p-2.5 rounded-lg transition-all ${
-                currentStep === 1
-                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/60 shadow-sm"
-                  : "hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <IconRadar className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={() => setStep(2)}
-              title="Step 2: Incident Workspace TG-2048"
-              className={`p-2.5 rounded-lg transition-all ${
-                currentStep === 2
-                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/60 shadow-sm"
-                  : "hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <IconMapPin className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={() => setStep(3)}
-              title="Step 3: Evidence Reconciliation"
-              className={`p-2.5 rounded-lg transition-all ${
-                currentStep === 3
-                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/60 shadow-sm"
-                  : "hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <IconLayers className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={() => setStep(4)}
-              title="Step 4: Impact & Priority Cascade"
-              className={`p-2.5 rounded-lg transition-all ${
-                currentStep === 4
-                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/60 shadow-sm"
-                  : "hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <IconActivity className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={() => setStep(6)}
-              title="Step 6: Authority Decision Gate"
-              className={`p-2.5 rounded-lg transition-all ${
-                currentStep === 6
-                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/60 shadow-sm"
-                  : "hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <IconShieldCheck className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={() => setStep(8)}
-              title="Step 8: Action Gap Watchdog"
-              className={`p-2.5 rounded-lg transition-all ${
-                currentStep === 8
-                  ? "bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700/60 shadow-sm animate-pulse"
-                  : "hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <IconAlertTriangle className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={() => setStep(10)}
-              title="Step 10: Complete Audit Replay"
-              className={`p-2.5 rounded-lg transition-all ${
-                currentStep === 10
-                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/60 shadow-sm"
-                  : "hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <IconClock className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={() => setStep(11)}
-              title="Step 11: Living Incident & Reassessment (Golden Demo)"
-              className={`p-2.5 rounded-lg transition-all ${
-                currentStep === 11
-                  ? "bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700/60 shadow-sm animate-pulse"
-                  : "hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <IconShieldCheck className="w-5 h-5 text-amber-500" />
-            </button>
-          </nav>
-        </div>
-
-        {/* Secondary utilities & Switch to Public mode */}
-        <div className="flex flex-col items-center gap-3">
-          <button
-            onClick={onSwitchToPublic}
-            title="Switch to Public Citizen Portal (TerraGuardian Safe)"
-            className="p-2 rounded-lg text-slate-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors"
-          >
-            <IconRadio className="w-5 h-5 text-emerald-500" />
-          </button>
-
-          <button
-            onClick={() => setShowReportModal(true)}
-            title="Executive Incident Briefing Report"
-            className="p-2 rounded-lg text-slate-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors"
-          >
-            <IconFileText className="w-4 h-4" />
-          </button>
-
-          <div className="flex flex-col items-center gap-1 pt-2 border-t border-slate-200 dark:border-neutral-800">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-            <span className="text-[8px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">ONLINE</span>
-          </div>
-        </div>
-      </aside>
+      {/* Government-Grade Command Sidebar */}
+      <CommandSidebar
+        onSwitchToPublic={onSwitchToPublic}
+        onOpenReportModal={() => setShowReportModal(true)}
+      />
 
       {/* Main Container */}
-      <div className="flex flex-1 flex-col h-screen overflow-y-auto overflow-x-hidden min-w-0">
-        <DemoHeader />
+      <div className="flex flex-1 flex-col h-screen overflow-y-auto overflow-x-hidden min-w-0 relative">
+        <CommandHeader
+          onToggleCopilot={() => setShowCopilot((prev) => !prev)}
+          isCopilotOpen={showCopilot}
+        />
 
         <main className="flex-1 pb-10 min-w-0 w-full overflow-x-hidden">
-          {currentStep === 1 && <CommandCentreView />}
-          {currentStep === 2 && <IncidentWorkspaceView />}
-          {currentStep === 3 && <EvidenceReconciliationView />}
-          {currentStep === 4 && <ImpactPriorityView />}
-          {currentStep === 5 && <FieldVerificationView />}
-          {currentStep === 6 && <AuthorityDecisionView />}
-          {currentStep === 7 && <ActionTrackingView />}
-          {currentStep === 8 && <ActionGapView />}
-          {currentStep === 9 && <ConfirmationView />}
-          {currentStep === 10 && <IncidentReplayView />}
-          {currentStep === 11 && <GoldenDemoView />}
+          {navigationMode === "OPERATIONAL" ? (
+            <>
+              {activeNavTab === "OPERATIONS" && <CommandCentreView />}
+              {activeNavTab === "QUEUE" && <PriorityQueueView />}
+              {activeNavTab === "MAP" && <TacticalMapView />}
+              {activeNavTab === "INCIDENTS" && <IncidentWorkspaceView />}
+              {activeNavTab === "EVIDENCE" && <EvidenceReconciliationView />}
+              {activeNavTab === "ALERTS" && <AlertsWorkspaceView />}
+              {activeNavTab === "FIELD" && <FieldWorkspaceView />}
+              {activeNavTab === "OUTCOMES" && <OutcomesWorkspaceView />}
+              {activeNavTab === "REVIEW" && <ReviewWorkspaceView />}
+              {activeNavTab === "ADMIN" && <AdminWorkspaceView />}
+              {activeNavTab === "REPLAY" && <GoldenDemoView />}
+            </>
+          ) : (
+            <>
+              {currentStep === 1 && <CommandCentreView />}
+              {currentStep === 2 && <IncidentWorkspaceView />}
+              {currentStep === 3 && <EvidenceReconciliationView />}
+              {currentStep === 4 && <ImpactPriorityView />}
+              {currentStep === 5 && <FieldVerificationView />}
+              {currentStep === 6 && <AuthorityDecisionView />}
+              {currentStep === 7 && <ActionTrackingView />}
+              {currentStep === 8 && <ActionGapView />}
+              {currentStep === 9 && <ConfirmationView />}
+              {currentStep === 10 && <IncidentReplayView />}
+              {currentStep === 11 && <GoldenDemoView />}
+            </>
+          )}
         </main>
       </div>
 
@@ -284,6 +214,29 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
           </div>
         </div>
       )}
+
+      {/* Operational Copilot Drawer */}
+      <OperationalCopilot
+        isOpen={showCopilot}
+        onClose={() => setShowCopilot(false)}
+        currentIncidentCode={incidentCode || "TG-2048"}
+        currentView={activeNavTab.toLowerCase()}
+        onNavigateView={handleCopilotNavigate}
+      />
+
+      {/* Floating Copilot Quick Launcher Button */}
+      {!showCopilot && (
+        <button
+          onClick={() => setShowCopilot(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center space-x-2 px-3.5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-2xl border border-indigo-400/40 transition-all hover:scale-105 group cursor-pointer"
+          title="Open Operational Copilot (Command & Dialogue Layer)"
+          aria-label="Open Operational Copilot"
+        >
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+          <IconSparkles className="w-4 h-4 text-indigo-200" />
+          <span className="text-xs font-mono font-bold tracking-wide">OPERATIONAL COPILOT</span>
+        </button>
+      )}
     </div>
   );
 };
@@ -314,23 +267,41 @@ const PublicWorkflow: React.FC<{ onSwitchToOperator: () => void; onGoToEvidenceR
 };
 
 const AppCore: React.FC = () => {
-  const [appMode, setAppMode] = useState<AppMode>("public");
-  const [pendingStep, setPendingStep] = useState<number | null>(null);
   const { isAuthorityUser } = useAuth();
   const { setStep } = useDemoScenario();
+  const [appMode, setAppMode] = useState<AppMode>(() => {
+    if (typeof window !== "undefined") {
+      const savedMode = localStorage.getItem("tg_app_mode");
+      if (savedMode === "operator" || savedMode === "public") {
+        return savedMode;
+      }
+      if (localStorage.getItem("tg_current_user") || localStorage.getItem("tg_auth_token")) {
+        return "operator";
+      }
+    }
+    return "public";
+  });
+  const [pendingStep, setPendingStep] = useState<number | null>(null);
+
+  const handleSetAppMode = (mode: AppMode) => {
+    setAppMode(mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("tg_app_mode", mode);
+    }
+  };
 
   const handleGoToEvidenceReconciliation = () => {
     if (isAuthorityUser) {
-      setAppMode("operator");
+      handleSetAppMode("operator");
       setStep(3); // Jump right into Step 3: Evidence Reconciliation to see the fused citizen report
     } else {
       setPendingStep(3);
-      setAppMode("operator");
+      handleSetAppMode("operator");
     }
   };
 
   const handleSwitchToOperator = () => {
-    setAppMode("operator");
+    handleSetAppMode("operator");
   };
 
   return (
@@ -341,11 +312,11 @@ const AppCore: React.FC = () => {
           onGoToEvidenceReconciliation={handleGoToEvidenceReconciliation}
         />
       ) : isAuthorityUser ? (
-        <OperatorWorkflow onSwitchToPublic={() => setAppMode("public")} />
+        <OperatorWorkflow onSwitchToPublic={() => handleSetAppMode("public")} />
       ) : (
         <LoginView
           onSuccess={() => {
-            setAppMode("operator");
+            handleSetAppMode("operator");
             if (pendingStep) {
               setStep(pendingStep as any);
               setPendingStep(null);
@@ -353,7 +324,7 @@ const AppCore: React.FC = () => {
           }}
           onCancel={() => {
             setPendingStep(null);
-            setAppMode("public");
+            handleSetAppMode("public");
           }}
         />
       )}

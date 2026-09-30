@@ -112,3 +112,39 @@ async def test_incident_service_queries(db_session):
     items, total = await incident_service.list_incidents(page=1, page_size=10)
     assert total >= 1
     assert any(i.code == "TG-2048" for i in items)
+
+
+@pytest.mark.asyncio
+async def test_sqlite_foreign_key_cascade_and_no_orphans(db_session):
+    """Verify that deleting an incident cascades cleanly across all children with no orphaned rows (TG-007)."""
+    from sqlalchemy import select, text
+    from app.db.models import IncidentModel, EvidenceModel, ActionModel, AuditEventModel
+
+    # Check pragma
+    pragma_val = (await db_session.execute(text("PRAGMA foreign_keys;"))).scalar()
+    assert pragma_val == 1, "SQLite foreign keys must be strictly enforced"
+
+    # Seed TG-2048
+    seed_service = SeedService(db_session)
+    seeded = await seed_service.seed_tg_2048(force_reset=True)
+    inc_id = seeded.id
+
+    # Verify children exist
+    ev_count = (await db_session.execute(select(EvidenceModel).where(EvidenceModel.incident_id == inc_id))).scalars().all()
+    assert len(ev_count) >= 4
+
+    audit_count = (await db_session.execute(select(AuditEventModel).where(AuditEventModel.incident_id == inc_id))).scalars().all()
+    assert len(audit_count) >= 1
+
+    # Delete the parent incident
+    incident = (await db_session.execute(select(IncidentModel).where(IncidentModel.id == inc_id))).scalar_one()
+    await db_session.delete(incident)
+    await db_session.commit()
+
+    # Verify all children were cascade deleted with 0 orphans
+    ev_after = (await db_session.execute(select(EvidenceModel).where(EvidenceModel.incident_id == inc_id))).scalars().all()
+    assert len(ev_after) == 0, f"Expected 0 orphaned evidence rows, got {len(ev_after)}"
+
+    audit_after = (await db_session.execute(select(AuditEventModel).where(AuditEventModel.incident_id == inc_id))).scalars().all()
+    assert len(audit_after) == 0, f"Expected 0 orphaned audit rows, got {len(audit_after)}"
+

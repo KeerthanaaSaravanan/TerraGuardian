@@ -79,6 +79,31 @@ class NextBestInformationItem(BaseModel):
     discriminates_between: list[list[str]] = Field(default_factory=list)
     spatial_scope: Optional[str] = None
     temporal_scope: Optional[str] = None
+    # Phase 5 Workstream B3 Taxonomy
+    information_type: Optional[str] = None
+    reason: Optional[str] = None
+    hypotheses_affected: list[str] = Field(default_factory=list)
+    required_role: str = "FIELD_RESPONDER"
+    urgency: str = "HIGH"
+
+    model_config = {"from_attributes": True}
+
+
+
+class StructuredRecommendation(BaseModel):
+    """Structured decision support recommendation adhering to Phase 5 Workstream A2."""
+
+    recommendation: str
+    rationale: str
+    supporting_evidence: list[str] = Field(default_factory=list)
+    contradicting_evidence: list[str] = Field(default_factory=list)
+    uncertainty: str
+    next_best_information: list[NextBestInformationItem] = Field(default_factory=list)
+    required_authority: str
+    proposed_action: dict[str, Any] = Field(default_factory=dict)
+    authority_boundary_notice: str = (
+        "AI ASSISTS REASONING. ONLY STATUTORY HUMAN OFFICIALS MAY AUTHORIZE OPERATIONAL ACTIONS."
+    )
 
     model_config = {"from_attributes": True}
 
@@ -97,6 +122,7 @@ class DecisionSupportAssessment(BaseModel):
     governing_safety_rules: list[str] = Field(default_factory=list)
     recommended_operational_options: list[dict[str, Any]] = Field(default_factory=list)
     next_best_information: list[NextBestInformationItem] = Field(default_factory=list)
+    structured_recommendation: Optional[StructuredRecommendation] = None
 
     active_divergences: list[str] = Field(default_factory=list)
     outcome_summary: Optional[str] = None
@@ -110,4 +136,5 @@ class DecisionSupportAssessment(BaseModel):
 
 
 DecisionSupportAssessment.model_rebuild()
+
 

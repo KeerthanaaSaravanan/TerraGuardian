@@ -58,3 +58,13 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.7);
 }
+
+/* Tactical dark basemap filter for Leaflet raster tiles */
+.dark .leaflet-tile-tactical-dark {
+  filter: brightness(0.75) invert(0.95) contrast(2.2) hue-rotate(195deg) saturate(0.4);
+}
+
+.dark .leaflet-container {
+  background: #0b1120;
+}
+

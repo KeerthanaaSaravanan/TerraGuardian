@@ -22,6 +22,19 @@ class Base(DeclarativeBase):
     pass
 
 
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Enforce SQLite foreign key constraints on connection creation."""
+    if "sqlite" in type(dbapi_connection).__module__:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON;")
+        cursor.close()
+
+
+
 # Global engine and sessionmaker
 _engine: AsyncEngine | None = None
 _async_session_factory: async_sessionmaker[AsyncSession] | None = None

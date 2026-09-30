@@ -374,9 +374,21 @@ async def test_distant_evidence_rejects_silent_attachment(db_session: AsyncSessi
 @pytest.mark.asyncio
 async def test_approved_action_does_not_equal_confirmed_execution(db_session: AsyncSession):
     """An approved action must remain DISPATCHED and cannot claim PHYSICALLY_CONFIRMED without field confirmation."""
+    incident = IncidentModel(
+        id=uuid.uuid4(),
+        code="TG-ADV-09",
+        title="Approved Action Test",
+        status=IncidentStatus.AUTHORIZED.value,
+        hazard_state=HazardState.EXPECTED.value,
+        latitude=27.08,
+        longitude=92.56,
+    )
+    db_session.add(incident)
+    await db_session.flush()
+
     action = ActionModel(
         id=uuid.uuid4(),
-        incident_id=uuid.uuid4(),
+        incident_id=incident.id,
         task_code="TSK-01",
         agency="Police",
         title="Close Highway at KM-38",
@@ -386,6 +398,7 @@ async def test_approved_action_does_not_equal_confirmed_execution(db_session: As
     )
     db_session.add(action)
     await db_session.commit()
+
 
     assert action.state != ActionState.PHYSICALLY_CONFIRMED.value
     # Verification check: Action gap exists between authorization and physical reality

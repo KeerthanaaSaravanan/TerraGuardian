@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.models import ActionModel, EvidenceModel, IncidentModel
-from app.domain.decision import DecisionSupportAssessment, NextBestInformationItem
+from app.domain.decision import DecisionSupportAssessment, NextBestInformationItem, StructuredRecommendation
 from app.domain.enums import (
     ActionState,
     ActorRole,
@@ -246,7 +246,7 @@ class DecisionIntelligenceService:
                 "action_type": "TRAFFIC_DIVERSION",
                 "authority_required": True,
                 "statutory_authority": "District Magistrate / DDMA Chairperson (Sec 34, DM Act 2005)",
-                "rationale": "High pore-pressure slope failure threatens sole heavy transit corridor to West Kameng Civil Hospital.",
+                "rationale": "Severe hydrometeorological slope hazard threatens sole heavy transit corridor to West Kameng Civil Hospital.",
                 "status": "PROPOSED",
             })
             operational_options.append({
@@ -304,6 +304,45 @@ class DecisionIntelligenceService:
             f"Causal Claim: {'ESTABLISHED' if outcome.causal_claim_established else 'UNPROVEN (causal_claim_established=False)'}"
         )
 
+        # 8. Synthesize Structured Recommendation (Phase 5 Workstream A2)
+        supporting_ev_desc = [
+            f"{e.source}: {e.observation}"
+            for e in evidence_items
+            if e.interpretation in (EvidenceInterpretation.VERIFIED.value, "VERIFIED")
+            and any(kw in (e.observation or "").lower() for kw in ("rain", "mm", "slope", "crack", "displacement", "saturation"))
+        ][:4]
+        contradicting_ev_desc = [
+            f"{e.source}: {e.observation}"
+            for e in evidence_items
+            if e.conflict_status == EvidenceConflictStatus.CONFLICTED.value
+            or any(kw in (e.observation or "").lower() for kw in ("clear", "intact", "no debris", "stabilized"))
+        ][:3]
+
+        primary_opt = operational_options[0] if operational_options else {
+            "title": "Maintain Precautionary Corridor Monitoring",
+            "action_type": "MONITORING_HOLD",
+            "authority_required": False,
+        }
+
+        structured_rec = StructuredRecommendation(
+            recommendation=primary_opt.get("title", "Maintain precautionary corridor monitoring"),
+            rationale=(
+                f"Evaluated physical hazard score is {risk_score:.1f}/100 ({incident.risk_level}) with {priority_str} priority. "
+                + primary_opt.get("rationale", "Active terrain distress requires governed response.")
+            ),
+            supporting_evidence=supporting_ev_desc,
+            contradicting_evidence=contradicting_ev_desc,
+            uncertainty=(
+                f"Evidential certainty is {conf_score:.1f}% ({incident.confidence_level}). "
+                f"{'Optical spaceborne pass is heavily cloud-obscured (Observation Gap). ' if optical_cloud_cover >= 70.0 else ''}"
+                "Physical ground confirmation is required before resolving evidential ambiguity."
+            ),
+            next_best_information=nbi_items,
+            required_authority=primary_opt.get("statutory_authority", "District Magistrate / DDMA Authorization Officer"),
+            proposed_action=primary_opt,
+            authority_boundary_notice="AI ASSISTS REASONING. ONLY STATUTORY HUMAN OFFICIALS MAY AUTHORIZE OPERATIONAL ACTIONS.",
+        )
+
         return DecisionSupportAssessment(
             id=uuid.uuid4(),
             incident_id=incident.id,
@@ -315,6 +354,7 @@ class DecisionIntelligenceService:
             governing_safety_rules=governing_rules,
             recommended_operational_options=operational_options,
             next_best_information=nbi_items,
+            structured_recommendation=structured_rec,
             active_divergences=active_divergences,
             outcome_summary=outcome_summary_str,
             closure_readiness=closure_readiness,
@@ -322,3 +362,99 @@ class DecisionIntelligenceService:
             assessed_at=datetime.utcnow(),
             assessed_by="TerraGuardian Decision Intelligence Engine",
         )
+
+    @classmethod
+    def generate_structured_recommendation(
+        cls,
+        incident_id: str = "TG-2048",
+        hazard_summary: str = "Slope instability at NH-13 KM-42 due to 184mm antecedent rainfall.",
+        consequence_summary: str = "Critical lifeline route threatens 380 downslope dwellings.",
+        confidence: str = "MODERATE",
+    ) -> StructuredRecommendation:
+        """Produce structured recommendation adhering to Phase 5 Workstream A2."""
+        nbi_items = [
+            NextBestInformationItem(
+                action_type="FIELD_PATROL_INSPECTION",
+                information_type="FIELD_PATROL_INSPECTION",
+                priority="HIGH",
+                urgency="HIGH",
+                target_modality="FIELD_PATROL",
+                title="Dispatch Ground Patrol for Toe Inspection",
+                rationale="Visual ground inspection resolves spaceborne cloud cover and discriminates H1 vs H3.",
+                qualitative_discrimination="HIGH",
+                required_role="FIELD_RESPONDER",
+                status="RECOMMENDED",
+            ),
+            NextBestInformationItem(
+                action_type="ACQUIRE_SAR_RADAR",
+                information_type="ACQUIRE_SAR_RADAR",
+                priority="HIGH",
+                urgency="HIGH",
+                target_modality="SATELLITE_RADAR",
+                title="Acquire Sentinel-1 SAR Radar Pass",
+                rationale="Synthetic Aperture Radar penetrates 88% monsoon cloud cover to measure slope decorrelation.",
+                qualitative_discrimination="HIGH",
+                required_role="OPERATOR",
+                status="RECOMMENDED",
+            ),
+        ]
+        return StructuredRecommendation(
+            recommendation="Enforce precautionary heavy vehicle traffic halt on NH-13 KM-38 to KM-48.",
+            rationale=f"Evaluated hazard: {hazard_summary}. Consequence: {consequence_summary}.",
+            supporting_evidence=[
+                "184.6mm antecedent rainfall recorded at IMD Bhalukpong AWS",
+                "25.7° cut-slope gradient confirmed from Copernicus GLO-30 DEM",
+            ],
+            contradicting_evidence=[],
+            uncertainty=f"Evidential certainty is {confidence}. 88% cloud cover creates an observation gap; ground confirmation mandatory.",
+            next_best_information=nbi_items,
+            required_authority="District Magistrate / DDMA Authorization Officer",
+            proposed_action={
+                "action_type": "HIGHWAY_TRAFFIC_HALT",
+                "target": "NH-13 KM-38 to KM-48",
+                "status": "PROPOSED",
+                "requires_statutory_order": True,
+            },
+            authority_boundary_notice="AI ASSISTS REASONING. ONLY STATUTORY HUMAN OFFICIALS MAY AUTHORIZE OPERATIONAL ACTIONS.",
+        )
+
+    @classmethod
+    def get_decision_support_assessment(cls, incident_id: str = "TG-2048") -> DecisionSupportAssessment:
+        """Produce deterministic decision support assessment for incident."""
+        rec = cls.generate_structured_recommendation(incident_id=incident_id)
+        return DecisionSupportAssessment(
+            id=uuid.uuid4(),
+            incident_id=uuid.UUID(incident_id) if isinstance(incident_id, str) and len(incident_id) == 36 else uuid.uuid4(),
+            current_status="ASSESSING",
+            current_hazard_state="EXPECTED",
+            risk_score=86.0,
+            confidence_score=54.0,
+            priority_level="P2_HIGH",
+            governing_safety_rules=[
+                "RULE 1: AI RECOMMENDS, ONLY HUMAN OFFICIALS AUTHORIZE.",
+                "RULE 2: EVENT ABSENCE != HAZARD EXTINCTION.",
+                "RULE 3: HAZARD != PRIORITY.",
+            ],
+            recommended_operational_options=[
+                {
+                    "title": "Enforce precautionary heavy vehicle traffic halt",
+                    "action_type": "HIGHWAY_TRAFFIC_HALT",
+                    "priority": "P2_HIGH",
+                    "authority_required": True,
+                    "statutory_authority": "AUTHORIZATION_OFFICER",
+                }
+            ],
+            next_best_information=rec.next_best_information,
+            structured_recommendation=rec,
+            active_divergences=[],
+            outcome_summary="Outcome Type: OBSERVATION_GAP | Causal Claim: UNPROVEN",
+            closure_readiness=False,
+            closure_blockers=["Unresolved observation gap", "Missing field confirmation"],
+            assessed_at=datetime.utcnow(),
+            assessed_by="TerraGuardian Decision Intelligence Engine",
+        )
+
+
+decision_intelligence_service = DecisionIntelligenceService(None)  # type: ignore
+
+

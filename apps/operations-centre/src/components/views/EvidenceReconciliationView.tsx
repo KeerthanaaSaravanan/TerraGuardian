@@ -19,6 +19,7 @@ import type { EvidenceConflictStatus, EvidenceInterpretation, EvidenceProcessing
 export const EvidenceReconciliationView: React.FC = () => {
   const {
     setStep,
+    setIncidentSubTab,
     riskLevel,
     confidenceLevel,
     reconciliationSummary,
@@ -30,6 +31,8 @@ export const EvidenceReconciliationView: React.FC = () => {
   const { isSubmittedToOperations, activeImage, compiledObservation } = usePublicReport();
   const [isReconciling, setIsReconciling] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<"ALL" | "CITIZEN" | "WEATHER" | "SATELLITE" | "TERRAIN" | "FIELD">("ALL");
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   const handleRunReconciliation = async () => {
     setIsReconciling(true);
@@ -66,6 +69,8 @@ export const EvidenceReconciliationView: React.FC = () => {
         processing_status: be.processing_status,
         interpretation: be.interpretation,
         is_simulated: be.is_simulated,
+        photo_url: (be.raw_data?.photo_url as string) || (be.source === "CITIZEN" ? (be.raw_data?.image_url as string) : undefined),
+        raw_data: be.raw_data,
       }))
     : (isSubmittedToOperations
         ? [
@@ -103,6 +108,16 @@ export const EvidenceReconciliationView: React.FC = () => {
             is_simulated: true,
           })));
 
+  const citizenCount = displayEvidence.filter(e => e.sourceType === "CITIZEN" || e.sourceType === "PUBLIC_CITIZEN").length;
+  const unverifiedCitizenCount = displayEvidence.filter(e => (e.sourceType === "CITIZEN" || e.sourceType === "PUBLIC_CITIZEN") && (e.interpretation === "UNVERIFIED" || e.status === "UNVERIFIED")).length;
+
+  const filteredEvidence = displayEvidence.filter(item => {
+    if (selectedFilter === "ALL") return true;
+    if (selectedFilter === "CITIZEN") return item.sourceType === "CITIZEN" || item.sourceType === "PUBLIC_CITIZEN";
+    if (selectedFilter === "TERRAIN") return item.sourceType === "TERRAIN" || item.sourceType === "HISTORICAL";
+    return item.sourceType === selectedFilter;
+  });
+
   const dominantSignal = reconciliationSummary?.dominant_signal || "EXTREME_PRECIPITATION_WITH_OPTICAL_OBSCURATION";
   const qualityScore = reconciliationSummary?.evidence_quality_score ?? 0.65;
   const supportingCount = reconciliationSummary?.supporting_evidence_ids?.length ?? displayEvidence.filter(e => e.conflict_status !== "CONFLICTED").length;
@@ -116,8 +131,6 @@ export const EvidenceReconciliationView: React.FC = () => {
       <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 font-mono text-xs text-slate-500 dark:text-neutral-400">
-            <span>STEP 3 OF 10</span>
-            <span>•</span>
             <span className="text-amber-600 dark:text-amber-400 font-bold uppercase">
               Authoritative Evidence Reconciliation Fabric
             </span>
@@ -141,7 +154,10 @@ export const EvidenceReconciliationView: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setStep(4)}
+            onClick={() => {
+              setIncidentSubTab("ASSESSMENT");
+              setStep(4);
+            }}
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all cursor-pointer"
           >
             <span>Examine Impact & Priority</span>
@@ -179,7 +195,7 @@ export const EvidenceReconciliationView: React.FC = () => {
             <div>
               <span className="text-slate-400">Backend Authority: </span>
               <span className={backendStatus === "CONNECTED" ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
-                {backendStatus === "CONNECTED" ? "FASTAPI BACKEND" : "DETERMINISTIC DEMO"}
+                {backendStatus === "CONNECTED" ? "FASTAPI BACKEND" : "STANDALONE LOCAL REPLAY"}
               </span>
             </div>
           </div>
@@ -225,6 +241,163 @@ export const EvidenceReconciliationView: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Signature Capability #3: Evidence Convergence ("Why Do We Believe This?") ── */}
+      <div className="bg-slate-900 border border-indigo-500/40 rounded-2xl p-5 shadow-xl space-y-4 font-mono">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+              <IconShieldCheck className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-bold text-white tracking-wide uppercase">
+                  Evidence Convergence Engine ("Why Do We Believe This?")
+                </h3>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
+                  CONVERGENT (4 OF 4 PATHWAYS AGREE)
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold font-mono">
+                  CONTROLLED DEMONSTRATION
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Multi-sensor cross-validation isolating physical signal from sensor artifact [CONTROLLED DEMO SCENARIO].
+              </p>
+            </div>
+          </div>
+          <div className="text-[11px] text-right text-slate-400">
+            <span>Overall Assessment Trust: </span>
+            <strong className="text-emerald-400 text-xs">82.5% HIGH</strong>
+          </div>
+        </div>
+
+        {/* The 4 Independent Evidence Pathways */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          {/* Pathway 1 */}
+          <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 space-y-2 relative overflow-hidden">
+            <div className="w-1.5 h-full bg-blue-500 absolute top-0 left-0" />
+            <div className="flex items-center justify-between pl-1">
+              <span className="text-[10px] text-blue-400 uppercase font-bold">PATHWAY 1: DYNAMIC HAZARD</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-blue-950 text-blue-300 border border-blue-800">SCENARIO TELEMETRY</span>
+            </div>
+            <div className="pl-1">
+              <div className="font-bold text-white text-xs">IMD ARI-7 Rainfall Saturation</div>
+              <div className="text-slate-300 text-[11px] mt-1">184.6mm 7-day antecedent, 8.4mm/hr convective rate</div>
+              <div className="text-blue-400 text-[10px] mt-1.5 flex items-center gap-1">
+                <span>●</span> <span>High Scenario Reliability (Demo AWS)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Pathway 2 */}
+          <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 space-y-2 relative overflow-hidden">
+            <div className="w-1.5 h-full bg-purple-500 absolute top-0 left-0" />
+            <div className="flex items-center justify-between pl-1">
+              <span className="text-[10px] text-purple-400 uppercase font-bold">PATHWAY 2: STATIC SUSCEPTIBILITY</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800">TERRAIN MODEL</span>
+            </div>
+            <div className="pl-1">
+              <div className="font-bold text-white text-xs">Copernicus 30m DEM + GSI NLSM</div>
+              <div className="text-slate-300 text-[11px] mt-1">44.2° cut-slope in Daling-Buxa fractured mica-schist</div>
+              <div className="text-purple-400 text-[10px] mt-1.5 flex items-center gap-1">
+                <span>●</span> <span>High Reliability (Verified Topo)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Pathway 3 */}
+          <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 space-y-2 relative overflow-hidden">
+            <div className="w-1.5 h-full bg-emerald-500 absolute top-0 left-0" />
+            <div className="flex items-center justify-between pl-1">
+              <span className="text-[10px] text-emerald-400 uppercase font-bold">PATHWAY 3: SCENARIO FIELD EVIDENCE</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">SCENARIO VERIFIED</span>
+            </div>
+            <div className="pl-1">
+              <div className="font-bold text-white text-xs">SDRF Team Alpha Field Visual</div>
+              <div className="text-slate-300 text-[11px] mt-1">45m tension crack with active mud slurry at KM-42 scarp</div>
+              <div className="text-emerald-400 text-[10px] mt-1.5 flex items-center gap-1">
+                <span>●</span> <span>Scenario Patrol Evidence (Controlled Demo)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Pathway 4 */}
+          <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 space-y-2 relative overflow-hidden">
+            <div className="w-1.5 h-full bg-amber-500 absolute top-0 left-0" />
+            <div className="flex items-center justify-between pl-1">
+              <span className="text-[10px] text-amber-400 uppercase font-bold">PATHWAY 4: CITIZEN INTEL</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-800">UNVERIFIED SUBMISSION</span>
+            </div>
+            <div className="pl-1">
+              <div className="font-bold text-white text-xs">Safe PWA Report #CR-2048-01</div>
+              <div className="text-slate-300 text-[11px] mt-1">Carriageway encroachment reported at Bhalukpong checkpost</div>
+              <div className="text-amber-400 text-[10px] mt-1.5 flex items-center gap-1">
+                <span>●</span> <span>Moderate Trust (Pending Operator Sign-off)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Evidence Trust & Uncertainty Breakdown Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs pt-1">
+          {/* Known With High Confidence */}
+          <div className="bg-emerald-950/20 p-3 rounded-xl border border-emerald-800/40">
+            <div className="text-emerald-400 text-[10px] uppercase font-bold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span>Known (High Confidence)</span>
+            </div>
+            <ul className="mt-2 space-y-1 text-[11px] text-slate-300 list-disc list-inside">
+              <li>Rain saturation: 184.6mm (IMD)</li>
+              <li>Slope angle: 44.2° (Copernicus DEM)</li>
+              <li>Surface tension crack: 45m (SDRF)</li>
+              <li>Lifeline status: NH-13 sole artery</li>
+            </ul>
+          </div>
+
+          {/* Inferred With Moderate Confidence */}
+          <div className="bg-blue-950/20 p-3 rounded-xl border border-blue-800/40">
+            <div className="text-blue-400 text-[10px] uppercase font-bold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-400" />
+              <span>Inferred (Moderate Confidence)</span>
+            </div>
+            <ul className="mt-2 space-y-1 text-[11px] text-slate-300 list-disc list-inside">
+              <li>Pore-water pressure from ARI-7</li>
+              <li>Potential debris volume: ~3,200 m³</li>
+              <li>Clearing duration: 14 to 18 hours</li>
+              <li>Estimated pop isolation: 1,420</li>
+            </ul>
+          </div>
+
+          {/* Unknown / Unconfirmed Data Gaps */}
+          <div className="bg-amber-950/20 p-3 rounded-xl border border-amber-800/40">
+            <div className="text-amber-400 text-[10px] uppercase font-bold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span>Unknown / Information Gaps</span>
+            </div>
+            <ul className="mt-2 space-y-1 text-[11px] text-slate-300 list-disc list-inside">
+              <li>Piezometer telemetry: KM-41 offline</li>
+              <li>Subsurface slip surface exact depth</li>
+              <li>Night-time vehicle occupancy downstream</li>
+              <li>Bridle track clearance for 10-wheelers</li>
+            </ul>
+          </div>
+
+          {/* Sensitivity Scenario (Demonstration Model Bounds) */}
+          <div className="bg-purple-950/20 p-3 rounded-xl border border-purple-800/40">
+            <div className="text-purple-400 text-[10px] uppercase font-bold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-purple-400" />
+              <span>Sensitivity Scenario</span>
+            </div>
+            <ul className="mt-2 space-y-1 text-[11px] text-slate-300 list-disc list-inside">
+              <li>Additional rainfall increases modeled hazard under current demonstration assumptions</li>
+              <li>Rain &lt; 10mm/12h: Hazard lowers towards baseline</li>
+              <li>Crack widening &gt; 5cm: Triggers scenario escalation</li>
+              <li>Culvert rupture: Increases modeled debris velocity</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       {/* Recommended Action Quick Dispatch Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 p-4 rounded-xl text-xs">
         <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200">
@@ -232,17 +405,94 @@ export const EvidenceReconciliationView: React.FC = () => {
           <span>Citizen submissions enter as UNVERIFIED and cannot independently trigger state transitions or road closures without field officer confirmation.</span>
         </div>
         <button
-          onClick={() => setStep(5)}
+          onClick={() => {
+            setIncidentSubTab("ACTIONS");
+            setStep(5);
+          }}
           className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-2 px-4 rounded-lg transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
-          <span>Dispatch Ground Patrol (Step 5)</span>
+          <span>Dispatch Ground Patrol Verification</span>
           <IconArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Evidence Source Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-neutral-800 pb-3">
+        <button
+          onClick={() => setSelectedFilter("ALL")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
+            selectedFilter === "ALL"
+              ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+              : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          All Evidence ({displayEvidence.length})
+        </button>
+        <button
+          onClick={() => setSelectedFilter("CITIZEN")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            selectedFilter === "CITIZEN"
+              ? "bg-emerald-600 text-white shadow-sm"
+              : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <IconRadio className="w-3.5 h-3.5" />
+          <span>Citizen Reports ({citizenCount})</span>
+          {unverifiedCitizenCount > 0 && (
+            <span className="bg-amber-500 text-slate-950 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+              {unverifiedCitizenCount} Unverified
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setSelectedFilter("WEATHER")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            selectedFilter === "WEATHER"
+              ? "bg-blue-600 text-white shadow-sm"
+              : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <IconCloudRain className="w-3.5 h-3.5" />
+          <span>Meteorological ({displayEvidence.filter(e => e.sourceType === "WEATHER").length})</span>
+        </button>
+        <button
+          onClick={() => setSelectedFilter("SATELLITE")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            selectedFilter === "SATELLITE"
+              ? "bg-purple-600 text-white shadow-sm"
+              : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <IconSatellite className="w-3.5 h-3.5" />
+          <span>Satellite InSAR & Optical ({displayEvidence.filter(e => e.sourceType === "SATELLITE").length})</span>
+        </button>
+        <button
+          onClick={() => setSelectedFilter("TERRAIN")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            selectedFilter === "TERRAIN"
+              ? "bg-amber-600 text-white shadow-sm"
+              : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <IconMountain className="w-3.5 h-3.5" />
+          <span>Terrain & Lithology ({displayEvidence.filter(e => e.sourceType === "TERRAIN" || e.sourceType === "HISTORICAL").length})</span>
+        </button>
+        <button
+          onClick={() => setSelectedFilter("FIELD")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            selectedFilter === "FIELD"
+              ? "bg-cyan-600 text-white shadow-sm"
+              : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <IconShieldCheck className="w-3.5 h-3.5" />
+          <span>Field Patrol ({displayEvidence.filter(e => e.sourceType === "FIELD").length})</span>
         </button>
       </div>
 
       {/* Multi-Source Evidence Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {displayEvidence.map((item) => {
+        {filteredEvidence.map((item) => {
           const isWeather = item.sourceType === "WEATHER";
           const isSat = item.sourceType === "SATELLITE";
           const isTerrain = item.sourceType === "TERRAIN";
@@ -323,6 +573,25 @@ export const EvidenceReconciliationView: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Explicit Lineage Relation & "Why Do We Believe This?" Box */}
+                  <div className="mt-2.5 p-2.5 rounded-lg bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-[11px] font-mono">
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-neutral-400 font-bold uppercase mb-1">
+                      <span className="text-purple-600 dark:text-purple-400">
+                        LINEAGE: {isWeather ? "SUPPORTS HAZARD HYPOTHESIS" : isSat ? (isConflicted ? "CONTRADICTS OPTICAL CLARITY" : "DERIVED_FROM SAR BACKSCATTER") : isTerrain ? "DERIVED_FROM COPERNICUS GLO-30 DEM" : isHist ? "SUPERSEDES VIRGIN SLOPE ASSUMPTION" : isCitizen ? "SUPPORTS CARRIAGEWAY OBSTRUCTION REPORT" : "SUPPORTS SCENARIO FIELD CONFIRMATION"}
+                      </span>
+                      <span className="text-emerald-600 dark:text-emerald-400 text-[9px]">DATA → FEATURE → ASSESSMENT</span>
+                    </div>
+                    <div className="text-slate-700 dark:text-neutral-300 font-sans leading-relaxed text-xs">
+                      <strong className="text-slate-900 dark:text-white font-mono text-[10px] block mb-0.5">WHY WE BELIEVE THIS:</strong>
+                      {isWeather && "Extreme antecedent precipitation (184.6mm) on saturated 44.2° cut slope exceeds regional 70mm/24h empirical threshold by >150%."}
+                      {isSat && (isConflicted ? "Optical Sentinel-2 imagery has 88% monsoon cloud obstruction; radar backscatter indicates surface roughness anomaly but lacks optical confirmation." : "Synthetic Aperture Radar phase coherence penetrates monsoon clouds, confirming localized slope shift.")}
+                      {isTerrain && "Horn (1981) 3x3 finite-difference algorithm on 30m posting verifies 42.3° colluvial escarpment on fractured Daling-Buxa formation."}
+                      {isHist && "BRO Project Vartak maintenance records confirm 3 historical slides at KM-42 (2021-2024), nearest GSI NLSM landslide polygon is 140.6m away."}
+                      {isCitizen && "Citizen mobile camera upload with geocoding verifies carriageway encroachment; kept UNVERIFIED until physical patrol sign-off."}
+                      {isField && "Official SDRF / BRO field officer physical ground inspection confirmed barricade placement and slope status."}
+                    </div>
+                  </div>
+
                   {/* Citizen verification button for unverified citizen evidence */}
                   {isCitizen && isUnverified && (
                     <div className="mt-3 pt-2 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between">
@@ -340,16 +609,41 @@ export const EvidenceReconciliationView: React.FC = () => {
                     </div>
                   )}
 
-                  {/* If Citizen Evidence, display image preview */}
-                  {isCitizen && isSubmittedToOperations && (
-                    <div className="mt-3 rounded-lg overflow-hidden border border-slate-300 dark:border-neutral-700 bg-black/40 h-28 flex items-center justify-center relative">
-                      <img
-                        src={activeImage}
-                        alt="Citizen Upload"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute bottom-1 right-1 bg-black/70 px-2 py-0.5 rounded text-[9px] font-mono text-emerald-400 border border-emerald-500/30">
-                        CITIZEN INGEST • UNVERIFIED
+                  {/* If Citizen Evidence, display first-class photo artifact with expand + honest CV analysis */}
+                  {isCitizen && (
+                    <div className="mt-3 space-y-2">
+                      <div
+                        onClick={() => setExpandedImage(item.photo_url || activeImage || "/samples/landslide_debris_flow.jpg")}
+                        className="rounded-lg overflow-hidden border border-slate-300 dark:border-neutral-700 bg-slate-950 h-32 flex items-center justify-center relative cursor-pointer group"
+                      >
+                        <img
+                          src={item.photo_url || activeImage || "/samples/landslide_debris_flow.jpg"}
+                          alt="Citizen Uploaded Evidence"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute bottom-1.5 left-1.5 bg-black/80 backdrop-blur-xs px-2 py-0.5 rounded text-[9px] font-mono text-white flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <span>GROUND PHOTO ARTIFACT</span>
+                        </div>
+                        <div className="absolute top-1.5 right-1.5 bg-black/80 backdrop-blur-xs px-2 py-0.5 rounded text-[9px] font-mono text-slate-300 group-hover:text-white">
+                          🔍 Click to Expand
+                        </div>
+                      </div>
+
+                      {/* Honest CV Analysis Card */}
+                      <div className="p-2.5 rounded-lg bg-slate-100 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-mono">
+                        <div className="flex items-center justify-between text-[10px] font-bold">
+                          <span className="text-slate-600 dark:text-neutral-400">CV INFERENCE ENGINE</span>
+                          <span className="px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                            NOT CONNECTED / EXPERIMENTAL
+                          </span>
+                        </div>
+                        <div className="text-slate-900 dark:text-white font-semibold mt-1">
+                          CV ANALYSIS: NOT CONNECTED / EXPERIMENTAL • Manual verification required
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5 leading-normal">
+                          Zero automated object detection. No synthetic bounding boxes or fabricated probabilities applied. Requires visual inspection by authorized Field Controller.
+                        </div>
                       </div>
                     </div>
                   )}
@@ -371,6 +665,51 @@ export const EvidenceReconciliationView: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Expanded Image Modal */}
+      {expandedImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-neutral-900 border border-slate-300 dark:border-neutral-700 rounded-2xl max-w-2xl w-full p-4 shadow-2xl flex flex-col gap-3 font-mono">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-2">
+              <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                CITIZEN OPTICAL EVIDENCE ARTIFACT • NH-13 KM-41.8
+              </span>
+              <button
+                onClick={() => setExpandedImage(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-xs cursor-pointer"
+              >
+                ✕ Close
+              </button>
+            </div>
+            <div className="rounded-xl overflow-hidden bg-slate-950 max-h-[60vh] flex items-center justify-center">
+              <img
+                src={expandedImage}
+                alt="Full Resolution Evidence"
+                className="w-full h-full object-contain max-h-[60vh]"
+              />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-slate-600 dark:text-neutral-400 bg-slate-50 dark:bg-neutral-950 p-2.5 rounded-lg border border-slate-200 dark:border-neutral-800">
+              <div>
+                <span className="block text-slate-400">INGEST SOURCE</span>
+                <span className="font-bold text-slate-800 dark:text-neutral-200">TerraGuardian Safe PWA</span>
+              </div>
+              <div>
+                <span className="block text-slate-400">GEOTAG STATUS</span>
+                <span className="font-bold text-emerald-600">Geo-Verified (27.20°N, 92.45°E)</span>
+              </div>
+              <div>
+                <span className="block text-slate-400">CV STATE</span>
+                <span className="font-bold text-amber-600">Experimental / Disconnected</span>
+              </div>
+              <div>
+                <span className="block text-slate-400">VERIFICATION</span>
+                <span className="font-bold text-amber-600">Pending Field Patrol</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

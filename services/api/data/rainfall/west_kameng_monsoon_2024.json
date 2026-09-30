@@ -1,0 +1,170 @@
+{
+  "dataset_name": "West Kameng Corridor Historical Rainfall Series (Monsoon 2024)",
+  "region": "West Kameng, Arunachal Pradesh",
+  "coordinates": {
+    "latitude": 27.0842,
+    "longitude": 92.5681
+  },
+  "station_reference": "Bhalukpong-Tenga Sector (NH-13 KM-42)",
+  "source_agency": "ECMWF ERA5 / NASA GPM Satellite Reanalysis via Open-Meteo",
+  "elevation_msl_m": 618.4,
+  "provenance_class": "REAL_HISTORICAL",
+  "timezone": "Asia/Kolkata",
+  "daily_observations": [
+    {
+      "date": "2024-06-15",
+      "precipitation_sum_mm": 8.4,
+      "precipitation_hours": 17.0
+    },
+    {
+      "date": "2024-06-16",
+      "precipitation_sum_mm": 13.1,
+      "precipitation_hours": 15.0
+    },
+    {
+      "date": "2024-06-17",
+      "precipitation_sum_mm": 19.1,
+      "precipitation_hours": 18.0
+    },
+    {
+      "date": "2024-06-18",
+      "precipitation_sum_mm": 42.4,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-06-19",
+      "precipitation_sum_mm": 26.0,
+      "precipitation_hours": 21.0
+    },
+    {
+      "date": "2024-06-20",
+      "precipitation_sum_mm": 13.0,
+      "precipitation_hours": 13.0
+    },
+    {
+      "date": "2024-06-21",
+      "precipitation_sum_mm": 6.5,
+      "precipitation_hours": 10.0
+    },
+    {
+      "date": "2024-06-22",
+      "precipitation_sum_mm": 2.7,
+      "precipitation_hours": 9.0
+    },
+    {
+      "date": "2024-06-23",
+      "precipitation_sum_mm": 18.8,
+      "precipitation_hours": 16.0
+    },
+    {
+      "date": "2024-06-24",
+      "precipitation_sum_mm": 32.9,
+      "precipitation_hours": 23.0
+    },
+    {
+      "date": "2024-06-25",
+      "precipitation_sum_mm": 74.0,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-06-26",
+      "precipitation_sum_mm": 14.3,
+      "precipitation_hours": 16.0
+    },
+    {
+      "date": "2024-06-27",
+      "precipitation_sum_mm": 19.4,
+      "precipitation_hours": 16.0
+    },
+    {
+      "date": "2024-06-28",
+      "precipitation_sum_mm": 22.0,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-06-29",
+      "precipitation_sum_mm": 65.9,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-06-30",
+      "precipitation_sum_mm": 64.8,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-07-01",
+      "precipitation_sum_mm": 65.4,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-07-02",
+      "precipitation_sum_mm": 17.8,
+      "precipitation_hours": 14.0
+    },
+    {
+      "date": "2024-07-03",
+      "precipitation_sum_mm": 23.7,
+      "precipitation_hours": 15.0
+    },
+    {
+      "date": "2024-07-04",
+      "precipitation_sum_mm": 15.3,
+      "precipitation_hours": 19.0
+    },
+    {
+      "date": "2024-07-05",
+      "precipitation_sum_mm": 35.0,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-07-06",
+      "precipitation_sum_mm": 19.6,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-07-07",
+      "precipitation_sum_mm": 35.3,
+      "precipitation_hours": 22.0
+    },
+    {
+      "date": "2024-07-08",
+      "precipitation_sum_mm": 18.4,
+      "precipitation_hours": 21.0
+    },
+    {
+      "date": "2024-07-09",
+      "precipitation_sum_mm": 14.0,
+      "precipitation_hours": 23.0
+    },
+    {
+      "date": "2024-07-10",
+      "precipitation_sum_mm": 12.1,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-07-11",
+      "precipitation_sum_mm": 24.7,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-07-12",
+      "precipitation_sum_mm": 18.8,
+      "precipitation_hours": 24.0
+    },
+    {
+      "date": "2024-07-13",
+      "precipitation_sum_mm": 17.6,
+      "precipitation_hours": 19.0
+    },
+    {
+      "date": "2024-07-14",
+      "precipitation_sum_mm": 1.6,
+      "precipitation_hours": 10.0
+    },
+    {
+      "date": "2024-07-15",
+      "precipitation_sum_mm": 16.5,
+      "precipitation_hours": 13.0
+    }
+  ]
+}

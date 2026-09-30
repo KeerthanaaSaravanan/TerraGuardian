@@ -24,6 +24,7 @@ function IconCameraIcon(props: React.SVGProps<SVGSVGElement>) {
 export const FieldVerificationView: React.FC = () => {
   const {
     setStep,
+    setIncidentSubTab,
     isVerificationRequested,
     isFieldReportReceived,
     fieldReport,
@@ -38,9 +39,7 @@ export const FieldVerificationView: React.FC = () => {
       <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 font-mono text-xs text-slate-500 dark:text-neutral-400">
-            <span>STEP 5 OF 10</span>
-            <span>•</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">FIELD VERIFICATION & GROUND TRUTH WORKFLOW</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase">FIELD VERIFICATION & PHYSICAL GROUND EVIDENCE WORKFLOW</span>
           </div>
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
             Ground Patrol Verification for Incident TG-2048
@@ -52,8 +51,11 @@ export const FieldVerificationView: React.FC = () => {
 
         {isFieldReportReceived && (
           <button
-            onClick={() => setStep(6)}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all"
+            onClick={() => {
+              setIncidentSubTab("ACTIONS");
+              setStep(6);
+            }}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all cursor-pointer"
           >
             <span>Proceed to Authority Decision</span>
             <IconArrowRight className="w-4 h-4" />
@@ -100,7 +102,7 @@ export const FieldVerificationView: React.FC = () => {
             </span>
             <div>
               <div className="font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">
-                CONFIDENCE LEVEL UPDATED VIA GROUND TRUTH
+                CONFIDENCE LEVEL UPDATED VIA VERIFIED FRESH FIELD EVIDENCE
               </div>
               <div className="text-lg font-bold text-slate-900 dark:text-white">
                 Evidence Confidence Elevated: <span className="text-slate-400 dark:text-neutral-400 line-through">MODERATE (54%)</span>{" "}

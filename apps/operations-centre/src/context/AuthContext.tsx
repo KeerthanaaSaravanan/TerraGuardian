@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { UserProfile, ActorRole, LoginPayload } from "../types/incident";
+import { UserProfile, ActorRole, LoginPayload, OperationalPermission, PERMISSION_MATRIX } from "../types/incident";
 import { apiClient, setAuthToken, getAuthToken, ApiError } from "../services/apiClient";
 
 export interface DemoAccount {
@@ -14,20 +14,16 @@ export interface DemoAccount {
 }
 
 /**
- * Deterministic demonstration accounts seeded in backend (Prompt 02).
- * STRICTLY DEMO / LOCAL ONLY.
+ * Curated command-centre demonstration accounts (Phase 4 / Pre-Phase 5).
+ * Strictly for demonstrating the Operations Command Platform.
+ * 
+ * 1. OPERATOR (Operations Duty Officer)
+ * 2. ASSESSMENT_OFFICER (Hazard Assessment)
+ * 3. FIELD_RESPONDER (Field Response / Patrol)
+ * 4. AUTHORIZATION_OFFICER (Statutory Authorization / DDMA)
+ * 5. REVIEWER (Governance / Review)
  */
-export const DEMO_ACCOUNTS: DemoAccount[] = [
-  {
-    username: "citizen",
-    role: "PUBLIC_CITIZEN",
-    passwordHint: "Citizen#2026",
-    roleLabel: "Public Citizen Observer",
-    fullName: "Citizen Observer (West Kameng)",
-    agency: "Citizen Community Watch",
-    badgeNumber: "CIT-WK-09",
-    description: "Public view only: localized alerts, safety advisories, and citizen hazard reporting.",
-  },
+export const COMMAND_DEMO_ACCOUNTS: DemoAccount[] = [
   {
     username: "operator",
     role: "OPERATOR",
@@ -36,27 +32,75 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     fullName: "Operations Duty Officer",
     agency: "State Disaster Operations Centre",
     badgeNumber: "SDOC-WK-102",
-    description: "Operational coordination: evidence reconciliation, action dispatch, reassessment, and telemetry.",
+    description: "Operational triage & coordination",
+  },
+  {
+    username: "assessment",
+    role: "ASSESSMENT_OFFICER",
+    passwordHint: "Terra#Assess2026",
+    roleLabel: "Hazard Assessment Officer",
+    fullName: "Dr. T. Norbu (Geotechnical Assessment Officer)",
+    agency: "State Hazard Assessment Cell / GSI NER",
+    badgeNumber: "GSI-NER-88",
+    description: "Hazard analysis & geotechnical models",
   },
   {
     username: "patrol",
-    role: "FIELD_VERIFIER",
+    role: "FIELD_RESPONDER",
     passwordHint: "Patrol#2026",
-    roleLabel: "Ground Patrol Officer",
+    roleLabel: "Field Response / Patrol",
     fullName: "ASI D. Sonam",
     agency: "West Kameng Traffic Police",
     badgeNumber: "WKTP-38",
-    description: "Field truth: ground patrol inspection reports and physical response action confirmation.",
+    description: "On-site field verification & confirmation",
   },
   {
     username: "magistrate",
-    role: "AUTHORIZED_DECISION_MAKER",
+    role: "AUTHORIZATION_OFFICER",
     passwordHint: "Terra#Admin2026",
-    roleLabel: "District Magistrate / DDMA",
+    roleLabel: "Statutory Authorization Authority",
     fullName: "P. Tsering, IAS (District Magistrate)",
     agency: "District Disaster Management Authority",
     badgeNumber: "DM-WK-01",
-    description: "Statutory authority: emergency orders (#DDMA-WK), decision authorization, and final incident closure.",
+    description: "Civil statutory disaster authorization",
+  },
+  {
+    username: "reviewer",
+    role: "REVIEWER",
+    passwordHint: "Terra#Review2026",
+    roleLabel: "Incident Review & Governance",
+    fullName: "K. Sharma (Independent Statutory Reviewer)",
+    agency: "NDMA State Oversight Division",
+    badgeNumber: "NDMA-REV-14",
+    description: "Governance review & compliance audit",
+  },
+];
+
+// Re-export as DEMO_ACCOUNTS for backward compatibility
+export const DEMO_ACCOUNTS: DemoAccount[] = COMMAND_DEMO_ACCOUNTS;
+
+// Comprehensive account register for offline fallback and programmatic API access
+export const ALL_SUPPORTED_ACCOUNTS: DemoAccount[] = [
+  ...COMMAND_DEMO_ACCOUNTS,
+  {
+    username: "admin",
+    role: "ADMINISTRATOR",
+    passwordHint: "Terra#SuperAdmin2026",
+    roleLabel: "System & Governance Administrator",
+    fullName: "System & Model Governance Administrator",
+    agency: "State IT & Disaster Systems Hub",
+    badgeNumber: "SYS-ADM-01",
+    description: "Infrastructure & model registry administration",
+  },
+  {
+    username: "citizen",
+    role: "CITIZEN",
+    passwordHint: "Citizen#2026",
+    roleLabel: "Public Citizen Observer",
+    fullName: "Citizen Observer (West Kameng)",
+    agency: "Citizen Community Watch",
+    badgeNumber: "CIT-WK-09",
+    description: "Public tier: localized hazard reporting via TerraGuardian Safe",
   },
 ];
 
@@ -67,14 +111,20 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   loginError: string | null;
-  login: (payload: LoginPayload) => Promise<boolean>;
+  login: (payloadOrUsername: LoginPayload | string, password?: string) => Promise<boolean>;
   logout: () => void;
   quickLoginAs: (username: string) => Promise<boolean>;
+  hasPermission: (permission: OperationalPermission | string) => boolean;
   isPublicUser: boolean;
   isAuthorityUser: boolean;
   canAuthorizeDecisions: boolean;
   canConfirmActions: boolean;
   canCoordinateOperations: boolean;
+  canProposeActions: boolean;
+  canReconcileEvidence: boolean;
+  canAssessHazard: boolean;
+  canReview: boolean;
+  canAdminister: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -123,13 +173,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initAuth();
   }, []);
 
-  const login = async (payload: LoginPayload): Promise<boolean> => {
+  const login = async (
+    payloadOrUsername: LoginPayload | string,
+    passwordArg?: string
+  ): Promise<boolean> => {
+    const payload: LoginPayload =
+      typeof payloadOrUsername === "string"
+        ? { username: payloadOrUsername, password: passwordArg || "" }
+        : payloadOrUsername;
+
     setIsLoading(true);
     setLoginError(null);
 
+    const safeUsername = (payload?.username || "").trim();
+    const safePassword = payload?.password || "";
+
     try {
       // 1. Attempt authoritative backend login
-      const response = await apiClient.login(payload);
+      const response = await apiClient.login({ username: safeUsername, password: safePassword });
       setAuthToken(response.access_token);
       setTokenState(response.access_token);
       setCurrentUser(response.user);
@@ -147,14 +208,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // 2. Offline / local fallback against seeded deterministic DEMO accounts
-      const match = DEMO_ACCOUNTS.find(
+      const match = ALL_SUPPORTED_ACCOUNTS.find(
         (a) =>
-          (a.username.toLowerCase() === payload.username.toLowerCase() ||
-           `${a.username}@terraguardian.gov.in`.toLowerCase() === payload.username.toLowerCase()) &&
-          payload.password === a.passwordHint
+          ((a.username.toLowerCase() === safeUsername.toLowerCase() ||
+            `${a.username}@terraguardian.gov.in`.toLowerCase() === safeUsername.toLowerCase())) &&
+          safePassword === a.passwordHint
       );
 
       if (match) {
+        const grantedPerms = (PERMISSION_MATRIX[match.role] || []).map((p) => p.toString());
         const syntheticProfile: UserProfile = {
           id: `demo-${match.username}-uuid`,
           username: match.username,
@@ -164,6 +226,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           agency: match.agency,
           badge_number: match.badgeNumber,
           is_active: true,
+          permissions: grantedPerms,
         };
         const syntheticToken = `demo_bearer_token_${match.username}`;
         setAuthToken(syntheticToken);
@@ -183,7 +246,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const quickLoginAs = async (username: string): Promise<boolean> => {
-    const acc = DEMO_ACCOUNTS.find((a) => a.username.toLowerCase() === username.toLowerCase());
+    const acc = ALL_SUPPORTED_ACCOUNTS.find((a) => a.username.toLowerCase() === username.toLowerCase());
     if (!acc) return false;
     return login({ username: acc.username, password: acc.passwordHint });
   };
@@ -198,12 +261,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const hasPermission = (permission: OperationalPermission | string): boolean => {
+    if (!currentUser) return permission === "READ";
+    if (currentUser.permissions && currentUser.permissions.length > 0) {
+      return currentUser.permissions.includes(permission);
+    }
+    const role = currentUser.role;
+    const granted = PERMISSION_MATRIX[role] || [];
+    return granted.includes(permission as OperationalPermission);
+  };
+
   const isAuthenticated = !!currentUser && !!token;
-  const isPublicUser = !isAuthenticated || currentUser?.role === "PUBLIC_CITIZEN";
-  const isAuthorityUser = isAuthenticated && currentUser?.role !== "PUBLIC_CITIZEN";
-  const canAuthorizeDecisions = currentUser?.role === "AUTHORIZED_DECISION_MAKER";
-  const canConfirmActions = currentUser?.role === "FIELD_VERIFIER" || currentUser?.role === "OPERATOR" || currentUser?.role === "AUTHORIZED_DECISION_MAKER";
-  const canCoordinateOperations = currentUser?.role === "OPERATOR" || currentUser?.role === "AUTHORIZED_DECISION_MAKER";
+  const isPublicUser = !isAuthenticated || currentUser?.role === "PUBLIC_CITIZEN" || currentUser?.role === "CITIZEN";
+  const isAuthorityUser = isAuthenticated && !isPublicUser;
+  
+  // Explicit permission mappings respecting governance invariants:
+  // Recommendation ≠ Authorization ≠ Execution ≠ Confirmation
+  const canAuthorizeDecisions = hasPermission("AUTHORIZE_ACTION");
+  const canConfirmActions = hasPermission("CONFIRM_PHYSICAL_COMPLETION");
+  const canCoordinateOperations = hasPermission("PROPOSE_ACTION") || hasPermission("EXECUTE_ACTION");
+  const canProposeActions = hasPermission("PROPOSE_ACTION");
+  const canReconcileEvidence = hasPermission("RECONCILE_EVIDENCE");
+  const canAssessHazard = hasPermission("ASSESS");
+  const canReview = hasPermission("REVIEW");
+  const canAdminister = hasPermission("ADMINISTER");
 
   return (
     <AuthContext.Provider
@@ -217,11 +298,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         logout,
         quickLoginAs,
+        hasPermission,
         isPublicUser,
         isAuthorityUser,
         canAuthorizeDecisions,
         canConfirmActions,
         canCoordinateOperations,
+        canProposeActions,
+        canReconcileEvidence,
+        canAssessHazard,
+        canReview,
+        canAdminister,
       }}
     >
       {children}

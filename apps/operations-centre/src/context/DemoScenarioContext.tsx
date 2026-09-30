@@ -35,6 +35,28 @@ export type DemoStep =
   | 10 // Forensics / Incident Replay ("What actually happened?")
   | 11; // Living Incident / Golden Demo ("SAME INCIDENT. NEW EVIDENCE. REASSESS.")
 
+export type PrimaryNavTab =
+  | "OPERATIONS"
+  | "QUEUE"
+  | "MAP"
+  | "INCIDENTS"
+  | "EVIDENCE"
+  | "ALERTS"
+  | "FIELD"
+  | "OUTCOMES"
+  | "REVIEW"
+  | "ADMIN"
+  | "REPLAY";
+export type IncidentSubTab =
+  | "OVERVIEW"
+  | "EVIDENCE"
+  | "ASSESSMENT"
+  | "EXPOSURE"
+  | "ACTIONS"
+  | "OUTCOME"
+  | "TIMELINE";
+export type NavigationMode = "OPERATIONAL" | "WALKTHROUGH";
+
 export type BackendSyncStatus = "CONNECTING" | "CONNECTED" | "OFFLINE_FALLBACK";
 
 export interface DemoState {
@@ -44,15 +66,31 @@ export interface DemoState {
   prevStep: () => void;
   resetDemo: () => void;
 
+  // Operational navigation state
+  activeNavTab: PrimaryNavTab;
+  setActiveNavTab: (tab: PrimaryNavTab) => void;
+  incidentSubTab: IncidentSubTab;
+  setIncidentSubTab: (tab: IncidentSubTab) => void;
+  navigationMode: NavigationMode;
+  setNavigationMode: (mode: NavigationMode) => void;
+
   // Backend synchronization
   backendStatus: BackendSyncStatus;
   backendIncidentId: string | null;
   backendSyncError: string | null;
   liveAuditEvents: AuditEvent[];
 
-  // Selected incident
+  // Selected incident & View Mode
   selectedIncidentCode: string;
   selectIncident: (code: string) => void;
+  incidentViewMode: "QUEUE" | "WORKSPACE";
+  setIncidentViewMode: (mode: "QUEUE" | "WORKSPACE") => void;
+  previousNavTab: PrimaryNavTab;
+  openIncident: (code: string, fromTab?: PrimaryNavTab) => void;
+  closeIncident: () => void;
+  refreshBackendData: () => Promise<void>;
+  outcomeAssessment: OutcomeAssessment | null;
+  evaluateOutcome: () => Promise<void>;
 
   // TG-2048 canonical dynamic state
   incidentCode: "TG-2048";
@@ -64,6 +102,13 @@ export interface DemoState {
   confidenceLevel: "VERY_HIGH" | "HIGH" | "MODERATE" | "LOW" | "VERY_LOW";
   confidenceScore: number;
   priorityLevel: "CRITICAL (P1)" | "HIGH (P2)" | "MODERATE (P3)" | "LOW (P4)";
+
+  // Assessment & Scientific Substrate State
+  currentAssessment: any | null;
+  previousAssessment: any | null;
+  whatChanged: any[] | null;
+  assessmentVersion: number;
+  reassessWithRealEnvironmentalData: () => Promise<void>;
 
   // Canonical state attributes as required by product spec
   verificationStatus: "PENDING" | "IN_PROGRESS" | "VERIFIED";
@@ -137,6 +182,80 @@ const DemoScenarioContext = createContext<DemoState | undefined>(undefined);
 export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentStep, setCurrentStep] = useState<DemoStep>(1);
   const [selectedIncidentCode, setSelectedIncidentCode] = useState<string>("TG-2048");
+  const [activeNavTab, setActiveNavTabState] = useState<PrimaryNavTab>("OPERATIONS");
+  const [previousNavTab, setPreviousNavTab] = useState<PrimaryNavTab>("QUEUE");
+
+  const TAB_TO_HASH: Record<PrimaryNavTab, string> = {
+    OPERATIONS: "#operations",
+    QUEUE: "#priority-queue",
+    MAP: "#map",
+    INCIDENTS: "#incidents",
+    EVIDENCE: "#evidence",
+    ALERTS: "#alerts",
+    FIELD: "#field",
+    OUTCOMES: "#outcomes",
+    REVIEW: "#review",
+    ADMIN: "#admin",
+    REPLAY: "#replay",
+  };
+
+  const HASH_TO_TAB: Record<string, PrimaryNavTab> = {
+    "#operations": "OPERATIONS",
+    "#priority-queue": "QUEUE",
+    "#queue": "QUEUE",
+    "#map": "MAP",
+    "#incidents": "INCIDENTS",
+    "#evidence": "EVIDENCE",
+    "#alerts": "ALERTS",
+    "#field": "FIELD",
+    "#outcomes": "OUTCOMES",
+    "#review": "REVIEW",
+    "#admin": "ADMIN",
+    "#replay": "REPLAY",
+  };
+
+  const setActiveNavTab = (tab: PrimaryNavTab, updateHistory: boolean = true) => {
+    setActiveNavTabState(tab);
+    if (typeof window !== "undefined") {
+      const targetHash = TAB_TO_HASH[tab] || "#operations";
+      if (window.location.hash !== targetHash) {
+        if (updateHistory) {
+          window.location.hash = targetHash;
+        } else {
+          window.history.replaceState(null, "", targetHash);
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      const tab = HASH_TO_TAB[hash];
+      if (tab) {
+        setActiveNavTabState(tab);
+        if (tab === "INCIDENTS") {
+          setIncidentViewMode("WORKSPACE");
+        }
+      }
+    };
+
+    if (window.location.hash) {
+      handleHash();
+    } else {
+      window.history.replaceState(null, "", "#operations");
+    }
+
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  const [incidentSubTab, setIncidentSubTab] = useState<IncidentSubTab>("OVERVIEW");
+  const [navigationMode, setNavigationMode] = useState<NavigationMode>("OPERATIONAL");
+  const [incidentViewMode, setIncidentViewMode] = useState<"QUEUE" | "WORKSPACE">("WORKSPACE");
+  const [outcomeAssessment, setOutcomeAssessment] = useState<OutcomeAssessment | null>(null);
 
   // Backend state
   const [backendStatus, setBackendStatus] = useState<BackendSyncStatus>("CONNECTING");
@@ -163,6 +282,11 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [confidenceScore, setConfidenceScore] = useState<number>(54);
   const [priorityLevel, setPriorityLevel] = useState<DemoState["priorityLevel"]>("HIGH (P2)");
 
+  // Real-Data Scientific Assessment State
+  const [currentAssessment, setCurrentAssessment] = useState<any | null>(null);
+  const [previousAssessment, setPreviousAssessment] = useState<any | null>(null);
+  const [whatChanged, setWhatChanged] = useState<any[] | null>(null);
+  const [assessmentVersion, setAssessmentVersion] = useState<number>(0);
 
   const [verificationStatus, setVerificationStatus] = useState<DemoState["verificationStatus"]>("PENDING");
   const [decisionStatus, setDecisionStatus] = useState<DemoState["decisionStatus"]>("REQUIRED");
@@ -206,13 +330,15 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
           throw new Error("Backend health check unsuccessful");
         }
 
-        // Try getting TG-2048 by code
+        // Ensure server-authenticated session exists (derives bearer token)
+        await apiClient.ensureAuthenticatedSession();
+
+        // Authoritative incident twin retrieval
         let twin: IncidentTwin | null = null;
         try {
           twin = await apiClient.getIncidentByCode("TG-2048");
         } catch (err) {
           if (err instanceof ApiError && err.status === 404) {
-            // Seed TG-2048 into database
             twin = await apiClient.seedTG2048();
           } else {
             throw err;
@@ -223,6 +349,26 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
           setBackendIncidentId(twin.id);
           setIncidentStatus(twin.status);
           setHazardState(twin.hazard_state);
+          setRiskScore(twin.risk_score);
+          setRiskLevel(twin.risk_level as DemoState["riskLevel"]);
+          setConfidenceScore(twin.confidence_score);
+          setConfidenceLevel(twin.confidence_level as DemoState["confidenceLevel"]);
+          setAssessmentVersion(twin.assessment_version || 0);
+
+          const meta = twin.metadata_json || {};
+          if (meta.current_assessment) {
+            setCurrentAssessment(meta.current_assessment);
+            setPreviousAssessment(meta.previous_assessment || null);
+            setWhatChanged(meta.what_changed || null);
+            if (meta.current_assessment.risk_score !== undefined) {
+              setRiskScore(meta.current_assessment.risk_score);
+              setRiskLevel(meta.current_assessment.risk_level);
+            }
+            if (meta.current_assessment.confidence_score !== undefined) {
+              setConfidenceScore(meta.current_assessment.confidence_score);
+              setConfidenceLevel(meta.current_assessment.confidence_level);
+            }
+          }
           setBackendStatus("CONNECTED");
           setBackendSyncError(null);
 
@@ -255,10 +401,12 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
             const pred = await apiClient.getIncidentPrediction(twin.id);
             if (isMounted && pred) {
               setPredictiveAssessment(pred);
-              setRiskScore(Math.round(pred.risk_score));
-              setRiskLevel(pred.risk_level as DemoState["riskLevel"]);
-              setConfidenceScore(Math.round(pred.confidence_score));
-              setConfidenceLevel(pred.confidence_level as DemoState["confidenceLevel"]);
+              if (!meta.current_assessment) {
+                setRiskScore(Math.round(pred.risk_score));
+                setRiskLevel(pred.risk_level as DemoState["riskLevel"]);
+                setConfidenceScore(Math.round(pred.confidence_score));
+                setConfidenceLevel(pred.confidence_level as DemoState["confidenceLevel"]);
+              }
             }
           } catch {
             // Non-fatal, fallback retained
@@ -301,6 +449,33 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
           } catch {
             // Non-fatal, fallback retained
           }
+
+          // Fetch authoritative operational actions & living outcome assessment
+          try {
+            const [actions, outcome] = await Promise.all([
+              apiClient.getIncidentActions(twin.id),
+              apiClient.getIncidentOutcome(twin.id),
+            ]);
+            if (isMounted) {
+              if (outcome) setOutcomeAssessment(outcome);
+              if (actions && actions.length > 0) {
+                setOperationalTasks(actions.map(a => ({
+                  id: a.task_code,
+                  agency: a.agency,
+                  title: a.title,
+                  assignedTo: a.assigned_to,
+                  status: a.state === "PHYSICALLY_CONFIRMED" || a.state === "COMPLETED" ? "COMPLETED" : a.state,
+                  description: a.description,
+                  isActionGapTrigger: a.is_action_gap_trigger,
+                  timestamp: a.confirmed_at ? new Date(a.confirmed_at).toLocaleTimeString() : (a.dispatched_at ? new Date(a.dispatched_at).toLocaleTimeString() : undefined)
+                })));
+                setIsActionGapActive(actions.some(a => a.is_action_gap_trigger && a.state !== "PHYSICALLY_CONFIRMED" && a.state !== "COMPLETED"));
+                setIsActionConfirmed(actions.some(a => a.is_action_gap_trigger && a.state === "PHYSICALLY_CONFIRMED"));
+              }
+            }
+          } catch {
+            // Non-fatal, fallback retained
+          }
         }
       } catch (err) {
         if (isMounted) {
@@ -321,10 +496,131 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
     setMapLayers((prev) => ({ ...prev, [layer]: !prev[layer] }));
   };
 
+  const openIncident = (code: string, fromTab?: PrimaryNavTab) => {
+    setSelectedIncidentCode(code);
+    if (fromTab) {
+      setPreviousNavTab(fromTab);
+    } else if (activeNavTab !== "INCIDENTS") {
+      setPreviousNavTab(activeNavTab);
+    }
+    setIncidentViewMode("WORKSPACE");
+    setActiveNavTab("INCIDENTS");
+  };
+
+  const closeIncident = () => {
+    setIncidentViewMode("QUEUE");
+    setActiveNavTab(previousNavTab || "QUEUE");
+  };
+
   const selectIncident = (code: string) => {
     setSelectedIncidentCode(code);
+    setIncidentViewMode("WORKSPACE");
     if (code === "TG-2048") {
       setCurrentStep(2);
+    }
+  };
+
+  const refreshBackendData = async () => {
+    if (!backendIncidentId) return;
+    try {
+      const [twin, timeline, evidence, actions, outcome, priority, impact] = await Promise.all([
+        apiClient.getIncidentById(backendIncidentId).catch(() => null),
+        apiClient.getIncidentTimeline(backendIncidentId).catch(() => []),
+        apiClient.getIncidentEvidence(backendIncidentId).catch(() => []),
+        apiClient.getIncidentActions(backendIncidentId).catch(() => []),
+        apiClient.getIncidentOutcome(backendIncidentId).catch(() => null),
+        apiClient.getIncidentPriority(backendIncidentId).catch(() => null),
+        apiClient.getIncidentImpact(backendIncidentId).catch(() => null),
+      ]);
+      if (twin) {
+        setIncidentStatus(twin.status);
+        setHazardState(twin.hazard_state);
+        setRiskScore(twin.risk_score);
+        setRiskLevel(twin.risk_level as DemoState["riskLevel"]);
+        setConfidenceScore(twin.confidence_score);
+        setConfidenceLevel(twin.confidence_level as DemoState["confidenceLevel"]);
+        setAssessmentVersion(twin.assessment_version || 0);
+
+        const meta = twin.metadata_json || {};
+        if (meta.current_assessment) {
+          setCurrentAssessment(meta.current_assessment);
+          setPreviousAssessment(meta.previous_assessment || null);
+          setWhatChanged(meta.what_changed || null);
+          if (meta.current_assessment.risk_score !== undefined) {
+            setRiskScore(meta.current_assessment.risk_score);
+            setRiskLevel(meta.current_assessment.risk_level);
+          }
+          if (meta.current_assessment.confidence_score !== undefined) {
+            setConfidenceScore(meta.current_assessment.confidence_score);
+            setConfidenceLevel(meta.current_assessment.confidence_level);
+          }
+        }
+      }
+      if (timeline && timeline.length > 0) setLiveAuditEvents(timeline);
+      if (evidence && evidence.length > 0) setBackendEvidence(evidence);
+      if (outcome) setOutcomeAssessment(outcome);
+      if (impact) setImpactAssessment(impact);
+      if (priority) {
+        setPriorityAssessment(priority);
+        if (priority.priority_level === "P1_CRITICAL") setPriorityLevel("CRITICAL (P1)");
+        else if (priority.priority_level === "P2_HIGH") setPriorityLevel("HIGH (P2)");
+        else if (priority.priority_level === "P3_MODERATE") setPriorityLevel("MODERATE (P3)");
+        else if (priority.priority_level === "P4_LOW") setPriorityLevel("LOW (P4)");
+      }
+      if (actions && actions.length > 0) {
+        setOperationalTasks(actions.map(a => ({
+          id: a.task_code,
+          agency: a.agency,
+          title: a.title,
+          assignedTo: a.assigned_to,
+          status: a.state === "PHYSICALLY_CONFIRMED" || a.state === "COMPLETED" ? "COMPLETED" : a.state,
+          description: a.description,
+          isActionGapTrigger: a.is_action_gap_trigger,
+          timestamp: a.confirmed_at ? new Date(a.confirmed_at).toLocaleTimeString() : (a.dispatched_at ? new Date(a.dispatched_at).toLocaleTimeString() : undefined)
+        })));
+        setIsActionGapActive(actions.some(a => a.is_action_gap_trigger && a.state !== "PHYSICALLY_CONFIRMED" && a.state !== "COMPLETED"));
+        setIsActionConfirmed(actions.some(a => a.is_action_gap_trigger && a.state === "PHYSICALLY_CONFIRMED"));
+      }
+    } catch (err) {
+      console.warn("Refresh backend data error:", err);
+    }
+  };
+
+  const reassessWithRealEnvironmentalData = async () => {
+    if (!backendIncidentId) return;
+    try {
+      const res = await apiClient.reassessWithRealEnvironmentalData(backendIncidentId);
+      if (res) {
+        if (res.current_assessment) setCurrentAssessment(res.current_assessment);
+        if (res.previous_assessment) setPreviousAssessment(res.previous_assessment);
+        if (res.what_changed) setWhatChanged(res.what_changed);
+        if (res.updated_risk_score !== undefined) {
+          setRiskScore(res.updated_risk_score);
+          setRiskLevel(res.updated_risk_level as DemoState["riskLevel"]);
+        }
+        if (res.updated_confidence_score !== undefined) {
+          setConfidenceScore(res.updated_confidence_score);
+          setConfidenceLevel(res.updated_confidence_level as DemoState["confidenceLevel"]);
+        }
+        if (res.assessment_version !== undefined) {
+          setAssessmentVersion(res.assessment_version);
+        }
+      }
+      await refreshBackendData();
+    } catch (err) {
+      console.warn("reassessWithRealEnvironmentalData error:", err);
+      throw err;
+    }
+  };
+
+  const evaluateOutcome = async () => {
+    if (backendStatus === "CONNECTED" && backendIncidentId) {
+      try {
+        const out = await apiClient.evaluateOutcome(backendIncidentId);
+        setOutcomeAssessment(out);
+      } catch (err) {
+        console.warn("Evaluate outcome failed:", err);
+      }
     }
   };
 
@@ -467,40 +763,59 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const escalateActionGap = () => {
-    alert("DEMO ESCALATION BROADCAST: High-priority TETRA radio emergency override simulated to West Kameng SP Office & Bhalukpong Thana.");
+    console.info("Action gap escalation broadcast dispatched to West Kameng SP Office & Bhalukpong Checkpost via TETRA.");
   };
 
-  const confirmActionGap = (confirmedBy = "ASI D. Sonam (Bhalukpong Police Checkpost)", notes = "Physical roadblock barrier deployed across both carriageways") => {
+  const confirmActionGap = async (confirmedBy = "ASI D. Sonam (Bhalukpong Police Checkpost)", notes = "Physical roadblock barrier deployed across both carriageways") => {
     setIsActionConfirmed(true);
     setIsActionGapActive(false);
     setActionStatus("CONFIRMED_COMPLETED");
     setOverallStatus("MONITORING");
     setIncidentStatus("MONITORING");
 
-    // Update the task list to completed
     setOperationalTasks((prev) =>
       prev.map((t) =>
         t.isActionGapTrigger
           ? {
               ...t,
               status: "COMPLETED",
-              description: "Physical roadblock established at KM-38. Heavy traffic halted. Confirmed by ASI D. Sonam via TETRA Radio.",
-              timestamp: "05:18 IST (Simulated Field Verification)",
+              description: `Physical roadblock established at KM-38. Heavy traffic halted. Confirmed by ${confirmedBy} via TETRA Radio.`,
+              timestamp: new Date().toLocaleTimeString(),
             }
           : t,
       ),
     );
 
-    // Backend sync: transition incident to MONITORING and record confirmation
     if (backendStatus === "CONNECTED" && backendIncidentId) {
-      apiClient
-        .transitionIncidentState(backendIncidentId, {
+      try {
+        const actions = await apiClient.getIncidentActions(backendIncidentId);
+        const gapTask = actions.find((a) => a.is_action_gap_trigger) || actions[1];
+        if (gapTask) {
+          await apiClient.transitionActionState(gapTask.id, {
+            target_state: "COMPLETED",
+            actor_role: "FIELD_VERIFIER" as ActorRole,
+            actor_name: confirmedBy,
+            reason: notes,
+          });
+          await apiClient.confirmAction(gapTask.id, {
+            confirming_officer: confirmedBy,
+            confirming_agency: "West Kameng Traffic Police",
+            location_confirmed: "KM-38 Bhalukpong Checkpost",
+            confirmation_notes: notes,
+            communication_channel: "TETRA_RADIO",
+            is_simulated: false,
+          });
+        }
+        await apiClient.transitionIncidentState(backendIncidentId, {
           target_status: "MONITORING",
           actor_role: "RESPONDER" as ActorRole,
           actor_name: confirmedBy,
           reason: `Physical closure confirmed: ${notes}`,
-        })
-        .catch((e) => console.warn("Background confirmation transition failed:", e));
+        });
+        await refreshBackendData();
+      } catch (err) {
+        console.warn("Real action gap confirmation sync error:", err);
+      }
     }
   };
 
@@ -643,7 +958,7 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
         const res = await apiClient.recalculateIncidentPriority(backendIncidentId, payload || {
           actor_role: "OPERATOR",
           actor_name: "Operations Room Officer",
-          reason: "Recalculating operational priority from live telemetry and consequence cascade",
+          reason: "Recalculating operational priority from multi-source evidence and consequence cascade",
         });
         setPriorityAssessment(res);
         if (res.priority_level === "P1_CRITICAL") setPriorityLevel("CRITICAL (P1)");
@@ -679,6 +994,38 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const syncStateToStep = (step: DemoStep) => {
+    if (step === 1) {
+      setActiveNavTab("INCIDENTS");
+      setIncidentSubTab("OVERVIEW");
+    } else if (step === 2) {
+      setActiveNavTab("INCIDENTS");
+      setIncidentSubTab("OVERVIEW");
+    } else if (step === 3) {
+      setActiveNavTab("EVIDENCE");
+      setIncidentSubTab("EVIDENCE");
+    } else if (step === 4) {
+      setActiveNavTab("ALERTS");
+      setIncidentSubTab("ASSESSMENT");
+    } else if (step === 5) {
+      setActiveNavTab("EVIDENCE");
+      setIncidentSubTab("EVIDENCE");
+    } else if (step === 6 || step === 7) {
+      setActiveNavTab("INCIDENTS");
+      setIncidentSubTab("ACTIONS");
+    } else if (step === 8) {
+      setActiveNavTab("REVIEW");
+      setIncidentSubTab("ACTIONS");
+    } else if (step === 9) {
+      setActiveNavTab("INCIDENTS");
+      setIncidentSubTab("OUTCOME");
+    } else if (step === 10) {
+      setActiveNavTab("REVIEW");
+      setIncidentSubTab("TIMELINE");
+    } else if (step === 11) {
+      setActiveNavTab("REVIEW");
+      setIncidentSubTab("OUTCOME");
+    }
+
     if (step === 1 || step === 2 || step === 3) {
       if (!isFieldReportReceived) {
         setPriorityLevel("HIGH (P2)");
@@ -723,14 +1070,15 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
       confirmActionGap();
     }
     if (step === 10) {
-      setIncidentStatus("RESOLVED");
-      setOverallStatus("RESOLVED");
+      // Historical replay mode: inspect archived timeline milestones without altering active incident state
       setReplayStepIndex(9);
     }
   };
 
   const resetDemo = () => {
     setCurrentStep(1);
+    setActiveNavTab("INCIDENTS");
+    setIncidentSubTab("OVERVIEW");
     setSelectedIncidentCode("TG-2048");
     setIncidentStatus("VERIFYING");
     setHazardState("EXPECTED");
@@ -793,6 +1141,13 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
         fetchImpactAndPriority,
         selectedIncidentCode,
         selectIncident,
+        incidentViewMode,
+        setIncidentViewMode,
+        openIncident,
+        closeIncident,
+        refreshBackendData,
+        outcomeAssessment,
+        evaluateOutcome,
         incidentCode: "TG-2048",
         incidentLocation: "NH-13 Corridor, West Kameng, Arunachal Pradesh",
         incidentStatus,
@@ -802,6 +1157,11 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
         confidenceLevel,
         confidenceScore,
         priorityLevel,
+        currentAssessment,
+        previousAssessment,
+        whatChanged,
+        assessmentVersion,
+        reassessWithRealEnvironmentalData,
         verificationStatus,
         decisionStatus,
         authorizationStatus,
@@ -825,6 +1185,13 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
         setReplayStepIndex,
         mapLayers,
         toggleMapLayer,
+        activeNavTab,
+        setActiveNavTab,
+        previousNavTab,
+        incidentSubTab,
+        setIncidentSubTab,
+        navigationMode,
+        setNavigationMode,
       }}
     >
       {children}

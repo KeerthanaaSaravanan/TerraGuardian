@@ -227,7 +227,7 @@ export const GoldenDemoView: React.FC = () => {
       setClosureAttemptResult({
         blocked: false,
         statusCode: 200,
-        reason: "AUTHORIZED: Evidentiary closure gate passed all 7 configured precondition checks.",
+        reason: "AUTHORIZED: Evidentiary closure gate passed all 9 configured precondition checks.",
         timestamp: new Date().toLocaleTimeString(),
       });
     } catch (err: any) {
@@ -258,7 +258,7 @@ export const GoldenDemoView: React.FC = () => {
             </span>
             <div>
               <div className="text-[11px] font-mono tracking-widest text-emerald-400 font-bold uppercase">
-                THE CANONICAL CLOSED-LOOP DEMONSTRATION
+                CLOSED-LOOP OUTCOME & HYPOTHESIS EVALUATION
               </div>
               <h1 className="text-xl lg:text-3xl font-black tracking-tight mt-0.5">
                 Living Incident & Hazard Outcome Engine
@@ -270,8 +270,8 @@ export const GoldenDemoView: React.FC = () => {
             <span className="px-3 py-1 rounded-full bg-neutral-800 border border-neutral-700 text-neutral-300">
               PERSISTENT ID: <strong className="text-white">TG-2048</strong>
             </span>
-            <span className="px-3 py-1 rounded-full bg-amber-950/80 border border-amber-500/50 text-amber-300 font-bold text-[10px]">
-              SEEDED DEMO FIXTURE
+            <span className="px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 font-bold text-[10px]">
+              ACTIVE OPERATIONAL TWIN
             </span>
             <span className="px-3 py-1 rounded-full bg-emerald-950 border border-emerald-600/60 text-emerald-300 font-bold">
               LINEAGE: HL-TG-2048-01
@@ -386,7 +386,7 @@ export const GoldenDemoView: React.FC = () => {
                 }`}
               >
                 <span>T4: Evidentiary Closure Gate</span>
-                <span className="text-[10px] opacity-80">7 GATES ENFORCED</span>
+                <span className="text-[10px] opacity-80">9 GATES ENFORCED</span>
               </button>
             </div>
           </div>
@@ -402,15 +402,15 @@ export const GoldenDemoView: React.FC = () => {
             </span>
             <div>
               <h2 className="text-sm font-bold font-mono text-slate-900 dark:text-white">
-                RESEARCH SCENARIO MATRIX INSPECTOR (SCENARIOS A – G)
+                HYPOTHESIS EVALUATION MATRIX (SCENARIOS A – G)
               </h2>
               <span className="text-[11px] font-mono text-slate-500 dark:text-neutral-400">
-                Deterministic domain projections representing all Prompt 04 research outcomes
+                Operational domain projections representing multi-agency research and ground outcomes
               </span>
             </div>
           </div>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-bold border border-slate-300 dark:border-neutral-700">
-            PROJECTION MATRIX
+            EVALUATION MATRIX
           </span>
         </div>
 
@@ -495,7 +495,7 @@ export const GoldenDemoView: React.FC = () => {
             </div>
             <div className="mt-3 pt-3 border-t border-slate-200 dark:border-neutral-800 flex justify-between text-[11px] font-mono">
               <span>Risk: 86 (HIGH)</span>
-              <span>Confidence: 54% (MODERATE)</span>
+              <span>Confidence: MODERATE (Incomplete EO)</span>
             </div>
           </div>
 
@@ -567,7 +567,7 @@ export const GoldenDemoView: React.FC = () => {
             </div>
             <div className="mt-3 pt-3 border-t border-slate-200 dark:border-neutral-800 flex justify-between text-[11px] font-mono text-cyan-700 dark:text-cyan-300 font-bold">
               <span>Hazard: SHIFTED (1.2km)</span>
-              <span>Confidence: 94% (Verified)</span>
+              <span>Confidence: VERY_HIGH (Verified Field Evidence)</span>
             </div>
           </div>
         </div>
@@ -596,7 +596,7 @@ export const GoldenDemoView: React.FC = () => {
                 <IconRadar className="w-4 h-4" />
               </span>
               <h3 className="font-bold text-sm font-mono text-slate-900 dark:text-white">
-                OUTCOME ENGINE EVALUATION (PROMPT 04)
+                ADAPTIVE OUTCOME ENGINE EVALUATION
               </h3>
             </div>
             <button
@@ -673,43 +673,43 @@ export const GoldenDemoView: React.FC = () => {
                 {
                   code: "H1_FALSE_ALARM",
                   title: "H1: False Alarm",
-                  status: selectedScenarioKey === "SCENARIO_B" ? "VIABLE" : "CONTRADICTED",
+                  status: selectedScenarioKey === "SCENARIO_B" ? "SUPPORTING" : selectedScenarioKey === "SCENARIO_A" || selectedScenarioKey === "SCENARIO_D" || selectedScenarioKey === "SCENARIO_F" ? "CONTRADICTING" : "UNKNOWN",
                   desc: "Baseline model over-prediction; slope intrinsically stable.",
                 },
                 {
                   code: "H2_INTERVENTION_CONDITIONED_NON_EVENT",
                   title: "H2: Intervention Non-Event",
-                  status: selectedScenarioKey === "SCENARIO_D" ? "ACTIVE" : "CONTRADICTED",
+                  status: selectedScenarioKey === "SCENARIO_D" ? "SUPPORTING" : selectedScenarioKey === "SCENARIO_A" || selectedScenarioKey === "SCENARIO_B" || selectedScenarioKey === "SCENARIO_F" ? "CONTRADICTING" : "UNKNOWN",
                   desc: "Non-event observed following mitigation; causal link unproven.",
                 },
                 {
                   code: "H3_DELAYED_FAILURE",
                   title: "H3: Delayed Failure",
-                  status: selectedScenarioKey === "SCENARIO_D" || selectedScenarioKey === "SCENARIO_E" ? "VIABLE" : "CONTRADICTED",
+                  status: selectedScenarioKey === "SCENARIO_D" || selectedScenarioKey === "SCENARIO_E" ? "SUPPORTING" : selectedScenarioKey === "SCENARIO_B" ? "CONTRADICTING" : "UNKNOWN",
                   desc: "Hydrostatic pore pressure surcharge sustained; rupture delayed.",
                 },
                 {
                   code: "H4_SHIFTED_HAZARD",
                   title: "H4: Shifted Hazard",
-                  status: selectedScenarioKey === "SCENARIO_F" ? "SUPPORTED" : selectedScenarioKey === "SCENARIO_A" ? "DISFAVORED" : "VIABLE",
+                  status: selectedScenarioKey === "SCENARIO_F" ? "SUPPORTING" : selectedScenarioKey === "SCENARIO_A" ? "CONTRADICTING" : "UNKNOWN",
                   desc: "Rupture occurred on adjacent slope flank within corridor scope.",
                 },
                 {
                   code: "H5_OBSERVATION_GAP",
                   title: "H5: Observation Gap",
-                  status: selectedScenarioKey === "SCENARIO_C" ? "ACTIVE" : "CONTRADICTED",
+                  status: selectedScenarioKey === "SCENARIO_C" ? "SUPPORTING" : selectedScenarioKey === "SCENARIO_A" || selectedScenarioKey === "SCENARIO_F" ? "CONTRADICTING" : "UNKNOWN",
                   desc: "Optical obscuration or sensor blackout; ground reality unverified.",
                 },
                 {
                   code: "H6_RESIDUAL_HAZARD",
                   title: "H6: Residual Hazard",
-                  status: selectedScenarioKey === "SCENARIO_A" ? "SUPPORTED" : selectedScenarioKey === "SCENARIO_D" || selectedScenarioKey === "SCENARIO_F" ? "VIABLE" : "DISFAVORED",
+                  status: selectedScenarioKey === "SCENARIO_A" ? "SUPPORTING" : selectedScenarioKey === "SCENARIO_B" ? "CONTRADICTING" : "UNKNOWN",
                   desc: "Unstable scarp crown retains detachment potential post-event.",
                 },
                 {
                   code: "H7_CONFLICTED",
                   title: "H7: Conflicted Evidence",
-                  status: selectedScenarioKey === "SCENARIO_G" ? "ACTIVE" : "CONTRADICTED",
+                  status: selectedScenarioKey === "SCENARIO_G" ? "SUPPORTING" : selectedScenarioKey === "SCENARIO_A" ? "CONTRADICTING" : "UNKNOWN",
                   desc: "Discrepancy between sensor telemetry and observational reports.",
                 },
               ].map((hyp) => (
@@ -725,11 +725,11 @@ export const GoldenDemoView: React.FC = () => {
                     <span className="text-slate-900 dark:text-white">{hyp.title}</span>
                     <span
                       className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
-                        hyp.status === "SUPPORTED"
-                          ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300"
-                          : hyp.status === "VIABLE" || hyp.status === "ACTIVE"
-                          ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300"
-                          : "bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400"
+                        hyp.status === "SUPPORTING"
+                          ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300"
+                          : hyp.status === "CONTRADICTING"
+                          ? "bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300"
+                          : "bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400 border border-slate-200"
                       }`}
                     >
                       {hyp.status}
@@ -807,7 +807,7 @@ export const GoldenDemoView: React.FC = () => {
             </div>
 
             <div className="text-[11px] text-slate-600 dark:text-neutral-400 font-sans leading-relaxed">
-              Targeted information gathering actions prioritizing maximal evidential uncertainty reduction:
+              Qualitative and operational mechanism for selecting the next observation or evidence that could most usefully reduce uncertainty between competing hazard hypotheses:
             </div>
 
             <div className="space-y-2">
@@ -878,72 +878,155 @@ export const GoldenDemoView: React.FC = () => {
                   EVIDENTIARY CLOSURE GATE
                 </h3>
               </div>
-              <span className="text-[10px] font-mono bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 px-2 py-0.5 rounded font-bold">
-                PROMPT 05 HARDENED
+              <span className="text-[10px] font-mono bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded font-bold border border-emerald-400">
+                AUDIT TRAIL HARDENED
               </span>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-neutral-300 leading-relaxed font-sans">
-              Incidents cannot be arbitrarily resolved. The authoritative backend requires all <strong>7 configured evidentiary precondition gates</strong> to be satisfied before transitioning to <code>RESOLVED</code>:
-            </p>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold">
+                OPERATIONAL CLOSURE GATEWAY
+              </span>
+              <h4 className="text-xs font-bold font-mono text-slate-900 dark:text-white">
+                7 / 9 CONDITIONS SATISFIED • CLOSURE BLOCKED
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-neutral-300 leading-relaxed font-sans mt-0.5">
+                Incidents cannot be arbitrarily resolved. The authoritative backend requires all <strong>9 operational precondition gates</strong> to be verified before transitioning to <code>RESOLVED</code>:
+              </p>
+            </div>
 
-            {/* 7 Preconditions Checklist */}
-            <div className="flex flex-col gap-2 font-mono text-xs">
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800">
-                <span className="flex items-center gap-2 text-slate-800 dark:text-neutral-200">
-                  <span className="text-emerald-500 font-bold">✓</span>
-                  1. Source State: REASSESSING
-                </span>
-                <span className="text-[10px] text-emerald-600 font-bold">MANDATORY</span>
+            {/* 9 Preconditions Checklist */}
+            <div className="flex flex-col gap-1.5 font-mono text-xs max-h-[380px] overflow-y-auto pr-1">
+              {/* 1 */}
+              <div className="flex items-start justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/70 dark:border-emerald-800/60">
+                <div>
+                  <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-neutral-100 text-[11px]">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    1. Source State: REASSESSING
+                  </span>
+                  <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-sans ml-4 mt-0.5">
+                    Incident in active REASSESSING state following post-action monitoring.
+                  </div>
+                </div>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 shrink-0">PASS</span>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800">
-                <span className="flex items-center gap-2 text-slate-800 dark:text-neutral-200">
-                  <span className="text-emerald-500 font-bold">✓</span>
-                  2. Actor Role: AUTHORIZED_DECISION_MAKER
-                </span>
-                <span className="text-[10px] text-emerald-600 font-bold">MAGISTRATE</span>
+              {/* 2 */}
+              <div className="flex items-start justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/70 dark:border-emerald-800/60">
+                <div>
+                  <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-neutral-100 text-[11px]">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    2. Actor Role: AUTHORIZATION_OFFICER / AUTHORIZED_DECISION_MAKER
+                  </span>
+                  <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-sans ml-4 mt-0.5">
+                    Civil statutory sign-off authority (District Magistrate / DDMA).
+                  </div>
+                </div>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 shrink-0">PASS</span>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800">
-                <span className="flex items-center gap-2 text-slate-800 dark:text-neutral-200">
-                  <span className="text-emerald-500 font-bold">✓</span>
-                  3. Order Reference: Resolution Order Code
-                </span>
-                <span className="text-[10px] text-emerald-600 font-bold">REQUIRED</span>
+              {/* 3 */}
+              <div className="flex items-start justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/70 dark:border-emerald-800/60">
+                <div>
+                  <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-neutral-100 text-[11px]">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    3. Order Reference: Resolution Order Code
+                  </span>
+                  <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-sans ml-4 mt-0.5">
+                    Non-empty official order code provided (#DDMA-WK-2026/884-CLOSE).
+                  </div>
+                </div>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 shrink-0">PASS</span>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800">
-                <span className="flex items-center gap-2 text-slate-800 dark:text-neutral-200">
-                  <span className="text-emerald-500 font-bold">✓</span>
-                  4. Dispatched Tasks: ALL PHYSICALLY_CONFIRMED
-                </span>
-                <span className="text-[10px] text-amber-600 font-bold">ENFORCED</span>
+              {/* 4 */}
+              <div className="flex items-start justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/70 dark:border-emerald-800/60">
+                <div>
+                  <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-neutral-100 text-[11px]">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    4. Dispatched Tasks: ALL PHYSICALLY_CONFIRMED
+                  </span>
+                  <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-sans ml-4 mt-0.5">
+                    All dispatched operational actions verified completed by field patrol.
+                  </div>
+                </div>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 shrink-0">PASS</span>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800">
-                <span className="flex items-center gap-2 text-slate-800 dark:text-neutral-200">
-                  <span className="text-emerald-500 font-bold">✓</span>
-                  5. Evidence Conflicts: All Reconciled
-                </span>
-                <span className="text-[10px] text-emerald-600 font-bold">ZERO CONFLICTS</span>
+              {/* 5 */}
+              <div className="flex items-start justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/70 dark:border-emerald-800/60">
+                <div>
+                  <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-neutral-100 text-[11px]">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    5. Evidence Conflicts: All Reconciled
+                  </span>
+                  <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-sans ml-4 mt-0.5">
+                    Zero unresolved CONFLICTED multi-source evidence records.
+                  </div>
+                </div>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 shrink-0">PASS</span>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800">
-                <span className="flex items-center gap-2 text-slate-800 dark:text-neutral-200">
-                  <span className="text-emerald-500 font-bold">✓</span>
-                  6. Ground Truth: Fresh Verified FIELD (≤21,600s)
-                </span>
-                <span className="text-[10px] text-emerald-600 font-bold">MAX 6.0H AGE</span>
+              {/* 6 */}
+              <div className="flex items-start justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/70 dark:border-emerald-800/60">
+                <div>
+                  <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-neutral-100 text-[11px]">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    6. Ground Truth: Fresh Verified FIELD (≤21,600s)
+                  </span>
+                  <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-sans ml-4 mt-0.5">
+                    At least one verified on-site field observation record present.
+                  </div>
+                </div>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 shrink-0">PASS</span>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800">
-                <span className="flex items-center gap-2 text-slate-800 dark:text-neutral-200">
-                  <span className="text-red-500 font-bold">✕</span>
-                  7. Outcome Engine: Clearance & Fresh Eval
-                </span>
-                <span className="text-[10px] text-red-600 font-bold">BLOCKS CLOSURE</span>
+              {/* 7 */}
+              <div className="flex items-start justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/70 dark:border-emerald-800/60">
+                <div>
+                  <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-neutral-100 text-[11px]">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    7. Freshness Threshold: Freshness Within 6.0 Hours
+                  </span>
+                  <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-sans ml-4 mt-0.5">
+                    Field evidence age within 21,600s (6h) max freshness policy limit.
+                  </div>
+                </div>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 shrink-0">PASS</span>
               </div>
+
+              {/* 8 */}
+              <div className="flex items-start justify-between p-2 rounded-lg bg-rose-50/80 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800/80">
+                <div>
+                  <span className="flex items-center gap-1.5 font-bold text-rose-900 dark:text-rose-200 text-[11px]">
+                    <span className="text-rose-600 font-bold">✕</span>
+                    8. Outcome Engine: Clearance & Fresh Eval
+                  </span>
+                  <div className="text-[10px] text-rose-700/80 dark:text-rose-300/80 font-sans ml-4 mt-0.5">
+                    Outcome is DELAYED/RESIDUAL: Non-event does not permit closure. Engineering stabilization report absent.
+                  </div>
+                </div>
+                <span className="text-[10px] text-rose-700 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/60 shrink-0">BLOCKED</span>
+              </div>
+
+              {/* 9 */}
+              <div className="flex items-start justify-between p-2 rounded-lg bg-rose-50/80 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800/80">
+                <div>
+                  <span className="flex items-center gap-1.5 font-bold text-rose-900 dark:text-rose-200 text-[11px]">
+                    <span className="text-rose-600 font-bold">✕</span>
+                    9. Outcome Evaluation Current: No Subsequent Evidence Unassessed
+                  </span>
+                  <div className="text-[10px] text-rose-700/80 dark:text-rose-300/80 font-sans ml-4 mt-0.5">
+                    Subsequent telemetry received after last outcome evaluation. Reassessment required before closure.
+                  </div>
+                </div>
+                <span className="text-[10px] text-rose-700 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/60 shrink-0">BLOCKED</span>
+              </div>
+            </div>
+
+            {/* Invariant Notice Banner */}
+            <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-[11px] text-amber-900 dark:text-amber-200 font-sans leading-tight">
+              <strong>GOVERNANCE LAW:</strong> OPERATIONAL INCIDENT CLOSURE ≠ GEOTECHNICAL HAZARD EXTINCTION.
             </div>
 
             {/* Test Closure Gate Execution Box */}

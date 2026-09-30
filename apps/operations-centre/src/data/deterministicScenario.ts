@@ -358,9 +358,9 @@ export const REPLAY_TIMELINE_STEPS: TimelineMilestone[] = [
     step: 5,
     time: "04:48 IST",
     title: "Field Evidence Uploaded with Geo-Photo",
-    badge: "GROUND TRUTH",
+    badge: "SCENARIO FIELD EVIDENCE",
     badgeColor: "#10B981",
-    description: "SDRF Sub-Inspector R. Thapa arrives at KM-42. Confirms active debris encroaching highway. Confidence surges from MODERATE (54%) to HIGH (94%).",
+    description: "SDRF Sub-Inspector R. Thapa arrives at KM-42. Confirms active debris encroaching highway. Scenario confidence shifts from MODERATE (54%) to HIGH (94%).",
     actor: "SI R. Thapa (SDRF Patrol)",
   },
   {

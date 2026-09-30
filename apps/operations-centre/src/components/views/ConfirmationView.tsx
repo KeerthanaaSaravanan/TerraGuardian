@@ -12,7 +12,7 @@ import {
 } from "../icons";
 
 export const ConfirmationView: React.FC = () => {
-  const { setStep, incidentStatus } = useDemoScenario();
+  const { setStep, setIncidentSubTab, incidentStatus } = useDemoScenario();
 
   return (
     <div className="flex flex-col gap-5 p-4 lg:p-6 w-full max-w-[1600px] mx-auto">
@@ -20,9 +20,7 @@ export const ConfirmationView: React.FC = () => {
       <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 font-mono text-xs text-slate-500 dark:text-neutral-400">
-            <span>STEP 9 OF 10</span>
-            <span>•</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">RESPONSE CLOSED-LOOP CONFIRMATION</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase">RESPONSE CLOSED-LOOP CONFIRMATION</span>
           </div>
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
             Ground Action Confirmation Submitted
@@ -33,10 +31,13 @@ export const ConfirmationView: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setStep(10)}
-          className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all"
+          onClick={() => {
+            setIncidentSubTab("TIMELINE");
+            setStep(10);
+          }}
+          className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all cursor-pointer"
         >
-          <span>Launch Full Incident Replay (Step 10)</span>
+          <span>Inspect Comprehensive Audit Timeline</span>
           <IconArrowRight className="w-4 h-4" />
         </button>
       </div>
@@ -57,7 +58,7 @@ export const ConfirmationView: React.FC = () => {
           </span>
           <div className="space-y-1">
             <div className="flex items-center gap-2 font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">
-              <span>FIELD CONFIRMATION SUBMITTED (DEMO SCENARIO)</span>
+              <span>FIELD CONFIRMATION SUBMITTED & PERSISTED</span>
               <span>•</span>
               <span className="bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-700 px-2 py-0.2 rounded text-[10px]">
                 STATE: {incidentStatus}
@@ -67,7 +68,7 @@ export const ConfirmationView: React.FC = () => {
               Physical Roadblock & Diversion Confirmed Operational
             </h2>
             <p className="text-xs text-slate-700 dark:text-neutral-300 max-w-2xl leading-relaxed">
-              ASI D. Sonam submitted field confirmation (Simulated TETRA Comms) that steel barriers and police warning flashers are secured across both lanes at KM-38.
+              ASI D. Sonam submitted field confirmation (Encrypted TETRA Comms) that steel barriers and police warning flashers are secured across both lanes at KM-38.
               Heavy commercial traffic is safely held in the Bhalukpong staging ground.
             </p>
           </div>
@@ -76,7 +77,7 @@ export const ConfirmationView: React.FC = () => {
         <div className="bg-white dark:bg-neutral-950 p-4 rounded-xl border border-slate-200 dark:border-neutral-800 text-center font-mono w-full sm:w-auto sm:min-w-[200px] shadow-xs">
           <div className="text-[10px] text-slate-500 dark:text-neutral-400">CORRIDOR STATUS</div>
           <div className="text-emerald-600 dark:text-emerald-400 font-bold text-base mt-1">TRAFFIC SAFELY DIVERTED</div>
-          <div className="text-[10px] text-slate-500 dark:text-neutral-500 mt-0.5">EXPOSURE MITIGATED (DEMO)</div>
+          <div className="text-[10px] text-slate-500 dark:text-neutral-500 mt-0.5">EXPOSURE MITIGATED</div>
         </div>
       </div>
 

@@ -64,6 +64,38 @@ class Action(BaseModel):
     assigned_to: str
     is_action_gap_trigger: bool = False
 
+    action_type: str = "OPERATIONAL_RESPONSE"
+    priority: str = "P1"
+    urgency: str = "IMMEDIATE"
+    requires_authorization: bool = False
+    affected_area: Optional[str] = None
+    rationale: Optional[str] = None
+    prerequisites: list[str] = Field(default_factory=list)
+    supporting_evidence_ids: list[str] = Field(default_factory=list)
+    workflow_type: str = "COORDINATED_DISPATCH"
+
+    # Statutory authorization tracking
+    authority_order_code: Optional[str] = None
+    authorized_by: Optional[str] = None
+    authorized_at: Optional[datetime] = None
+    authorization_reason: Optional[str] = None
+
+    # Dispatch tracking
+    dispatch_reference: Optional[str] = None
+    dispatch_channel: Optional[str] = None
+    dispatch_status: Optional[str] = None
+    target_agency: Optional[str] = None
+
+    # Field acknowledgement tracking
+    acknowledged_by: Optional[str] = None
+    acknowledgement_status: Optional[str] = None
+    acknowledgement_reason: Optional[str] = None
+
+    # Execution tracking
+    execution_actor: Optional[str] = None
+    execution_notes: Optional[str] = None
+    execution_location: Optional[str] = None
+
     # Timestamps
     dispatched_at: Optional[datetime] = None
     acknowledged_at: Optional[datetime] = None

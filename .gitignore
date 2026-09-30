@@ -55,6 +55,16 @@ Desktop.ini
 test-results/
 playwright-report/
 
+# ---------- Databases ----------
+*.db
+*.sqlite
+*.sqlite3
+
+# ---------- Temporary Scratch & Artifacts ----------
+scratch/
+screenshots/
+ANTIGRAVITY_*
+
 # ---------- Misc ----------
 *.log
 *.pid

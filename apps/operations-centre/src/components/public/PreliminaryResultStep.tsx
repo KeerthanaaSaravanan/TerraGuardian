@@ -65,16 +65,21 @@ export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
         <div className="w-full bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
             <div>
-              <span className="text-[10px] font-mono uppercase text-slate-400 block">
-                PRELIMINARY AI ASSESSMENT
+              <span className="text-[10px] font-mono uppercase text-slate-500 dark:text-neutral-400 block font-semibold">
+                PRELIMINARY COMPUTER VISION HEURISTIC (DEMONSTRATION PROTOCOL — PENDING FIELD VERIFICATION)
               </span>
-              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+              <h3 className="font-bold text-base text-slate-900 dark:text-white mt-0.5">
                 Potential Slope Failure Indicators Detected
               </h3>
             </div>
-            <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-300 dark:border-amber-800/60">
+            <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-300 dark:border-amber-800/60 shrink-0">
               MODERATE CONFIDENCE
             </span>
+          </div>
+
+          {/* Scientific Transparency & Field Verification Disclaimer */}
+          <div className="bg-slate-50 dark:bg-neutral-950 p-2.5 rounded-xl border border-slate-200 dark:border-neutral-800 text-[11px] font-mono text-slate-600 dark:text-neutral-400 leading-snug">
+            <strong>Provenance:</strong> Citizen Crowd Sourced Upload • Automated Edge Feature Extraction (Not authoritative until verified by authorized field officer).
           </div>
 
           {/* Photo & Detected Features */}

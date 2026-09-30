@@ -697,9 +697,9 @@ class OutcomeService:
             elif verified_event_observed:
                 rel_h3 = EvidenceRelationshipType.CONTRADICTING
                 reason_h3 = "Slope failure manifested during primary window; delay hypothesis is moot."
-            elif any(kw in obs for kw in ("pore-water", "saturation", "tension crack", "creep", "184mm", "rainfall")):
+            elif any(kw in obs for kw in ("saturation", "tension crack", "creep", "rainfall")):
                 rel_h3 = EvidenceRelationshipType.SUPPORTING
-                reason_h3 = "Hydrologic precipitation surge, pore pressure, or active tension crack indicates delayed failure risk."
+                reason_h3 = "Hydrologic precipitation surge, soil saturation, or active tension crack indicates delayed failure risk."
             elif is_satellite and any(kw in obs for kw in ("cloud", "obscur")):
                 rel_h3 = EvidenceRelationshipType.UNKNOWN
                 reason_h3 = "Cloud obscuration hides ground deformation without refuting hydrologic saturation."
@@ -886,8 +886,12 @@ class OutcomeService:
             st_h7 = HypothesisStatus.DISFAVORED
             rat_h7 = "DISFAVORED: Insufficient multi-source data to evaluate conflict."
 
+        def _ev_strings(eids: list[uuid.UUID]) -> list[str]:
+            return [str(eid) for eid in eids]
+
         competing_hypotheses = [
             CompetingHypothesisItem(
+                incident_id=incident.id,
                 hypothesis_type=HypothesisType.H1_FALSE_ALARM,
                 status=st_h1,
                 title="H1: False Alarm (Ungrounded Forecast)",
@@ -895,10 +899,15 @@ class OutcomeService:
                 supporting_evidence_ids=h_supporting[HypothesisType.H1_FALSE_ALARM],
                 contradicting_evidence_ids=h_contradicting[HypothesisType.H1_FALSE_ALARM],
                 unknown_evidence_ids=h_unknown[HypothesisType.H1_FALSE_ALARM],
+                supporting_evidence=_ev_strings(h_supporting[HypothesisType.H1_FALSE_ALARM]),
+                contradicting_evidence=_ev_strings(h_contradicting[HypothesisType.H1_FALSE_ALARM]),
+                unknown_evidence=_ev_strings(h_unknown[HypothesisType.H1_FALSE_ALARM]),
                 evidence_bindings=h_bindings[HypothesisType.H1_FALSE_ALARM],
                 rationale=rat_h1,
+                next_best_information=["Dispatch Ground Patrol for Physical Toe Verification", "Acquire Radar InSAR Telemetry"],
             ),
             CompetingHypothesisItem(
+                incident_id=incident.id,
                 hypothesis_type=HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT,
                 status=st_h2,
                 title="H2: Intervention-Conditioned Non-Event",
@@ -906,10 +915,15 @@ class OutcomeService:
                 supporting_evidence_ids=h_supporting[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT],
                 contradicting_evidence_ids=h_contradicting[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT],
                 unknown_evidence_ids=h_unknown[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT],
+                supporting_evidence=_ev_strings(h_supporting[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT]),
+                contradicting_evidence=_ev_strings(h_contradicting[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT]),
+                unknown_evidence=_ev_strings(h_unknown[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT]),
                 evidence_bindings=h_bindings[HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT],
                 rationale=rat_h2,
+                next_best_information=["Deploy Piezometric Hydrologic Sensor & Inclinometer Scan", "Dispatch Ground Patrol"],
             ),
             CompetingHypothesisItem(
+                incident_id=incident.id,
                 hypothesis_type=HypothesisType.H3_DELAYED_FAILURE,
                 status=st_h3,
                 title="H3: Delayed Failure (Hydrologic Lag)",
@@ -917,10 +931,15 @@ class OutcomeService:
                 supporting_evidence_ids=h_supporting[HypothesisType.H3_DELAYED_FAILURE],
                 contradicting_evidence_ids=h_contradicting[HypothesisType.H3_DELAYED_FAILURE],
                 unknown_evidence_ids=h_unknown[HypothesisType.H3_DELAYED_FAILURE],
+                supporting_evidence=_ev_strings(h_supporting[HypothesisType.H3_DELAYED_FAILURE]),
+                contradicting_evidence=_ev_strings(h_contradicting[HypothesisType.H3_DELAYED_FAILURE]),
+                unknown_evidence=_ev_strings(h_unknown[HypothesisType.H3_DELAYED_FAILURE]),
                 evidence_bindings=h_bindings[HypothesisType.H3_DELAYED_FAILURE],
                 rationale=rat_h3,
+                next_best_information=["Deploy Piezometric Hydrologic Sensor", "Extend Monitoring Window by 6 Hours"],
             ),
             CompetingHypothesisItem(
+                incident_id=incident.id,
                 hypothesis_type=HypothesisType.H4_SHIFTED_HAZARD,
                 status=st_h4,
                 title="H4: Shifted Hazard (Spatial Corridor Divergence)",
@@ -928,10 +947,15 @@ class OutcomeService:
                 supporting_evidence_ids=h_supporting[HypothesisType.H4_SHIFTED_HAZARD],
                 contradicting_evidence_ids=h_contradicting[HypothesisType.H4_SHIFTED_HAZARD],
                 unknown_evidence_ids=h_unknown[HypothesisType.H4_SHIFTED_HAZARD],
+                supporting_evidence=_ev_strings(h_supporting[HypothesisType.H4_SHIFTED_HAZARD]),
+                contradicting_evidence=_ev_strings(h_contradicting[HypothesisType.H4_SHIFTED_HAZARD]),
+                unknown_evidence=_ev_strings(h_unknown[HypothesisType.H4_SHIFTED_HAZARD]),
                 evidence_bindings=h_bindings[HypothesisType.H4_SHIFTED_HAZARD],
                 rationale=rat_h4,
+                next_best_information=["Acquire Sentinel-1 InSAR Phase Coherence Corridor Scan", "Drone Flank Survey"],
             ),
             CompetingHypothesisItem(
+                incident_id=incident.id,
                 hypothesis_type=HypothesisType.H5_OBSERVATION_GAP,
                 status=st_h5,
                 title="H5: Observation Gap (Evidentiary Obscuration / Inadequacy)",
@@ -939,10 +963,15 @@ class OutcomeService:
                 supporting_evidence_ids=h_supporting[HypothesisType.H5_OBSERVATION_GAP],
                 contradicting_evidence_ids=h_contradicting[HypothesisType.H5_OBSERVATION_GAP],
                 unknown_evidence_ids=h_unknown[HypothesisType.H5_OBSERVATION_GAP],
+                supporting_evidence=_ev_strings(h_supporting[HypothesisType.H5_OBSERVATION_GAP]),
+                contradicting_evidence=_ev_strings(h_contradicting[HypothesisType.H5_OBSERVATION_GAP]),
+                unknown_evidence=_ev_strings(h_unknown[HypothesisType.H5_OBSERVATION_GAP]),
                 evidence_bindings=h_bindings[HypothesisType.H5_OBSERVATION_GAP],
                 rationale=rat_h5,
+                next_best_information=["Dispatch Ground Patrol for Physical Toe & Carriageway Verification"],
             ),
             CompetingHypothesisItem(
+                incident_id=incident.id,
                 hypothesis_type=HypothesisType.H6_RESIDUAL_HAZARD,
                 status=st_h6,
                 title="H6: Residual Hazard (Persisting Geotechnical Instability)",
@@ -950,10 +979,15 @@ class OutcomeService:
                 supporting_evidence_ids=h_supporting[HypothesisType.H6_RESIDUAL_HAZARD],
                 contradicting_evidence_ids=h_contradicting[HypothesisType.H6_RESIDUAL_HAZARD],
                 unknown_evidence_ids=h_unknown[HypothesisType.H6_RESIDUAL_HAZARD],
+                supporting_evidence=_ev_strings(h_supporting[HypothesisType.H6_RESIDUAL_HAZARD]),
+                contradicting_evidence=_ev_strings(h_contradicting[HypothesisType.H6_RESIDUAL_HAZARD]),
+                unknown_evidence=_ev_strings(h_unknown[HypothesisType.H6_RESIDUAL_HAZARD]),
                 evidence_bindings=h_bindings[HypothesisType.H6_RESIDUAL_HAZARD],
                 rationale=rat_h6,
+                next_best_information=["Execute Geotechnical Stabilization Clearance Survey"],
             ),
             CompetingHypothesisItem(
+                incident_id=incident.id,
                 hypothesis_type=HypothesisType.H7_CONFLICTED,
                 status=st_h7,
                 title="H7: Conflicted Evidence (Discordant Observations)",
@@ -961,8 +995,12 @@ class OutcomeService:
                 supporting_evidence_ids=h_supporting[HypothesisType.H7_CONFLICTED],
                 contradicting_evidence_ids=h_contradicting[HypothesisType.H7_CONFLICTED],
                 unknown_evidence_ids=h_unknown[HypothesisType.H7_CONFLICTED],
+                supporting_evidence=_ev_strings(h_supporting[HypothesisType.H7_CONFLICTED]),
+                contradicting_evidence=_ev_strings(h_contradicting[HypothesisType.H7_CONFLICTED]),
+                unknown_evidence=_ev_strings(h_unknown[HypothesisType.H7_CONFLICTED]),
                 evidence_bindings=h_bindings[HypothesisType.H7_CONFLICTED],
                 rationale=rat_h7,
+                next_best_information=["Execute Joint Cross-Agency Verification Patrol"],
             ),
         ]
 
@@ -999,7 +1037,9 @@ class OutcomeService:
             nbi_items.append(
                 NextBestInformationItem(
                     action_type="DISPATCH_GROUND_PATROL_INSPECTION",
+                    information_type="DISPATCH_GROUND_PATROL_INSPECTION",
                     priority="HIGH",
+                    urgency="HIGH",
                     target_modality="FIELD_PATROL",
                     title="Dispatch Ground Patrol for Physical Toe & Carriageway Verification",
                     rationale=(
@@ -1007,7 +1047,16 @@ class OutcomeService:
                         "from unobserved detachment masked by optical cloud obscuration (H5). "
                         "[RECOMMENDED OBSERVATION ONLY — DOES NOT CONFER OPERATIONAL AUTHORITY]"
                     ),
+                    reason=(
+                        "Ground inspection provides definitive physical proof. Distinguishes genuine slope stability (H2) "
+                        "from unobserved detachment masked by optical cloud obscuration (H5)."
+                    ),
                     target_hypotheses=[
+                        HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value,
+                        HypothesisType.H5_OBSERVATION_GAP.value,
+                        HypothesisType.H1_FALSE_ALARM.value,
+                    ],
+                    hypotheses_affected=[
                         HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value,
                         HypothesisType.H5_OBSERVATION_GAP.value,
                         HypothesisType.H1_FALSE_ALARM.value,
@@ -1021,6 +1070,7 @@ class OutcomeService:
                     qualitative_discrimination="HIGH",
                     expected_confidence_delta=None,
                     authority_required=False,
+                    required_role="FIELD_RESPONDER",
                     status="RECOMMENDED",
                 )
             )
@@ -1033,7 +1083,9 @@ class OutcomeService:
             nbi_items.append(
                 NextBestInformationItem(
                     action_type="DEPLOY_PIEZOMETRIC_TELEMETRY",
+                    information_type="DEPLOY_PIEZOMETRIC_TELEMETRY",
                     priority="HIGH",
+                    urgency="HIGH",
                     target_modality="GROUND_SENSOR",
                     title="Deploy Piezometric Hydrologic Sensor & Inclinometer Scan",
                     rationale=(
@@ -1041,7 +1093,16 @@ class OutcomeService:
                         "hydrologic lag priming delayed failure (H3) or residual hazard (H6). "
                         "[RECOMMENDED OBSERVATION ONLY — DOES NOT CONFER OPERATIONAL AUTHORITY]"
                     ),
+                    reason=(
+                        "Measures pore-water pressure dissipation rate. Distinguishes stable drainage (H2) from progressive "
+                        "hydrologic lag priming delayed failure (H3) or residual hazard (H6)."
+                    ),
                     target_hypotheses=[
+                        HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value,
+                        HypothesisType.H3_DELAYED_FAILURE.value,
+                        HypothesisType.H6_RESIDUAL_HAZARD.value,
+                    ],
+                    hypotheses_affected=[
                         HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value,
                         HypothesisType.H3_DELAYED_FAILURE.value,
                         HypothesisType.H6_RESIDUAL_HAZARD.value,
@@ -1055,6 +1116,7 @@ class OutcomeService:
                     qualitative_discrimination="HIGH",
                     expected_confidence_delta=None,
                     authority_required=False,
+                    required_role="FIELD_RESPONDER",
                     status="RECOMMENDED",
                 )
             )
@@ -1064,7 +1126,9 @@ class OutcomeService:
             nbi_items.append(
                 NextBestInformationItem(
                     action_type="ACQUIRE_RADAR_TELEMETRY",
+                    information_type="ACQUIRE_RADAR_TELEMETRY",
                     priority="HIGH",
+                    urgency="HIGH",
                     target_modality="SATELLITE_RADAR",
                     title="Acquire Sentinel-1 InSAR Phase Coherence Corridor Scan",
                     rationale=(
@@ -1072,7 +1136,16 @@ class OutcomeService:
                         "at forecast centroid (H3) from shifted flanking displacement (H4). "
                         "[RECOMMENDED OBSERVATION ONLY — DOES NOT CONFER OPERATIONAL AUTHORITY]"
                     ),
+                    reason=(
+                        "Synthetic Aperture Radar penetrates cloud cover across the 5km corridor. Distinguishes focused shear "
+                        "at forecast centroid (H3) from shifted flanking displacement (H4)."
+                    ),
                     target_hypotheses=[
+                        HypothesisType.H3_DELAYED_FAILURE.value,
+                        HypothesisType.H4_SHIFTED_HAZARD.value,
+                        HypothesisType.H5_OBSERVATION_GAP.value,
+                    ],
+                    hypotheses_affected=[
                         HypothesisType.H3_DELAYED_FAILURE.value,
                         HypothesisType.H4_SHIFTED_HAZARD.value,
                         HypothesisType.H5_OBSERVATION_GAP.value,
@@ -1086,6 +1159,7 @@ class OutcomeService:
                     qualitative_discrimination="HIGH",
                     expected_confidence_delta=None,
                     authority_required=False,
+                    required_role="OPERATOR",
                     status="RECOMMENDED",
                 )
             )
@@ -1095,7 +1169,9 @@ class OutcomeService:
             nbi_items.append(
                 NextBestInformationItem(
                     action_type="RECONCILE_DISCORDANT_OBSERVATIONS",
+                    information_type="RECONCILE_DISCORDANT_OBSERVATIONS",
                     priority="HIGH",
+                    urgency="HIGH",
                     target_modality="CROSS_SOURCE_RECONCILIATION",
                     title="Execute Joint Cross-Agency Verification Patrol",
                     rationale=(
@@ -1103,7 +1179,16 @@ class OutcomeService:
                         "against ground reality (H1/H2). "
                         "[RECOMMENDED OBSERVATION ONLY — DOES NOT CONFER OPERATIONAL AUTHORITY]"
                     ),
+                    reason=(
+                        "Conducts joint inspection between reporting agencies to resolve conflicting observations (H7) "
+                        "against ground reality (H1/H2)."
+                    ),
                     target_hypotheses=[
+                        HypothesisType.H7_CONFLICTED.value,
+                        HypothesisType.H1_FALSE_ALARM.value,
+                        HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value,
+                    ],
+                    hypotheses_affected=[
                         HypothesisType.H7_CONFLICTED.value,
                         HypothesisType.H1_FALSE_ALARM.value,
                         HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value,
@@ -1117,6 +1202,7 @@ class OutcomeService:
                     qualitative_discrimination="HIGH",
                     expected_confidence_delta=None,
                     authority_required=False,
+                    required_role="FIELD_RESPONDER",
                     status="RECOMMENDED",
                 )
             )
@@ -1126,7 +1212,9 @@ class OutcomeService:
             nbi_items.append(
                 NextBestInformationItem(
                     action_type="GEOTECHNICAL_STABILIZATION_SURVEY",
+                    information_type="GEOTECHNICAL_STABILIZATION_SURVEY",
                     priority="MEDIUM",
+                    urgency="MEDIUM",
                     target_modality="ENGINEERING_SURVEY",
                     title="Affirmative Geotechnical Slope Stabilization Clearance Survey",
                     rationale=(
@@ -1134,7 +1222,15 @@ class OutcomeService:
                         "Distinguishes lingering residual hazard (H6) from stabilized dissipation (H1). "
                         "[RECOMMENDED OBSERVATION ONLY — DOES NOT CONFER OPERATIONAL AUTHORITY]"
                     ),
+                    reason=(
+                        "Mandatory geotechnical engineering survey verifying factor of safety > 1.3 before configured evidentiary closure gate permits sign-off. "
+                        "Distinguishes lingering residual hazard (H6) from stabilized dissipation (H1)."
+                    ),
                     target_hypotheses=[
+                        HypothesisType.H6_RESIDUAL_HAZARD.value,
+                        HypothesisType.H1_FALSE_ALARM.value,
+                    ],
+                    hypotheses_affected=[
                         HypothesisType.H6_RESIDUAL_HAZARD.value,
                         HypothesisType.H1_FALSE_ALARM.value,
                     ],
@@ -1146,16 +1242,20 @@ class OutcomeService:
                     qualitative_discrimination="MEDIUM",
                     expected_confidence_delta=None,
                     authority_required=True,
+                    required_role="AUTHORIZATION_OFFICER",
                     status="RECOMMENDED",
                 )
             )
+
 
         # NBI 6: Extend temporal window (Separates H1 vs H3)
         if not window_elapsed or incident.hazard_state == HazardState.DELAYED.value:
             nbi_items.append(
                 NextBestInformationItem(
                     action_type="EXTEND_OBSERVATION_WINDOW",
+                    information_type="EXTEND_OBSERVATION_WINDOW",
                     priority="HIGH",
+                    urgency="HIGH",
                     target_modality="UAV_DRONE_SURVEY",
                     title="Extend Observation Window & Deploy UAV Slope Survey",
                     rationale=(
@@ -1163,7 +1263,15 @@ class OutcomeService:
                         "Distinguishes benign non-event (H1) from delayed failure (H3). "
                         "[RECOMMENDED OBSERVATION ONLY — DOES NOT CONFER OPERATIONAL AUTHORITY]"
                     ),
+                    reason=(
+                        "Maintains active monitoring corridor and deploys drone scan to detect opening tension cracks. "
+                        "Distinguishes benign non-event (H1) from delayed failure (H3)."
+                    ),
                     target_hypotheses=[
+                        HypothesisType.H1_FALSE_ALARM.value,
+                        HypothesisType.H3_DELAYED_FAILURE.value,
+                    ],
+                    hypotheses_affected=[
                         HypothesisType.H1_FALSE_ALARM.value,
                         HypothesisType.H3_DELAYED_FAILURE.value,
                     ],
@@ -1175,6 +1283,7 @@ class OutcomeService:
                     qualitative_discrimination="MEDIUM",
                     expected_confidence_delta=None,
                     authority_required=False,
+                    required_role="FIELD_RESPONDER",
                     status="RECOMMENDED",
                 )
             )
@@ -1184,3 +1293,189 @@ class OutcomeService:
         nbi_items.sort(key=lambda item: (priority_rank.get(item.priority, 99), item.action_type))
 
         return primary_h, competing_hypotheses, nbi_items
+
+    @classmethod
+    def evaluate_hypotheses_and_nbi(
+        cls,
+        incident_id: str,
+        event_observed: bool,
+        intervention_state: InterventionContextState,
+        observation_adequacy: ObservationAdequacy,
+        cloud_cover_pct: float = 0.0,
+    ) -> OutcomeAssessment:
+        """Evaluate outcome, competing hypotheses, and NBI recommendations deterministically."""
+        inc_uuid = uuid.UUID(incident_id) if isinstance(incident_id, str) and len(incident_id) == 36 else uuid.uuid4()
+
+        if event_observed:
+            outcome_type = OutcomeType.EVENT_OBSERVED
+            primary_h = HypothesisType.H6_RESIDUAL_HAZARD
+            closure_permitted = False
+            causal_claim = False
+            reassessment_req = True
+            rec_hazard = "ACTIVE"
+            expl = "Physical slope failure confirmed on site."
+        elif observation_adequacy != ObservationAdequacy.ADEQUATE or cloud_cover_pct >= 70.0:
+            outcome_type = OutcomeType.OBSERVATION_GAP
+            primary_h = HypothesisType.H5_OBSERVATION_GAP
+            closure_permitted = False
+            causal_claim = False
+            reassessment_req = True
+            rec_hazard = "EXPECTED"
+            expl = "Observation gap detected due to obscuration; ground reality unverified."
+        elif intervention_state == InterventionContextState.INTERVENTION_CONFIRMED:
+            outcome_type = OutcomeType.INTERVENTION_CONDITIONED_NON_EVENT
+            primary_h = HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT
+            closure_permitted = False
+            causal_claim = False
+            reassessment_req = True
+            rec_hazard = "DELAYED"
+            expl = "Intervention confirmed deployed; non-event observed. Causal prevention explicitly unproven."
+        else:
+            outcome_type = OutcomeType.NON_EVENT_OBSERVED
+            primary_h = HypothesisType.H1_FALSE_ALARM
+            closure_permitted = False
+            causal_claim = False
+            reassessment_req = True
+            rec_hazard = "DISSIPATED"
+            expl = "Non-event observed with adequate observation under no intervention."
+
+        competing_hypotheses = [
+            CompetingHypothesisItem(
+                hypothesis_code=HypothesisType.H1_FALSE_ALARM.value,
+                hypothesis_id=uuid.uuid4(),
+                incident_id=inc_uuid,
+                hypothesis_type=HypothesisType.H1_FALSE_ALARM,
+                status=HypothesisStatus.SUPPORTING if primary_h == HypothesisType.H1_FALSE_ALARM else HypothesisStatus.UNKNOWN,
+                title="H1: Baseline Over-Prediction (False Alarm)",
+                description="Model trigger threshold was exceeded, but ground slope retained intrinsic stability.",
+                supporting_evidence=["Adequate optical line-of-sight confirmed no carriageway detachment"] if primary_h == HypothesisType.H1_FALSE_ALARM else [],
+                contradicting_evidence=["Physical slope collapse observed"] if event_observed else [],
+                unknown_evidence=[],
+                next_best_information=["Dispatch ground patrol toe inspection to confirm zero subsurface creep."],
+            ),
+            CompetingHypothesisItem(
+                hypothesis_code=HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT.value,
+                hypothesis_id=uuid.uuid4(),
+                incident_id=inc_uuid,
+                hypothesis_type=HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT,
+                status=HypothesisStatus.SUPPORTING if primary_h == HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT else HypothesisStatus.UNKNOWN,
+                title="H2: Intervention-Conditioned Non-Event",
+                description="Intervention was deployed and no failure occurred, but causal efficacy remains unproven.",
+                supporting_evidence=["Mitigating action physically confirmed in place"] if intervention_state == InterventionContextState.INTERVENTION_CONFIRMED else [],
+                contradicting_evidence=[],
+                unknown_evidence=["Absence of event does not prove the intervention prevented collapse"],
+                next_best_information=["Drone photogrammetry scan of upper detachment headscarp."],
+            ),
+            CompetingHypothesisItem(
+                hypothesis_code=HypothesisType.H3_DELAYED_FAILURE.value,
+                hypothesis_id=uuid.uuid4(),
+                incident_id=inc_uuid,
+                hypothesis_type=HypothesisType.H3_DELAYED_FAILURE,
+                status=HypothesisStatus.SUPPORTING if primary_h in (HypothesisType.H2_INTERVENTION_CONDITIONED_NON_EVENT, HypothesisType.H5_OBSERVATION_GAP) else HypothesisStatus.UNKNOWN,
+                title="H3: Delayed Failure Window",
+                description="Hydrologic pore pressure surcharge persists; slope failure window has shifted or delayed.",
+                supporting_evidence=["184mm antecedent rainfall moisture surcharge sustained in weathered mica schist"],
+                contradicting_evidence=[],
+                unknown_evidence=[],
+                next_best_information=["Extend monitoring window by 12h and deploy inclinometer telemetry."],
+            ),
+            CompetingHypothesisItem(
+                hypothesis_code=HypothesisType.H4_SHIFTED_HAZARD.value,
+                hypothesis_id=uuid.uuid4(),
+                incident_id=inc_uuid,
+                hypothesis_type=HypothesisType.H4_SHIFTED_HAZARD,
+                status=HypothesisStatus.UNKNOWN,
+                title="H4: Shifted Hazard Location",
+                description="Slope instability manifested on adjacent cut-slope within the 5km corridor envelope.",
+                supporting_evidence=[],
+                contradicting_evidence=[],
+                unknown_evidence=["Adjacent 5km corridor flanks not yet fully surveyed"],
+                next_best_information=["Inspect adjacent chainage KM-40 to KM-44 for tension crack development."],
+            ),
+            CompetingHypothesisItem(
+                hypothesis_code=HypothesisType.H5_OBSERVATION_GAP.value,
+                hypothesis_id=uuid.uuid4(),
+                incident_id=inc_uuid,
+                hypothesis_type=HypothesisType.H5_OBSERVATION_GAP,
+                status=HypothesisStatus.SUPPORTING if primary_h == HypothesisType.H5_OBSERVATION_GAP else HypothesisStatus.UNKNOWN,
+                title="H5: Observation Gap / Blind Area",
+                description="Heavy cloud cover or sensor blackout prevents definitive negative ground claim.",
+                supporting_evidence=[f"Monsoon optical obscuration ({cloud_cover_pct:.0f}%) impedes satellite detection"] if cloud_cover_pct >= 70.0 else [],
+                contradicting_evidence=[],
+                unknown_evidence=[],
+                next_best_information=["Acquire all-weather Sentinel-1 Synthetic Aperture Radar (SAR) pass."],
+            ),
+            CompetingHypothesisItem(
+                hypothesis_code=HypothesisType.H6_RESIDUAL_HAZARD.value,
+                hypothesis_id=uuid.uuid4(),
+                incident_id=inc_uuid,
+                hypothesis_type=HypothesisType.H6_RESIDUAL_HAZARD,
+                status=HypothesisStatus.SUPPORTING if event_observed else HypothesisStatus.UNKNOWN,
+                title="H6: Post-Event Residual Hazard",
+                description="Secondary detachment or headscarp retrogressive failure hazard persists post-slip.",
+                supporting_evidence=["Active scarp detachment and debris mass perched above road"] if event_observed else [],
+                contradicting_evidence=[],
+                unknown_evidence=[],
+                next_best_information=["Deploy geotechnical engineering survey with laser rangefinder."],
+            ),
+            CompetingHypothesisItem(
+                hypothesis_code=HypothesisType.H7_CONFLICTED.value,
+                hypothesis_id=uuid.uuid4(),
+                incident_id=inc_uuid,
+                hypothesis_type=HypothesisType.H7_CONFLICTED,
+                status=HypothesisStatus.UNKNOWN,
+                title="H7: Conflicted Evidence Streams",
+                description="Discordance between sensor telemetry and observational reports requires reconciliation.",
+                supporting_evidence=[],
+                contradicting_evidence=[],
+                unknown_evidence=["Telemetry vs patrol reports reconciliation in progress"],
+                next_best_information=["Reconcile discordant sensor feeds against physical field sign-off."],
+            ),
+        ]
+
+        nbi_items = [
+            NextBestInformationItem(
+                action_type="FIELD_PATROL_INSPECTION",
+                information_type="FIELD_PATROL_INSPECTION",
+                priority="HIGH",
+                urgency="HIGH",
+                target_modality="FIELD_PATROL",
+                title="Dispatch Ground Patrol for Toe Inspection",
+                rationale="Physical visual inspection resolves cloud cover and discriminates H1 vs H3.",
+                qualitative_discrimination="HIGH",
+                required_role="FIELD_RESPONDER",
+                status="RECOMMENDED",
+            ),
+            NextBestInformationItem(
+                action_type="ACQUIRE_SAR_RADAR",
+                information_type="ACQUIRE_SAR_RADAR",
+                priority="HIGH",
+                urgency="HIGH",
+                target_modality="SATELLITE_RADAR",
+                title="Acquire Sentinel-1 SAR Radar Interferometry",
+                rationale="Synthetic Aperture Radar penetrates cloud cover to measure slope decorrelation.",
+                qualitative_discrimination="HIGH",
+                required_role="OPERATOR",
+                status="RECOMMENDED",
+            ),
+        ]
+
+        return OutcomeAssessment(
+            id=uuid.uuid4(),
+            incident_id=inc_uuid,
+            outcome_type=outcome_type,
+            intervention_state=intervention_state,
+            observation_adequacy=observation_adequacy,
+            causal_claim_established=causal_claim,
+            closure_permitted=closure_permitted,
+            reassessment_required=reassessment_req,
+            recommended_hazard_state=rec_hazard,
+            explanation=expl,
+            primary_hypothesis=primary_h,
+            competing_hypotheses=competing_hypotheses,
+            nbi_recommendations=nbi_items,
+        )
+
+
+outcome_service = OutcomeService(None)  # type: ignore
+

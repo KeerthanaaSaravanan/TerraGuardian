@@ -140,15 +140,34 @@ class PriorityLevel(str, enum.Enum):
 
 
 class ActorRole(str, enum.Enum):
-    """Actor Authority Classification.
+    """Actor Authority Classification (Phase 2 Frozen Operational Roles).
+    
+    1. CITIZEN
+    2. OPERATOR
+    3. ASSESSMENT_OFFICER
+    4. FIELD_RESPONDER
+    5. AUTHORIZATION_OFFICER
+    6. REVIEWER
+    7. ADMINISTRATOR
     
     AI/System actors cannot make safety-critical authoritative decisions.
     """
-    PUBLIC_CITIZEN = "PUBLIC_CITIZEN"
-    SYSTEM_AI = "SYSTEM_AI"
-    FIELD_VERIFIER = "FIELD_VERIFIER"
+    CITIZEN = "CITIZEN"
     OPERATOR = "OPERATOR"
+    ASSESSMENT_OFFICER = "ASSESSMENT_OFFICER"
+    FIELD_RESPONDER = "FIELD_RESPONDER"
+    AUTHORIZATION_OFFICER = "AUTHORIZATION_OFFICER"
+    REVIEWER = "REVIEWER"
+    ADMINISTRATOR = "ADMINISTRATOR"
+
+    # Automated AI / model pipeline actors
+    SYSTEM_AI = "SYSTEM_AI"
+
+    # Compatibility aliases
+    PUBLIC_CITIZEN = "PUBLIC_CITIZEN"
+    FIELD_VERIFIER = "FIELD_VERIFIER"
     AUTHORIZED_DECISION_MAKER = "AUTHORIZED_DECISION_MAKER"
+    ADMIN = "ADMIN"
 
 
 class AuditEventType(str, enum.Enum):

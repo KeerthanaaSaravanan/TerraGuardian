@@ -69,7 +69,7 @@ async def test_login_success_magistrate(async_client: AsyncClient) -> None:
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["user"]["role"] == "AUTHORIZED_DECISION_MAKER"
+    assert data["user"]["role"] in ("AUTHORIZATION_OFFICER", "AUTHORIZED_DECISION_MAKER")
 
 
 @pytest.mark.asyncio
@@ -111,7 +111,7 @@ async def test_auth_me_with_valid_token(async_client: AsyncClient) -> None:
     assert me.status_code == 200
     data = me.json()
     assert data["username"] == "patrol"
-    assert data["role"] == "FIELD_VERIFIER"
+    assert data["role"] in ("FIELD_RESPONDER", "FIELD_VERIFIER")
 
 
 @pytest.mark.asyncio

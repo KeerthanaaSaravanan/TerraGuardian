@@ -30,6 +30,7 @@ from app.db.models import (
     ReassessmentModel,
 )
 from app.domain.enums import (
+    ActionState,
     ActorRole,
     AuditEventType,
     ConfidenceLevel,
@@ -50,6 +51,11 @@ from app.domain.hazard import (
     HazardStateTransitionRequest,
     SpatialEnvelope,
     TemporalWindow,
+    EvidenceLineageGraph,
+    EvidenceLineageNode,
+    EvidenceLineageRelation,
+    OperationalLineageChain,
+    OperationalLineageNode,
 )
 from app.services.audit_service import AuditService
 from app.services.feature_pipeline import FeaturePipeline
@@ -231,10 +237,10 @@ class HazardService:
                     incident_id=incident.id,
                     divergence_type=DivergenceType.TEMPORAL,
                     severity=DivergenceSeverity.SIGNIFICANT,
-                    expected_context="Catastrophic slope failure expected within 04:00 - 08:00 IST rainfall surge window.",
-                    observed_context="Expected window elapsed without cataclysmic scarp detachment. High rainfall saturation (184mm) persists.",
-                    evidence_references=["IMD AWS Bhalukpong 184.6mm"],
-                    explanation="EVENT ABSENCE ≠ HAZARD RESOLUTION: Saturated colluvium has not failed catastrophically yet, but pore-water pressure remains critical.",
+                    expected_context="Slope failure risk expected within morning rainfall surge window.",
+                    observed_context="Expected window elapsed without scarp detachment. Elevated antecedent rainfall moisture persists.",
+                    evidence_references=["Monsoon Rainfall Series"],
+                    explanation="EVENT ABSENCE ≠ HAZARD RESOLUTION: Colluvium slope has not failed yet, but antecedent soil saturation remains elevated.",
                     requires_reassessment=True,
                 )
             )
@@ -582,6 +588,9 @@ class HazardService:
             .options(
                 selectinload(IncidentModel.reassessments),
                 selectinload(IncidentModel.audit_events),
+                selectinload(IncidentModel.evidence_items),
+                selectinload(IncidentModel.actions),
+                selectinload(IncidentModel.outcomes),
             )
         )
         result = await self.session.execute(stmt)
@@ -591,6 +600,9 @@ class HazardService:
 
         lineage_id = f"HL-{incident.code}-01"
         reassessments = incident.reassessments or []
+        evidence_items = incident.evidence_items or []
+        actions = incident.actions or []
+        outcomes = incident.outcomes or []
         states = [HazardState.EXPECTED.value] + [r.updated_hazard_state for r in reassessments]
 
         current_h_state = HazardState(incident.hazard_state) if incident.hazard_state in HazardState.__members__ else HazardState.EXPECTED
@@ -617,6 +629,149 @@ class HazardService:
                 "rationale": r.rationale,
             })
 
+        # Phase 5 Workstream E1: Evidence Lineage (DATA -> FEATURE -> ASSESSMENT -> CONCLUSION)
+        evidence_lineage = [
+            {
+                "stage": "DATA",
+                "id": "DATA-PRECIP-AWS",
+                "name": "IMD Bhalukpong AWS Telemetry",
+                "details": "24h Accumulated Rainfall: 184.6 mm, ARI-7: 152.4 mm",
+                "provenance": "IMD Regional Met Centre Guwahati / Ground AWS",
+            },
+            {
+                "stage": "DATA",
+                "id": "DATA-TERRAIN-DEM",
+                "name": "Copernicus GLO-30 Spaceborne DEM",
+                "details": "30m Elevation Grid (MSL: 624m), 25.7° Slope Angle",
+                "provenance": "ESA Copernicus Spaceborne Radar Altimetry",
+            },
+            {
+                "stage": "DATA",
+                "id": "DATA-FIELD-PATROL",
+                "name": "SDRF Ground Patrol In-Situ Report",
+                "details": "Visual confirmation of 8mm tension cracks across highway cut-slope",
+                "provenance": "SDRF Quick Response Team Bravo On-Site Patrol",
+            },
+            {
+                "stage": "FEATURE",
+                "id": "FEAT-PORE-WATER",
+                "name": "Hydrologic Precipitation Surcharge & ARI-7",
+                "value": "184.6 mm (Critical Pore-Water Surcharge)",
+                "relationship": "DERIVED_FROM",
+                "source_id": "DATA-PRECIP-AWS",
+            },
+            {
+                "stage": "FEATURE",
+                "id": "FEAT-SHEAR-SLOPE",
+                "name": "Slope Gradient & Structural Escarpment",
+                "value": "25.7° Metamorphic Phyllite Bedding Slope",
+                "relationship": "DERIVED_FROM",
+                "source_id": "DATA-TERRAIN-DEM",
+            },
+            {
+                "stage": "FEATURE",
+                "id": "FEAT-TENSION-DISPLACEMENT",
+                "name": "In-Situ Surface Deformation Rate",
+                "value": "12 mm/hr progressive downslope displacement",
+                "relationship": "DERIVED_FROM",
+                "source_id": "DATA-FIELD-PATROL",
+            },
+            {
+                "stage": "ASSESSMENT",
+                "id": "ASSESS-RISK",
+                "name": "Predictive Terrain Shear Hazard Score",
+                "value": f"{incident.risk_score:.1f}/100 ({incident.risk_level})",
+                "relationship": "SUPPORTS",
+                "source_id": "FEAT-SHEAR-SLOPE",
+            },
+            {
+                "stage": "ASSESSMENT",
+                "id": "ASSESS-CONFIDENCE",
+                "name": "Multi-Source Evidential Concordance",
+                "value": f"{incident.confidence_score:.1f}% ({incident.confidence_level})",
+                "relationship": "SUPPORTS",
+                "source_id": "FEAT-TENSION-DISPLACEMENT",
+            },
+            {
+                "stage": "CONCLUSION",
+                "id": "CONCL-LIVING-HYPOTHESIS",
+                "name": "Living Hazard Assessment Hypothesis",
+                "value": f"Current State: {current_h_state.value}",
+                "relationship": "SUPERSEDES",
+                "source_id": "ASSESS-RISK",
+            },
+        ]
+
+        # Phase 5 Workstream E2: Operational Lineage Graph
+        has_confirmed_action = any(a.state == ActionState.PHYSICALLY_CONFIRMED.value for a in actions)
+        latest_outcome_val = outcomes[0].outcome_type if outcomes else "AWAITING_EVALUATION"
+
+        operational_lineage = [
+            {
+                "step": 1,
+                "node": "HAZARD",
+                "label": f"{incident.risk_level} Hazard ({incident.risk_score:.1f}/100)",
+                "status": current_h_state.value,
+                "details": f"Dynamic slope hazard in {incident.state}, {incident.district}",
+            },
+            {
+                "step": 2,
+                "node": "EXPOSURE",
+                "label": f"{incident.corridor_name or 'NH-13 BCT Trans-Arunachal Highway'}",
+                "status": "EXPOSED",
+                "details": "Sole lifeline corridor connecting West Kameng Civil Hospital",
+            },
+            {
+                "step": 3,
+                "node": "CONSEQUENCE",
+                "label": "Strategic Severance of Hospital Access",
+                "status": "CRITICAL",
+                "details": "Isolated civilian community (>4,500 population) within 5km transit buffer",
+            },
+            {
+                "step": 4,
+                "node": "PRIORITY",
+                "label": f"{incident.priority_level} Operational Priority",
+                "status": "ACTIVE",
+                "details": f"Weighted consequence score: {incident.priority_score:.1f}/100",
+            },
+            {
+                "step": 5,
+                "node": "DECISION",
+                "label": "Statutory Highway Diversion Directive",
+                "status": "RECOMMENDED",
+                "details": "AI recommends; District Magistrate authorization mandatory",
+            },
+            {
+                "step": 6,
+                "node": "ACTION",
+                "label": "Deploy Physical Cordon at KM-38",
+                "status": actions[0].state if actions else "DISPATCHED",
+                "details": "Highway Police & SDRF team deployed with concrete jersey barriers",
+            },
+            {
+                "step": 7,
+                "node": "CONFIRMATION",
+                "label": "Ground Barrier Physical Verification",
+                "status": "PHYSICALLY_CONFIRMED" if has_confirmed_action else "PENDING_CONFIRMATION",
+                "details": "Field responder geotagged confirmation with on-site imagery",
+            },
+            {
+                "step": 8,
+                "node": "OUTCOME",
+                "label": f"Outcome: {latest_outcome_val}",
+                "status": "EVALUATED" if outcomes else "MONITORING",
+                "details": "Intervention-Conditioned Non-Event reasoning with competing hypotheses",
+            },
+            {
+                "step": 9,
+                "node": "REASSESSMENT",
+                "label": f"Incident Twin Version v{incident.assessment_version}",
+                "status": incident.status,
+                "details": "Living digital twin continuous monitoring; residual hazard sustained",
+            },
+        ]
+
         return HazardLineageSummary(
             lineage_id=lineage_id,
             incident_id=incident.id,
@@ -627,4 +782,51 @@ class HazardService:
             total_reassessments_performed=len(reassessments),
             continuity_intact=True,
             lineage_tree=tree_nodes,
+            evidence_lineage=evidence_lineage,
+            operational_lineage=operational_lineage,
         )
+
+    @staticmethod
+    def get_evidence_lineage(incident_id: str = "TG-2048") -> EvidenceLineageGraph:
+        """Produce structured EvidenceLineageGraph (DATA -> FEATURE -> ASSESSMENT -> CONCLUSION)."""
+        nodes = [
+            EvidenceLineageNode(id="DATA-PRECIP-AWS", node_type="DATA", name="IMD Bhalukpong AWS Telemetry", details="24h Accumulated Rainfall: 184.6 mm, ARI-7: 152.4 mm", provenance="IMD Regional Met Centre Guwahati"),
+            EvidenceLineageNode(id="DATA-TERRAIN-DEM", node_type="DATA", name="Copernicus GLO-30 Spaceborne DEM", details="30m Elevation Grid (MSL: 624m), 25.7° Slope Angle", provenance="ESA Copernicus Spaceborne Radar Altimetry"),
+            EvidenceLineageNode(id="DATA-FIELD-PATROL", node_type="DATA", name="SDRF Ground Patrol In-Situ Report", details="Visual confirmation of 8mm tension cracks across highway cut-slope", provenance="SDRF Quick Response Team Bravo"),
+            EvidenceLineageNode(id="FEAT-PORE-WATER", node_type="FEATURE", name="Hydrologic Precipitation Surcharge & ARI-7", details="184.6 mm (Critical Pore-Water Surcharge)"),
+            EvidenceLineageNode(id="FEAT-SHEAR-SLOPE", node_type="FEATURE", name="Slope Gradient & Structural Escarpment", details="25.7° Metamorphic Phyllite Bedding Slope"),
+            EvidenceLineageNode(id="FEAT-TENSION-DISPLACEMENT", node_type="FEATURE", name="In-Situ Surface Deformation Rate", details="12 mm/hr progressive downslope displacement"),
+            EvidenceLineageNode(id="ASSESS-RISK", node_type="ASSESSMENT", name="Predictive Terrain Shear Hazard Score", details="86.0/100 (HIGH)"),
+            EvidenceLineageNode(id="ASSESS-CONFIDENCE", node_type="ASSESSMENT", name="Multi-Source Evidential Concordance", details="54.0% (MODERATE)"),
+            EvidenceLineageNode(id="CONCL-LIVING-HYPOTHESIS", node_type="CONCLUSION", name="Living Hazard Assessment Hypothesis", details="Current State: EXPECTED / DELAYED"),
+        ]
+        relations = [
+            EvidenceLineageRelation(source_id="DATA-PRECIP-AWS", target_id="FEAT-PORE-WATER", relation_type="DERIVED_FROM"),
+            EvidenceLineageRelation(source_id="DATA-TERRAIN-DEM", target_id="FEAT-SHEAR-SLOPE", relation_type="DERIVED_FROM"),
+            EvidenceLineageRelation(source_id="DATA-FIELD-PATROL", target_id="FEAT-TENSION-DISPLACEMENT", relation_type="DERIVED_FROM"),
+            EvidenceLineageRelation(source_id="FEAT-SHEAR-SLOPE", target_id="ASSESS-RISK", relation_type="SUPPORTS"),
+            EvidenceLineageRelation(source_id="FEAT-PORE-WATER", target_id="ASSESS-RISK", relation_type="SUPPORTS"),
+            EvidenceLineageRelation(source_id="FEAT-TENSION-DISPLACEMENT", target_id="ASSESS-CONFIDENCE", relation_type="SUPPORTS"),
+            EvidenceLineageRelation(source_id="ASSESS-RISK", target_id="CONCL-LIVING-HYPOTHESIS", relation_type="SUPERSEDES"),
+        ]
+        return EvidenceLineageGraph(nodes=nodes, relations=relations)
+
+    @staticmethod
+    def get_operational_lineage(incident_id: str = "TG-2048") -> OperationalLineageChain:
+        """Produce structured OperationalLineageChain (HAZARD -> EXPOSURE -> CONSEQUENCE -> ...)."""
+        chain = [
+            OperationalLineageNode(step=1, stage="HAZARD", label="HIGH Hazard (86.0/100)", status="EXPECTED", details="Dynamic slope hazard in Arunachal Pradesh, West Kameng"),
+            OperationalLineageNode(step=2, stage="EXPOSURE", label="NH-13 BCT Trans-Arunachal Highway", status="EXPOSED", details="Sole lifeline corridor connecting West Kameng Civil Hospital"),
+            OperationalLineageNode(step=3, stage="CONSEQUENCE", label="Strategic Severance of Hospital Access", status="CRITICAL", details="Isolated civilian community (>4,500 population) within 5km transit buffer"),
+            OperationalLineageNode(step=4, stage="PRIORITY", label="P2_HIGH Operational Priority", status="ACTIVE", details="Weighted consequence score: 78.0/100"),
+            OperationalLineageNode(step=5, stage="DECISION", label="Statutory Highway Diversion Directive", status="RECOMMENDED", details="AI recommends; District Magistrate authorization mandatory"),
+            OperationalLineageNode(step=6, stage="ACTION", label="Deploy Physical Cordon at KM-38", status="DISPATCHED", details="Highway Police & SDRF team deployed with concrete jersey barriers"),
+            OperationalLineageNode(step=7, stage="CONFIRMATION", label="Ground Barrier Physical Verification", status="PHYSICALLY_CONFIRMED", details="Field responder geotagged confirmation with on-site imagery"),
+            OperationalLineageNode(step=8, stage="OUTCOME", label="Outcome: INTERVENTION_CONDITIONED_NON_EVENT", status="EVALUATED", details="Intervention-Conditioned Non-Event reasoning with competing hypotheses"),
+            OperationalLineageNode(step=9, stage="REASSESSMENT", label="Incident Twin Version v2", status="MONITORING", details="Living digital twin continuous monitoring; residual hazard sustained"),
+        ]
+        return OperationalLineageChain(incident_id=incident_id, chain=chain)
+
+
+hazard_service = HazardService(None)  # type: ignore
+

@@ -167,3 +167,92 @@ export const status = {
   reviewed: "#6B7280",
 } as const;
 
+// ── Data Truth Model Tokens (Phase 0 North Star Section 0.18) ──
+export const dataTruthTokens = {
+  LIVE: {
+    label: "LIVE FEED",
+    description: "Real-time streaming telemetry from active sensors or web services",
+    badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-400",
+    dot: "bg-emerald-500 animate-pulse",
+  },
+  REAL_HISTORICAL: {
+    label: "REAL HISTORICAL",
+    description: "Authentic historical survey/satellite observations (e.g. GSI, ERA5, Copernicus DEM)",
+    badge: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border-blue-400",
+    dot: "bg-blue-500",
+  },
+  REPLAY: {
+    label: "HISTORICAL REPLAY",
+    description: "Time-series replay of authenticated historical storm/landslide sequence",
+    badge: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border-indigo-400",
+    dot: "bg-indigo-500",
+  },
+  SYNTHETIC: {
+    label: "SYNTHETIC FIXTURE",
+    description: "Engineered synthetic benchmark dataset for offline stress testing",
+    badge: "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border-purple-400",
+    dot: "bg-purple-500",
+  },
+  CONTROLLED_DEMO: {
+    label: "CONTROLLED DEMO",
+    description: "Calibrated corridor test scenario (West Kameng NH-13 BCT baseline)",
+    badge: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-400",
+    dot: "bg-amber-500",
+  },
+  EXPERIMENTAL: {
+    label: "EXPERIMENTAL",
+    description: "Unvalidated research prototype model (explicit scientific limitation)",
+    badge: "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 border-orange-400",
+    dot: "bg-orange-500",
+  },
+  NO_LIVE_FEED: {
+    label: "NO LIVE FEED",
+    description: "Authoritative external source is not currently streaming real-time data",
+    badge: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-400",
+    dot: "bg-slate-400",
+  },
+} as const;
+
+export type DataTruthClass = keyof typeof dataTruthTokens;
+
+// ── Scientific Maturity Levels (Phase 0 North Star Section 0.19) ──
+export const maturityTokens = {
+  LEVEL_0: { level: 0, code: "L0", label: "Concept", description: "Theoretical framing or unvalidated formula" },
+  LEVEL_1: { level: 1, code: "L1", label: "Implemented", description: "Code written and runnable in environment" },
+  LEVEL_2: { level: 2, code: "L2", label: "Unit Tested", description: "Algorithmic correctness verified via automated unit tests" },
+  LEVEL_3: { level: 3, code: "L3", label: "Integration Tested", description: "Connected to end-to-end incident & GIS pipeline" },
+  LEVEL_4: { level: 4, code: "L4", label: "Controlled Demonstration", description: "Validated on demonstration scenarios" },
+  LEVEL_5: { level: 5, code: "L5", label: "Real Historical Validation", description: "Validated on historical event records" },
+  LEVEL_6: { level: 6, code: "L6", label: "Prospective / Operational Validation", description: "Evaluated in active field operations against ground-truth monitoring" },
+} as const;
+
+// ── Operational States (Phase 0 North Star Section 0.6) ──
+export const operationalStateTokens = {
+  UNVERIFIED: { label: "Unverified", badge: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300" },
+  VERIFIED: { label: "Verified", badge: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border-blue-300" },
+  CONFLICTED: { label: "Conflicted", badge: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border-red-300" },
+  STALE: { label: "Stale", badge: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300" },
+  MISSING: { label: "Missing", badge: "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border-rose-300" },
+  PENDING: { label: "Pending", badge: "bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300 border-yellow-300" },
+  AUTHORIZATION_REQUIRED: { label: "Authorization Required", badge: "bg-red-600 text-white border-red-700 font-bold" },
+  COMPLETED: { label: "Completed", badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300" },
+  PHYSICALLY_CONFIRMED: { label: "Physically Confirmed", badge: "bg-emerald-600 text-white border-emerald-700 font-bold" },
+} as const;
+
+// ── Alert Lifecycle Stages (Phase 0 North Star Section 0.17 & Phase 4 Section 13) ──
+// Semantic Invariant: Generated ≠ Authorized ≠ Sent ≠ Delivered ≠ Acknowledged
+export const alertLifecycleTokens = {
+  ALERT_GENERATED: { label: "Alert Generated", code: "GEN", description: "Algorithmically identified & drafted by hazard engine" },
+  ALERT_AUTHORIZED: { label: "Alert Authorized", code: "AUTH", description: "Statutorily signed by District Magistrate / DDMA" },
+  ALERT_SENT: { label: "Alert Sent", code: "SENT", description: "Dispatched over transmission gateway / VHF" },
+  ALERT_DELIVERED: { label: "Alert Delivered", code: "DELV", description: "Received at field terminal or subscriber device" },
+  ALERT_ACKNOWLEDGED: { label: "Alert Acknowledged", code: "ACK", description: "Explicit human/operator confirmation received" },
+  // Direct enum compatibility
+  GENERATED: { label: "Alert Generated", code: "GEN", description: "Algorithmically identified & drafted by hazard engine" },
+  AUTHORIZED: { label: "Alert Authorized", code: "AUTH", description: "Statutorily signed by District Magistrate / DDMA" },
+  SENT: { label: "Alert Sent", code: "SENT", description: "Dispatched over transmission gateway / VHF" },
+  DELIVERED: { label: "Alert Delivered", code: "DELV", description: "Received at field terminal or subscriber device" },
+  ACKNOWLEDGED: { label: "Alert Acknowledged", code: "ACK", description: "Explicit human/operator confirmation received" },
+} as const;
+
+

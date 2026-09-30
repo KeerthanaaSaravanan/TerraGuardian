@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useDemoScenario } from "../../context/DemoScenarioContext";
+import { useAuth } from "../../context/AuthContext";
 import { PrincipleBanner } from "../common";
 import {
   IconCheck,
@@ -10,11 +11,13 @@ import {
   IconShieldCheck,
   IconUserCheck,
   IconFileText,
+  IconLock,
 } from "../icons";
 
 export const AuthorityDecisionView: React.FC = () => {
   const {
     setStep,
+    setIncidentSubTab,
     authorityDecision,
     decisionSigner,
     approveDecision,
@@ -22,8 +25,18 @@ export const AuthorityDecisionView: React.FC = () => {
     rejectDecision,
   } = useDemoScenario();
 
-  const [officerName, setOfficerName] = useState("P. Tsering, IAS (District Magistrate / Chairman DDMA)");
+  const { user, canAuthorizeDecisions } = useAuth();
+
+  const [officerName, setOfficerName] = useState(
+    canAuthorizeDecisions && user?.full_name
+      ? user.full_name
+      : "P. Tsering, IAS (District Magistrate / Chairman DDMA)"
+  );
   const [authCode, setAuthCode] = useState("DDMA-WK-2026/884-A");
+
+  const isFieldResponder = user?.role === "FIELD_RESPONDER" || user?.role === "FIELD_VERIFIER";
+  const isOperator = user?.role === "OPERATOR";
+  const isAssessmentOfficer = user?.role === "ASSESSMENT_OFFICER";
 
   return (
     <div className="flex flex-col gap-5 p-4 lg:p-6 w-full max-w-[1600px] mx-auto">
@@ -31,9 +44,11 @@ export const AuthorityDecisionView: React.FC = () => {
       <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 font-mono text-xs text-slate-500 dark:text-neutral-400">
-            <span>STEP 6 OF 10</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase">AUTHORITY DECISION & GOVERNANCE GATE</span>
             <span>•</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">AUTHORITY DECISION & GOVERNANCE GATE</span>
+            <span className="font-semibold text-slate-700 dark:text-neutral-300">
+              ACTOR: {user?.full_name || "Unauthenticated"} ({user?.role || "GUEST"})
+            </span>
           </div>
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
             Statutory Hazard Authorization for NH-13 KM-42
@@ -45,8 +60,11 @@ export const AuthorityDecisionView: React.FC = () => {
 
         {authorityDecision === "APPROVED" && (
           <button
-            onClick={() => setStep(7)}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all"
+            onClick={() => {
+              setIncidentSubTab("ACTIONS");
+              setStep(7);
+            }}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shadow-md transition-all cursor-pointer"
           >
             <span>Proceed to Action Tracking</span>
             <IconArrowRight className="w-4 h-4" />
@@ -116,36 +134,112 @@ export const AuthorityDecisionView: React.FC = () => {
                 DISTRICT DISASTER MANAGEMENT AUTHORITY (DDMA) SIGN-OFF
               </span>
               <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-neutral-950 px-2 py-0.5 rounded border border-emerald-300 dark:border-neutral-800 font-bold">
-                STATUTORY SIGNATORY
+                {canAuthorizeDecisions ? "STATUTORY SIGNATORY" : "READ-ONLY VIEW"}
               </span>
             </div>
 
-            {/* Officer credential inputs */}
-            <div className="mt-4 flex flex-col gap-3">
-              <div>
-                <label className="text-[11px] font-mono text-slate-600 dark:text-neutral-400 block mb-1">
-                  AUTHORIZING OFFICIAL:
-                </label>
-                <input
-                  type="text"
-                  value={officerName}
-                  onChange={(e) => setOfficerName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-300 dark:border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                />
+            {/* Role-Specific Statutory Boundary Notice */}
+            {!canAuthorizeDecisions && (
+              <div className="mt-3">
+                {isFieldResponder ? (
+                  <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 p-3 rounded-lg text-xs font-mono text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+                    <IconShieldAlert className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                    <div>
+                      <div className="font-bold uppercase tracking-wider text-[11px] text-amber-800 dark:text-amber-300">
+                        Read-Only Context: Field Responder Role
+                      </div>
+                      <div className="mt-1 text-[11px] leading-relaxed opacity-90">
+                        Authenticated as <strong>{user?.full_name || "ASI D. Sonam"}</strong> ({user?.role || "FIELD_RESPONDER"}).
+                        Field personnel may observe operational orders and confirm task execution on the ground, but <strong>MUST NOT</strong> enact, modify, or reject statutory emergency disaster orders.
+                        Statutory authorization is reserved strictly for the <strong>AUTHORIZATION_OFFICER</strong> (District Magistrate / DDMA Chairman).
+                      </div>
+                    </div>
+                  </div>
+                ) : isOperator ? (
+                  <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-700/60 p-3 rounded-lg text-xs font-mono text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
+                    <IconShieldCheck className="w-4 h-4 shrink-0 text-blue-600 mt-0.5" />
+                    <div>
+                      <div className="font-bold uppercase tracking-wider text-[11px] text-blue-800 dark:text-blue-300">
+                        Read-Only Governance Gate: Operator Role
+                      </div>
+                      <div className="mt-1 text-[11px] leading-relaxed opacity-90">
+                        Authenticated as <strong>{user?.full_name || "Operations Duty Officer"}</strong> ({user?.role || "OPERATOR"}).
+                        Control room operators propose actions and manage multi-agency dispatch, but cannot enact statutory civil disaster orders (Recommendation ≠ Authorization).
+                      </div>
+                    </div>
+                  </div>
+                ) : isAssessmentOfficer ? (
+                  <div className="bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-700/60 p-3 rounded-lg text-xs font-mono text-cyan-900 dark:text-cyan-200 flex items-start gap-2.5">
+                    <IconShieldCheck className="w-4 h-4 shrink-0 text-cyan-600 mt-0.5" />
+                    <div>
+                      <div className="font-bold uppercase tracking-wider text-[11px] text-cyan-800 dark:text-cyan-300">
+                        Read-Only Governance Gate: Assessment Officer
+                      </div>
+                      <div className="mt-1 text-[11px] leading-relaxed opacity-90">
+                        Authenticated as <strong>{user?.full_name || "Geotechnical Assessment Officer"}</strong> ({user?.role || "ASSESSMENT_OFFICER"}).
+                        Scientific assessment informs the decision threshold, but legal hazard authorization requires the District Magistrate.
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-slate-100 dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 p-3 rounded-lg text-xs font-mono text-slate-800 dark:text-neutral-200 flex items-start gap-2.5">
+                    <IconLock className="w-4 h-4 shrink-0 text-slate-600 mt-0.5" />
+                    <div>
+                      <div className="font-bold uppercase tracking-wider text-[11px]">
+                        Read-Only View: Authorization Officer Required
+                      </div>
+                      <div className="mt-1 text-[11px] leading-relaxed opacity-90">
+                        Statutory authorization controls are restricted to the District Magistrate / DDMA (<strong>AUTHORIZATION_OFFICER</strong>).
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+            )}
 
-              <div>
-                <label className="text-[11px] font-mono text-slate-600 dark:text-neutral-400 block mb-1">
-                  OFFICIAL TOKEN / DISASTER ORDER CODE:
-                </label>
-                <input
-                  type="text"
-                  value={authCode}
-                  onChange={(e) => setAuthCode(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-300 dark:border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
-                />
+            {/* Officer credential inputs: Editable ONLY for AUTHORIZATION_OFFICER */}
+            {canAuthorizeDecisions ? (
+              <div className="mt-4 flex flex-col gap-3">
+                <div>
+                  <label className="text-[11px] font-mono text-slate-600 dark:text-neutral-400 block mb-1">
+                    AUTHORIZING OFFICIAL:
+                  </label>
+                  <input
+                    type="text"
+                    value={officerName}
+                    onChange={(e) => setOfficerName(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-300 dark:border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-mono text-slate-600 dark:text-neutral-400 block mb-1">
+                    OFFICIAL TOKEN / DISASTER ORDER CODE:
+                  </label>
+                  <input
+                    type="text"
+                    value={authCode}
+                    onChange={(e) => setAuthCode(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-300 dark:border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mt-4 p-3 bg-slate-50 dark:bg-neutral-950 rounded-lg border border-slate-200 dark:border-neutral-800 font-mono text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-neutral-400">Designated Official:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">P. Tsering, IAS (District Magistrate)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-neutral-400">Order Reference:</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">DDMA-WK-2026/884-A</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-neutral-400">Legal Mandate:</span>
+                  <span className="text-slate-700 dark:text-neutral-300">Disaster Management Act 2005 (Sec 30)</span>
+                </div>
+              </div>
+            )}
 
             {/* Current Decision State Display */}
             <div className="mt-4">
@@ -177,44 +271,58 @@ export const AuthorityDecisionView: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-xs text-slate-500 dark:text-neutral-400 font-mono bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800">
-                  Select an authoritative determination below to proceed.
+                  {canAuthorizeDecisions
+                    ? "Select an authoritative determination below to enact or modify order."
+                    : "Awaiting statutory determination from District Magistrate / DDMA."}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Interactive Decision Buttons */}
-          <div className="pt-4 border-t border-slate-200 dark:border-neutral-800 flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => approveDecision(officerName, authCode)}
-              className={`flex-1 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-xs shadow-md transition-all ${
-                authorityDecision === "APPROVED"
-                  ? "bg-emerald-600 text-white ring-2 ring-emerald-400"
-                  : "bg-emerald-600 hover:bg-emerald-500 text-white"
-              }`}
-            >
-              <IconCheck className="w-4 h-4" />
-              <span>APPROVE RESTRICTION</span>
-            </button>
+          {/* Interactive Decision Buttons: Rendered ONLY for AUTHORIZATION_OFFICER */}
+          {canAuthorizeDecisions ? (
+            <div className="pt-4 border-t border-slate-200 dark:border-neutral-800 flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => approveDecision(officerName, authCode)}
+                className={`flex-1 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-xs shadow-md transition-all cursor-pointer ${
+                  authorityDecision === "APPROVED"
+                    ? "bg-emerald-600 text-white ring-2 ring-emerald-400"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                }`}
+              >
+                <IconCheck className="w-4 h-4" />
+                <span>APPROVE RESTRICTION</span>
+              </button>
 
-            <button
-              onClick={() => modifyDecision(officerName, "Conditional single-lane detour via Tenga")}
-              className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 font-semibold py-3 px-4 rounded-lg text-xs border border-slate-300 dark:border-neutral-700 transition-all"
-            >
-              MODIFY
-            </button>
+              <button
+                onClick={() => modifyDecision(officerName, "Conditional single-lane detour via Tenga")}
+                className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 font-semibold py-3 px-4 rounded-lg text-xs border border-slate-300 dark:border-neutral-700 transition-all cursor-pointer"
+              >
+                MODIFY
+              </button>
 
-            <button
-              onClick={() => rejectDecision(officerName, "Precautionary stand-down ordered")}
-              className="bg-slate-100 dark:bg-neutral-900 hover:bg-red-50 dark:hover:bg-red-950/60 text-red-600 dark:text-red-400 font-semibold py-3 px-4 rounded-lg text-xs border border-slate-300 dark:border-neutral-800 hover:border-red-300 dark:hover:border-red-800 transition-all"
-            >
-              REJECT
-            </button>
-          </div>
+              <button
+                onClick={() => rejectDecision(officerName, "Precautionary stand-down ordered")}
+                className="bg-slate-100 dark:bg-neutral-900 hover:bg-red-50 dark:hover:bg-red-950/60 text-red-600 dark:text-red-400 font-semibold py-3 px-4 rounded-lg text-xs border border-slate-300 dark:border-neutral-800 hover:border-red-300 dark:hover:border-red-800 transition-all cursor-pointer"
+              >
+                REJECT
+              </button>
+            </div>
+          ) : (
+            <div className="pt-4 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between p-3 bg-slate-50 dark:bg-neutral-950 rounded-lg text-xs font-mono border border-slate-200 dark:border-neutral-800">
+              <span className="text-slate-600 dark:text-neutral-400 flex items-center gap-2">
+                <IconLock className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
+                <span>Statutory Controls Locked</span>
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                AUTHORIZATION_OFFICER ONLY
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Decision Intelligence & Next-Best-Information (Prompt 05) */}
+      {/* Decision Intelligence & Next-Best-Information Engine */}
       <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex flex-col gap-4 font-mono text-xs">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
           <div className="flex items-center gap-2">
@@ -226,7 +334,7 @@ export const AuthorityDecisionView: React.FC = () => {
             </span>
           </div>
           <span className="text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded font-bold border border-emerald-300 dark:border-emerald-700">
-            UNCERTAINTY REDUCTION ENGINE
+            QUALITATIVE UNCERTAINTY REDUCTION
           </span>
         </div>
 
@@ -234,7 +342,7 @@ export const AuthorityDecisionView: React.FC = () => {
           <div className="bg-slate-50 dark:bg-neutral-950 p-3.5 rounded-lg border border-slate-200 dark:border-neutral-800 flex flex-col justify-between gap-2">
             <div>
               <div className="flex items-center justify-between font-bold text-xs text-slate-900 dark:text-white mb-1">
-                <span>1. Ground Truth Inspection</span>
+                <span>1. Physical Field Inspection</span>
                 <span className="text-emerald-700 dark:text-emerald-300 text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800">
                   HIGH DISCRIMINATION
                 </span>

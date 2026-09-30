@@ -1,4 +1,5 @@
 """TerraGuardian Domain Exceptions."""
+from typing import Any
 
 class DomainError(Exception):
     """Base class for domain-level exceptions."""
@@ -9,7 +10,10 @@ class DomainError(Exception):
 
 class IncidentNotFoundError(DomainError):
     """Raised when an incident twin cannot be found."""
-    pass
+    def __init__(self, incident_id: Any = None, message: str | None = None):
+        msg = message or f"Incident twin {incident_id} was not found."
+        super().__init__(msg)
+        self.incident_id = incident_id
 
 
 class InvalidTransitionError(DomainError):

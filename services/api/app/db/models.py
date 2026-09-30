@@ -71,6 +71,9 @@ class IncidentModel(Base):
     # Simulation & Demonstration Flags
     is_primary_demo: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_simulated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    assessment_version: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_evaluated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
     # Relationships
@@ -92,6 +95,13 @@ class IncidentModel(Base):
     outcomes: Mapped[list[OutcomeModel]] = relationship(
         "OutcomeModel", back_populates="incident", cascade="all, delete-orphan", order_by="OutcomeModel.evaluated_at.desc()"
     )
+    features_records: Mapped[list[IncidentFeaturesModel]] = relationship(
+        "IncidentFeaturesModel", back_populates="incident", cascade="all, delete-orphan", order_by="IncidentFeaturesModel.calculated_at.desc()"
+    )
+    alerts: Mapped[list[AlertModel]] = relationship(
+        "AlertModel", back_populates="incident", cascade="all, delete-orphan", order_by="AlertModel.generated_at.desc()"
+    )
+
 
 
 class EvidenceModel(Base):
@@ -172,6 +182,38 @@ class ActionModel(Base):
     state: Mapped[str] = mapped_column(String(32), default="PROPOSED", nullable=False)
     assigned_to: Mapped[str] = mapped_column(String(255), nullable=False)
     is_action_gap_trigger: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    action_type: Mapped[str] = mapped_column(String(64), default="OPERATIONAL_RESPONSE", nullable=False)
+    priority: Mapped[str] = mapped_column(String(32), default="P1", nullable=False)
+    urgency: Mapped[str] = mapped_column(String(32), default="IMMEDIATE", nullable=False)
+    requires_authorization: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    affected_area: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
+    prerequisites: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    supporting_evidence_ids: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    workflow_type: Mapped[str] = mapped_column(String(64), default="COORDINATED_DISPATCH", nullable=False)
+
+    # Statutory authorization tracking
+    authority_order_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    authorized_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    authorized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    authorization_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Dispatch tracking
+    dispatch_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    dispatch_channel: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    dispatch_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    target_agency: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Field acknowledgement tracking
+    acknowledged_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    acknowledgement_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    acknowledgement_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Execution tracking
+    execution_actor: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    execution_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    execution_location: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     dispatched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -315,4 +357,89 @@ class OutcomeModel(Base):
     evaluated_by: Mapped[str] = mapped_column(String(255), default="OutcomeEngine", nullable=False)
 
     incident: Mapped[IncidentModel] = relationship("IncidentModel", back_populates="outcomes")
+
+
+class IncidentFeaturesModel(Base):
+    """Persistent storage for extracted numerical feature vectors for an incident twin (Resolves TG-008)."""
+
+    __tablename__ = "incident_features"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    incident_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("incidents.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    assessment_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    feature_schema_version: Mapped[str] = mapped_column(String(32), default="v1.0", nullable=False)
+    features_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    data_quality_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    evidence_lineage_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+    calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+
+    incident: Mapped[IncidentModel] = relationship("IncidentModel", back_populates="features_records")
+
+
+class AlertModel(Base):
+    """Authoritative persistent record of a governed alert."""
+
+    __tablename__ = "alerts"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    incident_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("incidents.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    alert_code: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    severity: Mapped[str] = mapped_column(String(32), default="HIGH", nullable=False)
+    headline: Mapped[str] = mapped_column(String(255), nullable=False)
+    target_area: Mapped[str] = mapped_column(String(255), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    stage: Mapped[str] = mapped_column(String(32), default="ALERT_GENERATED", index=True, nullable=False)
+
+    authorized: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    authorized_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    authorized_role: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    authority_order_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    authorized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    action_required: Mapped[str] = mapped_column(Text, nullable=False)
+    is_controlled_demo: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    provenance: Mapped[str] = mapped_column(String(100), default="TERRAGUARDIAN_ALERT_FABRIC", nullable=False)
+    escalation_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    incident: Mapped[IncidentModel] = relationship("IncidentModel", back_populates="alerts")
+    channels: Mapped[list[AlertChannelModel]] = relationship(
+        "AlertChannelModel", back_populates="alert", cascade="all, delete-orphan"
+    )
+
+
+class AlertChannelModel(Base):
+    """Discrete delivery channel status record for an alert."""
+
+    __tablename__ = "alert_channels"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    alert_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("alerts.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    channel_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    channel_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="PENDING", nullable=False)
+    latency: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    details: Mapped[str] = mapped_column(Text, nullable=False)
+
+    dispatched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    alert: Mapped[AlertModel] = relationship("AlertModel", back_populates="channels")
+
+
+# Authoritative Geospatial Models Registration
+import app.gis.models  # noqa: F401
+
 
