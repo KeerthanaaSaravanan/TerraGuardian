@@ -23,3 +23,21 @@ def test_health_endpoint():
     assert v1_data["status"] == "ok"
     assert v1_data["database"] == "ok"
 
+    # Verify /api/health prefix routing
+    api_response = client.get("/api/health")
+    assert api_response.status_code == 200
+    api_data = api_response.json()
+    assert api_data["status"] == "ok"
+
+
+def test_vercel_serverless_entrypoint():
+    """Verify that api.index exports a valid FastAPI handler for Vercel Serverless Functions."""
+    from api.index import app as vercel_app, handler
+    assert vercel_app is not None
+    assert handler is not None
+    client = TestClient(handler)
+    res = client.get("/api/v1/health")
+    assert res.status_code == 200
+    assert res.json()["status"] == "ok"
+
+

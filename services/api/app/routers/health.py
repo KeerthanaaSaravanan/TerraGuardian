@@ -30,6 +30,9 @@ async def health_check() -> HealthResponse:
         factory = get_session_factory()
         async with factory() as session:
             await session.execute(text("SELECT 1"))
+        if settings.environment == "production" and "sqlite" in settings.database_url:
+            db_status = "sqlite_ephemeral"
+            overall_status = "degraded"
     except Exception as e:
         logger.warning(f"Database health check failed: {e}")
         db_status = "unavailable"

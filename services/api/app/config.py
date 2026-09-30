@@ -46,6 +46,20 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite+aiosqlite:///./terraguardian.db"
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def assemble_database_url(cls, v: Optional[str]) -> str:
+        env_db = os.environ.get("DATABASE_URL")
+        if env_db and env_db.strip():
+            return env_db.strip()
+        if v and v.strip():
+            if os.environ.get("VERCEL") and "terraguardian.db" in v and not v.startswith("sqlite+aiosqlite:////tmp"):
+                return "sqlite+aiosqlite:////tmp/terraguardian.db"
+            return v.strip()
+        if os.environ.get("VERCEL"):
+            return "sqlite+aiosqlite:////tmp/terraguardian.db"
+        return "sqlite+aiosqlite:///./terraguardian.db"
+
     # Security
     secret_key: str = "changeme-generate-a-real-key"
     jwt_algorithm: str = "HS256"

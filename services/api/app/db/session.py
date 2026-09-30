@@ -62,16 +62,27 @@ def get_engine() -> AsyncEngine:
             if ":memory:" in db_url:
                 kwargs["poolclass"] = StaticPool
         else:
-            # Production PostgreSQL pool configuration
-            kwargs["pool_pre_ping"] = True
-            kwargs["pool_recycle"] = 300
-            # Handle SSL requirement if sslmode is in URL
-            if "sslmode=require" in db_url or "ssl=require" in db_url:
+            # PostgreSQL pool configuration
+            import os
+            if os.environ.get("VERCEL"):
+                from sqlalchemy.pool import NullPool
+                kwargs["poolclass"] = NullPool
+            else:
+                kwargs["pool_pre_ping"] = True
+                kwargs["pool_recycle"] = 300
+
+            # Handle SSL requirement for cloud databases (Neon, Supabase, RDS)
+            if "sslmode" in db_url or "ssl=" in db_url:
+                import re
                 import ssl
                 ctx = ssl.create_default_context()
                 ctx.check_hostname = False
                 ctx.verify_mode = ssl.CERT_NONE
                 connect_args["ssl"] = ctx
+                # Strip sslmode / ssl parameter from query string so asyncpg doesn't error
+                db_url = re.sub(r'([?&])sslmode=[^&]*(&|$)', r'\1', db_url)
+                db_url = re.sub(r'([?&])ssl=[^&]*(&|$)', r'\1', db_url)
+                db_url = db_url.replace("?&", "?").rstrip("?&")
 
         _engine = create_async_engine(
             db_url,

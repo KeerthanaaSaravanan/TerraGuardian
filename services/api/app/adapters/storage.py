@@ -19,8 +19,14 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "uploads" / "citizen"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+if os.environ.get("VERCEL"):
+    UPLOAD_DIR = Path("/tmp") / "uploads" / "citizen"
+else:
+    UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "uploads" / "citizen"
+try:
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+except Exception as e:
+    logger.warning(f"Could not create local upload directory: {e}")
 
 MAX_IMAGE_SIZE_BYTES = 15 * 1024 * 1024  # 15 MB
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
