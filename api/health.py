@@ -1,4 +1,4 @@
-"""Vercel Serverless Function for /api and /api/index."""
+"""Vercel Serverless Function for /api/health."""
 
 import os
 import sys

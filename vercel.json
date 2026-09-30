@@ -5,12 +5,8 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api",
-      "destination": "/api/index"
-    },
-    {
       "source": "/api/(.*)",
-      "destination": "/api/index"
+      "destination": "/api/$1"
     },
     {
       "source": "/((?!api).*)",

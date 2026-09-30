@@ -1,10 +1,11 @@
-"""Vercel Serverless Function for /api and /api/index."""
+"""Vercel Serverless Function catch-all for /api/v1/*."""
 
 import os
 import sys
 from pathlib import Path
 
-api_dir = Path(__file__).resolve().parent
+v1_dir = Path(__file__).resolve().parent
+api_dir = v1_dir.parent
 pkg_dir = api_dir / "_pkg"
 root_dir = api_dir.parent
 services_api_dir = root_dir / "services" / "api"
