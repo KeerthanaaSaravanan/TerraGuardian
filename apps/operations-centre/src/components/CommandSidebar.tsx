@@ -244,18 +244,41 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
 
         {/* Live Status indicator */}
         <div
-          className={`flex items-center gap-2 px-2 py-1.5 rounded bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 text-[10px] font-mono ${
-            isCollapsed ? "justify-center" : ""
-          }`}
+          className={`flex items-center gap-2 px-2 py-1.5 rounded font-mono text-[10px] border ${
+            backendStatus === "CONNECTED"
+              ? "bg-emerald-50/60 dark:bg-neutral-950 border-emerald-200 dark:border-neutral-800 text-emerald-700 dark:text-emerald-400"
+              : backendStatus === "DEGRADED"
+              ? "bg-amber-50/60 dark:bg-neutral-950 border-amber-200 dark:border-neutral-800 text-amber-700 dark:text-amber-400"
+              : backendStatus === "CONNECTING"
+              ? "bg-slate-50 dark:bg-neutral-950 border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-neutral-400"
+              : "bg-red-50/60 dark:bg-neutral-950 border-red-200 dark:border-neutral-800 text-red-700 dark:text-red-400"
+          } ${isCollapsed ? "justify-center" : ""}`}
         >
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              backendStatus === "CONNECTED"
+                ? "bg-emerald-500 animate-ping"
+                : backendStatus === "DEGRADED"
+                ? "bg-amber-500 animate-pulse"
+                : backendStatus === "CONNECTING"
+                ? "bg-amber-400 animate-pulse"
+                : "bg-red-500 animate-ping"
+            }`}
+          />
           {!isCollapsed && (
-            <span className="text-emerald-700 dark:text-emerald-400 font-bold truncate">
-              {backendStatus === "CONNECTED" ? "ONLINE" : "DISCONNECTED"}
+            <span className="font-bold truncate">
+              {backendStatus === "CONNECTED"
+                ? "ONLINE"
+                : backendStatus === "DEGRADED"
+                ? "DEGRADED"
+                : backendStatus === "CONNECTING"
+                ? "CONNECTING..."
+                : "DISCONNECTED"}
             </span>
           )}
         </div>
       </div>
+
     </aside>
   );
 };

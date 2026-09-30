@@ -162,28 +162,51 @@ export class ApiError extends Error {
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
+  const contentType = res.headers.get("content-type") || "";
   if (!res.ok) {
     let errorDetail = res.statusText;
     try {
-      const errJson = await res.json();
-      if (errJson && errJson.detail) {
-        errorDetail = typeof errJson.detail === "string" ? errJson.detail : JSON.stringify(errJson.detail);
+      if (contentType.includes("application/json")) {
+        const errJson = await res.json();
+        if (errJson && errJson.detail) {
+          errorDetail = typeof errJson.detail === "string" ? errJson.detail : JSON.stringify(errJson.detail);
+        }
+      } else {
+        errorDetail = `HTTP ${res.status}: ${res.statusText}`;
       }
     } catch {
       // JSON parse error, use default statusText
     }
     throw new ApiError(res.status, errorDetail);
   }
+
+  // Detect accidental SPA HTML response when JSON is expected
+  if (!contentType.includes("application/json")) {
+    throw new ApiError(
+      res.status,
+      `Expected JSON from backend, but received '${contentType || "non-json"}'. VITE_API_URL may be missing or routing to frontend index.html.`
+    );
+  }
+
   return res.json() as Promise<T>;
 }
 
 export const apiClient = {
-  /** Health check against configured backend */
+  /** Health check against configured backend with bounded 5s timeout */
   async checkHealth(): Promise<{ status: string; service: string; database?: string; version: string; environment?: string }> {
-    const healthUrl = `${API_BASE_URL}/health`;
-    const res = await fetch(healthUrl);
-    return handleResponse(res);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    try {
+      const healthUrl = `${API_BASE_URL}/health`;
+      const res = await fetch(healthUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      return handleResponse(res);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
   },
+
 
 
   /** Ensure an active authenticated session exists, logging in with default credentials if needed */

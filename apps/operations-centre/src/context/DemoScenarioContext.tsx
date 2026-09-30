@@ -57,7 +57,8 @@ export type IncidentSubTab =
   | "TIMELINE";
 export type NavigationMode = "OPERATIONAL" | "WALKTHROUGH";
 
-export type BackendSyncStatus = "CONNECTING" | "CONNECTED" | "OFFLINE_FALLBACK";
+export type BackendSyncStatus = "UNKNOWN" | "CONNECTING" | "CONNECTED" | "DEGRADED" | "DISCONNECTED";
+
 
 export interface DemoState {
   currentStep: DemoStep;
@@ -369,8 +370,14 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
               setConfidenceLevel(meta.current_assessment.confidence_level);
             }
           }
-          setBackendStatus("CONNECTED");
-          setBackendSyncError(null);
+          if (health.database === "unavailable" || health.status === "degraded") {
+            setBackendStatus("DEGRADED");
+            setBackendSyncError("FastAPI service reachable, but PostgreSQL database is in degraded state.");
+          } else {
+            setBackendStatus("CONNECTED");
+            setBackendSyncError(null);
+          }
+
 
           // Fetch live timeline/audit if available
           try {
@@ -479,9 +486,10 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
       } catch (err) {
         if (isMounted) {
-          setBackendStatus("OFFLINE_FALLBACK");
+          setBackendStatus("DISCONNECTED");
           setBackendSyncError(err instanceof Error ? err.message : "Backend unreachable");
         }
+
       }
     }
 

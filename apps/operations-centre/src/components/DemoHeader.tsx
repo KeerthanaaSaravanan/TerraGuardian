@@ -29,7 +29,7 @@ export const DemoHeader: React.FC = () => {
   return (
     <header className="flex flex-col border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 transition-colors w-full min-w-0">
       {/* ── Truthful Backend Offline Alert Banner ── */}
-      {backendStatus === "OFFLINE_FALLBACK" && (
+      {backendStatus === "DISCONNECTED" && (
         <div className="bg-red-600 text-white px-4 py-1.5 text-xs font-mono flex items-center justify-between shadow-md border-b border-red-700 animate-pulse">
           <div className="flex items-center gap-2">
             <IconAlertTriangle className="w-4 h-4 shrink-0" />
@@ -84,12 +84,18 @@ export const DemoHeader: React.FC = () => {
             <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 border border-amber-300 text-amber-800 dark:text-amber-300 font-semibold shrink-0 text-[11px]">
               CONNECTING...
             </span>
+          ) : backendStatus === "DEGRADED" ? (
+            <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 border border-amber-400 text-amber-800 dark:text-amber-300 font-bold flex items-center gap-1.5 shrink-0 text-[11px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+              DATABASE DEGRADED
+            </span>
           ) : (
             <span className="px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-950 border border-red-400 text-red-800 dark:text-red-300 font-bold flex items-center gap-1.5 shrink-0 text-[11px]">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping shrink-0" />
               OFFLINE
             </span>
           )}
+
 
           {/* Incident Context */}
           <span className="hidden lg:inline-flex px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 shrink-0 text-[11px]">
