@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDemoScenario } from "../../context/DemoScenarioContext";
 import { usePublicReport } from "../../context/PublicReportContext";
+import { useAuth } from "../../context/AuthContext";
+import { apiClient } from "../../services/apiClient";
 import { INITIAL_EVIDENCE } from "../../data/deterministicScenario";
 import { PrincipleBanner } from "../common";
 import {
@@ -14,7 +16,12 @@ import {
   IconRadio,
   IconCheck,
 } from "../icons";
-import type { EvidenceConflictStatus, EvidenceInterpretation, EvidenceProcessingStatus } from "../../types/incident";
+import type {
+  EvidenceConflictStatus,
+  EvidenceInterpretation,
+  EvidenceProcessingStatus,
+  CitizenReportItem,
+} from "../../types/incident";
 
 export const EvidenceReconciliationView: React.FC = () => {
   const {
@@ -29,15 +36,67 @@ export const EvidenceReconciliationView: React.FC = () => {
     backendStatus,
   } = useDemoScenario();
   const { isSubmittedToOperations, activeImage, compiledObservation } = usePublicReport();
+  const { userProfile, hasPermission } = useAuth();
+  const canReconcile = hasPermission("RECONCILE_EVIDENCE");
+
   const [isReconciling, setIsReconciling] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<"ALL" | "CITIZEN" | "WEATHER" | "SATELLITE" | "TERRAIN" | "FIELD">("ALL");
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
+  // Live persistent citizen reports queue
+  const [liveReports, setLiveReports] = useState<CitizenReportItem[]>([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
+  const [reviewLoadingId, setReviewLoadingId] = useState<string | null>(null);
+  const [reviewFeedback, setReviewFeedback] = useState<string | null>(null);
+  const [citizenStatusFilter, setCitizenStatusFilter] = useState<string>("ALL");
+
+  const loadCitizenReports = async () => {
+    setIsLoadingReports(true);
+    try {
+      const reports = await apiClient.getCitizenReports(
+        citizenStatusFilter !== "ALL" ? citizenStatusFilter : undefined
+      );
+      setLiveReports(reports);
+    } catch (err) {
+      console.warn("Failed to load live citizen reports:", err);
+    } finally {
+      setIsLoadingReports(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCitizenReports();
+  }, [citizenStatusFilter]);
+
+  const handleReviewAction = async (reportId: string, action: "APPROVE" | "REJECT") => {
+    setReviewLoadingId(reportId);
+    setReviewFeedback(null);
+    try {
+      await apiClient.reviewCitizenReport(reportId, {
+        action,
+        review_notes:
+          action === "APPROVE"
+            ? `Verified by ${userProfile?.fullName || "Operations Officer"} (${userProfile?.role || "OPERATOR"}). Integrated into authoritative incident evidence.`
+            : `Rejected by ${userProfile?.fullName || "Operations Officer"}: Non-actionable or insufficient ground evidence.`,
+      });
+      setReviewFeedback(
+        `Report ${action === "APPROVE" ? "APPROVED and integrated to Incident Twin" : "REJECTED"}.`
+      );
+      await loadCitizenReports();
+      await reconcileEvidence();
+    } catch (err: any) {
+      setReviewFeedback(`Review action failed: ${err.message || "Unauthorized"}`);
+    } finally {
+      setReviewLoadingId(null);
+    }
+  };
+
   const handleRunReconciliation = async () => {
     setIsReconciling(true);
     try {
       await reconcileEvidence();
+      await loadCitizenReports();
     } finally {
       setIsReconciling(false);
     }
@@ -47,6 +106,7 @@ export const EvidenceReconciliationView: React.FC = () => {
     setVerifyingId(id);
     try {
       await verifyCitizenEvidence(id);
+      await loadCitizenReports();
     } finally {
       setVerifyingId(null);
     }
@@ -437,10 +497,10 @@ export const EvidenceReconciliationView: React.FC = () => {
           }`}
         >
           <IconRadio className="w-3.5 h-3.5" />
-          <span>Citizen Reports ({citizenCount})</span>
-          {unverifiedCitizenCount > 0 && (
+          <span>Citizen Evidence Queue ({liveReports.length > 0 ? liveReports.length : citizenCount})</span>
+          {liveReports.filter(r => r.review_status === "PENDING_REVIEW").length > 0 && (
             <span className="bg-amber-500 text-slate-950 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-              {unverifiedCitizenCount} Unverified
+              {liveReports.filter(r => r.review_status === "PENDING_REVIEW").length} Pending
             </span>
           )}
         </button>
@@ -489,6 +549,229 @@ export const EvidenceReconciliationView: React.FC = () => {
           <span>Field Patrol ({displayEvidence.filter(e => e.sourceType === "FIELD").length})</span>
         </button>
       </div>
+
+      {/* ── AUTHORITATIVE CITIZEN EVIDENCE REVIEW QUEUE SECTION ── */}
+      {(selectedFilter === "CITIZEN" || selectedFilter === "ALL") && liveReports.length > 0 && (
+        <div className="bg-white dark:bg-neutral-900 border border-emerald-500/30 dark:border-emerald-500/20 rounded-2xl p-5 shadow-md space-y-4 font-sans">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-neutral-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400">
+                <IconRadio className="w-5 h-5 animate-pulse" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                    Citizen Safe Evidence Review Queue
+                  </h2>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-300 dark:border-emerald-800">
+                    FASTAPI + SQLITE DURABLE ({liveReports.length} REPORTS)
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-neutral-400 mt-0.5">
+                  Real-time intake from Citizen Safe PWA across 8 North Eastern Region states. Screened by Multimodal Vision AI; human review required for authoritative incident elevation.
+                </p>
+              </div>
+            </div>
+
+            {/* Filter status buttons & Refresh */}
+            <div className="flex items-center gap-2 text-xs font-mono">
+              {["ALL", "PENDING_REVIEW", "APPROVED", "REJECTED"].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setCitizenStatusFilter(st)}
+                  className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                    citizenStatusFilter === st
+                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold"
+                      : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  {st.replace("_", " ")}
+                </button>
+              ))}
+
+              <button
+                onClick={loadCitizenReports}
+                disabled={isLoadingReports}
+                className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 transition-colors cursor-pointer flex items-center gap-1"
+                title="Refresh live citizen queue"
+              >
+                <span className={isLoadingReports ? "animate-spin inline-block" : ""}>⟳</span>
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Review feedback message */}
+          {reviewFeedback && (
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
+              <span>{reviewFeedback}</span>
+              <button
+                onClick={() => setReviewFeedback(null)}
+                className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Citizen reports grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {liveReports.map((report) => {
+              const isPending = report.review_status === "PENDING_REVIEW";
+              const isApproved = report.review_status === "APPROVED";
+              const isRejected = report.review_status === "REJECTED";
+
+              return (
+                <div
+                  key={report.id}
+                  className={`border rounded-xl p-4 flex flex-col justify-between gap-3 shadow-xs transition-all ${
+                    isPending
+                      ? "bg-amber-50/20 dark:bg-amber-950/10 border-amber-300 dark:border-amber-800/60"
+                      : isApproved
+                      ? "bg-emerald-50/20 dark:bg-emerald-950/10 border-emerald-300 dark:border-emerald-800/60"
+                      : "bg-red-50/20 dark:bg-red-950/10 border-red-300 dark:border-red-800/60"
+                  }`}
+                >
+                  <div className="space-y-3">
+                    {/* Header: Tracking ID + Status */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-slate-900 dark:text-white">
+                          {report.tracking_id}
+                        </span>
+                        <span
+                          className={`font-mono text-[9px] px-1.5 py-0.2 rounded font-bold uppercase border ${
+                            report.is_ner_region
+                              ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                              : "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800"
+                          }`}
+                        >
+                          {report.is_ner_region ? "NER REGION" : "OUTSIDE NER"}
+                        </span>
+                      </div>
+
+                      <span
+                        className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                          isApproved
+                            ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
+                            : isRejected
+                            ? "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700"
+                            : "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 animate-pulse"
+                        }`}
+                      >
+                        {report.review_status}
+                      </span>
+                    </div>
+
+                    {/* Photo + Telemetry Row */}
+                    <div className="grid grid-cols-3 gap-3 items-center">
+                      <div
+                        onClick={() => setExpandedImage(report.image_url)}
+                        className="col-span-1 h-24 rounded-lg overflow-hidden bg-slate-950 relative border border-slate-300 dark:border-neutral-700 cursor-pointer group"
+                      >
+                        <img
+                          src={report.image_url}
+                          alt="Citizen Upload"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute bottom-1 left-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-mono text-white">
+                          🔍 View
+                        </div>
+                      </div>
+
+                      <div className="col-span-2 space-y-1 text-xs font-mono">
+                        <div className="text-[11px] font-bold text-slate-900 dark:text-white">
+                          {report.locality || report.district}, {report.state}
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-neutral-400">
+                          Corridor: {report.road_corridor || "Local Artery"}
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-neutral-400">
+                          GPS: {report.latitude.toFixed(4)}°N, {report.longitude.toFixed(4)}°E (±{report.gps_accuracy ?? 10}m)
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          Received: {new Date(report.created_at).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* AI Screening Findings */}
+                    <div className="p-2.5 rounded-lg bg-slate-100 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-mono space-y-1">
+                      <div className="flex items-center justify-between text-[10px] font-bold">
+                        <span className="text-emerald-700 dark:text-emerald-400">
+                          AI VISION SCREENING: {report.ai_screening_result?.hazard_type || "SLOPE_DEBRIS"}
+                        </span>
+                        <span className="text-slate-500 dark:text-neutral-400">
+                          {report.ai_screening_result?.confidence || "MODERATE"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-700 dark:text-neutral-300 font-sans">
+                        {report.ai_observation || "Slope failure indicators detected."}
+                      </p>
+                    </div>
+
+                    {/* Citizen Notes */}
+                    {report.citizen_notes && (
+                      <div className="text-xs">
+                        <span className="font-bold text-slate-600 dark:text-neutral-400 text-[10px] uppercase font-mono block">
+                          Citizen Field Note:
+                        </span>
+                        <p className="text-slate-800 dark:text-neutral-200 text-[11px] italic bg-white dark:bg-neutral-900 p-2 rounded border border-slate-200 dark:border-neutral-800 mt-0.5">
+                          "{report.citizen_notes}"
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Review Disposition Status if already processed */}
+                    {!isPending && (
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-neutral-400 pt-1 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between">
+                        <span>
+                          Reviewed by: <strong className="text-slate-800 dark:text-neutral-200">{report.reviewer_name || "Operations Officer"}</strong> ({report.reviewer_role})
+                        </span>
+                        {report.incident_code && (
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                            Incident: {report.incident_code}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Operator Review Actions (RBAC enforced) */}
+                  {isPending && (
+                    <div className="pt-2 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between gap-2">
+                      {canReconcile ? (
+                        <>
+                          <button
+                            onClick={() => handleReviewAction(report.id, "REJECT")}
+                            disabled={reviewLoadingId === report.id}
+                            className="bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 font-medium text-xs px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-800 transition-colors cursor-pointer"
+                          >
+                            {reviewLoadingId === report.id ? "Processing..." : "Reject Report"}
+                          </button>
+
+                          <button
+                            onClick={() => handleReviewAction(report.id, "APPROVE")}
+                            disabled={reviewLoadingId === report.id}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                          >
+                            <IconCheck className="w-3.5 h-3.5" />
+                            <span>{reviewLoadingId === report.id ? "Integrating..." : "Approve & Integrate to Incident"}</span>
+                          </button>
+                        </>
+                      ) : (
+                        <div className="text-[10px] font-mono text-amber-600 dark:text-amber-400">
+                          Review requires Operator / Magistrate authorization (RECONCILE_EVIDENCE).
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Multi-Source Evidence Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

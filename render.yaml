@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: terraguardian-api
+    env: python
+    rootDir: services/api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: TERRAGUARDIAN_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: terraguardian-db
+          property: connectionString
+      - key: API_CORS_ORIGINS
+        value: https://terraguardian-operations-centre.vercel.app,https://terraguardian-safe.vercel.app,https://terraguardian.vercel.app
+      - key: SECRET_KEY
+        generateValue: true
+
+databases:
+  - name: terraguardian-db
+    databaseName: terraguardian
+    user: terraguardian
+    region: singapore
+    plan: standard

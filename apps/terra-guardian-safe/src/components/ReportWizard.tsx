@@ -6,7 +6,7 @@ import {
   type HazardSeverity,
   type CitizenReportResponse,
 } from "../types/citizen";
-import { submitCitizenReport } from "../services/api";
+import { submitCitizenReport, screenCitizenImage, reverseGeocode } from "../services/api";
 
 interface ReportWizardProps {
   onComplete: () => void;
@@ -18,6 +18,11 @@ export const ReportWizard: React.FC<ReportWizardProps> = ({ onComplete, onCancel
   const [selectedSample, setSelectedSample] = useState<import("../types/citizen").SampleHazardPhoto | null>(null);
   const [customPhotoFile, setCustomPhotoFile] = useState<string | null>(null);
   
+  // AI Vision Screening state
+  const [isScreening, setIsScreening] = useState(false);
+  const [screeningError, setScreeningError] = useState<string | null>(null);
+  const [screeningFeedback, setScreeningFeedback] = useState<string | null>(null);
+
   // Location
   const [locationMode, setLocationMode] = useState<"PRESET" | "GPS">("PRESET");
   const [selectedPresetIndex, setSelectedPresetIndex] = useState<number>(0);
@@ -112,14 +117,24 @@ export const ReportWizard: React.FC<ReportWizardProps> = ({ onComplete, onCancel
     setGpsLoading(true);
     setGpsError(null);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(4));
+        const lng = Number(pos.coords.longitude.toFixed(4));
         setDeviceGps({
-          lat: Number(pos.coords.latitude.toFixed(4)),
-          lng: Number(pos.coords.longitude.toFixed(4)),
+          lat,
+          lng,
           accuracy: Math.round(pos.coords.accuracy),
         });
         setLocationMode("GPS");
         setGpsLoading(false);
+        try {
+          const geo = await reverseGeocode(lat, lng);
+          if (geo && !geo.is_ner_region) {
+            setGpsError(`Notice: Location is in ${geo.state} (outside primary 8 NER states). Report will be ingested into national extended queue.`);
+          }
+        } catch {
+          // Non-fatal
+        }
       },
       (err) => {
         setGpsError(`Unable to fetch GPS: ${err.message}. Using corridor preset.`);
@@ -134,9 +149,30 @@ export const ReportWizard: React.FC<ReportWizardProps> = ({ onComplete, onCancel
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        setCustomPhotoFile(event.target?.result as string);
+      reader.onload = async (event) => {
+        const b64 = event.target?.result as string;
+        setCustomPhotoFile(b64);
         setSelectedSample(null);
+        setScreeningError(null);
+        setScreeningFeedback(null);
+        setIsScreening(true);
+        try {
+          const result = await screenCitizenImage(b64, file.name);
+          if (!result.is_hazard_relevant || result.ai_status === "REJECTED_UNRELATED") {
+            setScreeningError(
+              result.reasoning || "Image rejected: The uploaded photo does not show a visible landslide, debris spill, or slope hazard."
+            );
+          } else {
+            setScreeningFeedback(`AI Screening Passed: ${result.hazard_type} (${result.confidence})`);
+            if (result.visual_observations?.length) {
+              setObservation(result.visual_observations.join(". ") + ".");
+            }
+          }
+        } catch (err: any) {
+          console.warn("Screening network call error:", err);
+        } finally {
+          setIsScreening(false);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -267,6 +303,30 @@ export const ReportWizard: React.FC<ReportWizardProps> = ({ onComplete, onCancel
                   <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                 </label>
               </div>
+
+              {/* AI Screening Live Status & Feedback */}
+              {isScreening && (
+                <div className="p-2.5 rounded-xl bg-slate-900 text-emerald-400 text-xs font-mono flex items-center justify-center gap-2 mt-2">
+                  <span className="h-3 w-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                  <span>AI Vision Screening in progress...</span>
+                </div>
+              )}
+
+              {screeningError && !isScreening && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-300 text-red-800 text-xs mt-2 text-left space-y-1">
+                  <div className="font-bold flex items-center gap-1 font-mono uppercase text-[11px] text-red-700">
+                    <span>⚠️</span>
+                    <span>AI SCREENING REJECTED (NON-HAZARD DETECTED)</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-red-900">{screeningError}</p>
+                </div>
+              )}
+
+              {screeningFeedback && !isScreening && !screeningError && (
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs mt-2 text-left font-mono">
+                  <span>✓ {screeningFeedback}</span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -674,7 +734,12 @@ export const ReportWizard: React.FC<ReportWizardProps> = ({ onComplete, onCancel
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-md transition-all text-center"
+                disabled={step === 1 && (isScreening || !!screeningError)}
+                className={`flex-1 font-bold py-2.5 px-4 rounded-xl text-xs shadow-md transition-all text-center ${
+                  step === 1 && (isScreening || !!screeningError)
+                    ? "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
+                }`}
               >
                 Next Step →
               </button>

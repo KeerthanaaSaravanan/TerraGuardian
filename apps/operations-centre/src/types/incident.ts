@@ -809,3 +809,69 @@ export interface DecisionSupportAssessment {
   assessed_by: string;
 }
 
+// ── Citizen Safe & Public Evidence Pipeline Types ──
+
+export interface CitizenScreeningResult {
+  is_hazard_relevant: boolean;
+  hazard_type: string;
+  visual_observations: string[];
+  severity_screen: string;
+  image_quality: string;
+  confidence: string;
+  recommended_followup: string;
+  reasoning: string;
+  needs_human_verification: boolean;
+  ai_status: string;
+}
+
+export interface CitizenGeocodingResult {
+  latitude: number;
+  longitude: number;
+  state: string;
+  district: string;
+  locality?: string;
+  road_corridor?: string;
+  is_ner_region: boolean;
+  display_name: string;
+  resolved_source: string;
+}
+
+export interface CitizenReportItem {
+  id: string;
+  tracking_id: string;
+  created_at: string;
+  image_url: string;
+  image_hash: string;
+  latitude: number;
+  longitude: number;
+  gps_accuracy?: number;
+  state: string;
+  district: string;
+  locality?: string;
+  road_corridor?: string;
+  is_ner_region: boolean;
+  citizen_notes?: string;
+  ai_observation?: string;
+  ai_status: string;
+  ai_screening_result: CitizenScreeningResult;
+  submission_status: string;
+  review_status: "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "NEEDS_MORE_INFORMATION";
+  maturity_status: string;
+  reviewer_role?: string;
+  reviewer_name?: string;
+  reviewed_at?: string;
+  review_notes?: string;
+  incident_id?: string;
+  incident_code?: string;
+  provenance: string;
+  source_type: string;
+}
+
+export interface CitizenReviewPayload {
+  action: "APPROVE" | "REJECT" | "NEEDS_MORE_INFORMATION";
+  incident_id?: string;
+  create_new_incident?: boolean;
+  new_incident_title?: string;
+  review_notes?: string;
+}
+

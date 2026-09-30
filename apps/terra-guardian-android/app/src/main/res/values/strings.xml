@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">TerraGuardian Safe</string>
+    <string name="channel_emergency_name">Emergency Alerts</string>
+    <string name="channel_emergency_desc">High-priority emergency landslide and evacuation warnings.</string>
+    <string name="channel_warning_name">Hazard Warnings</string>
+    <string name="channel_warning_desc">Corridor warnings and slope instability alerts.</string>
+    <string name="channel_advisory_name">Weather Advisories</string>
+    <string name="channel_advisory_desc">Monsoon precipitation and heightened vigilance advisories.</string>
+    <string name="channel_system_name">System Notifications</string>
+    <string name="channel_system_desc">Background sync and operational status updates.</string>
+</resources>

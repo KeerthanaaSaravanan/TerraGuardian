@@ -26,17 +26,32 @@ import {
   PredictiveRiskAssessment,
   ReconciliationSummary,
   UserProfile,
+  CitizenScreeningResult,
+  CitizenGeocodingResult,
+  CitizenReportItem,
+  CitizenReviewPayload,
 } from "../types/incident";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
+function normalizeApiBaseUrl(raw?: string): string {
+  if (!raw || !raw.trim()) {
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/api/v1`;
+    }
+    return "/api/v1";
+  }
+  let clean = raw.trim().replace(/\/+$/, "");
+  if (!clean.endsWith("/api/v1")) {
+    clean = `${clean}/api/v1`;
+  }
+  return clean;
+}
+
+export const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
 export function getApiBaseDisplayUrl(): string {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/api/v1`;
-  }
-  return "http://127.0.0.1:8000/api/v1";
+  return API_BASE_URL;
 }
+
 
 
 let currentAuthToken: string | null =
@@ -164,13 +179,12 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
 export const apiClient = {
   /** Health check against configured backend */
-  async checkHealth(): Promise<{ status: string; service: string; version: string }> {
-    const healthUrl = import.meta.env.VITE_API_URL 
-      ? `${import.meta.env.VITE_API_URL.replace(/\/api\/v1\/?$/, "")}/health` 
-      : "/health";
+  async checkHealth(): Promise<{ status: string; service: string; database?: string; version: string; environment?: string }> {
+    const healthUrl = `${API_BASE_URL}/health`;
     const res = await fetch(healthUrl);
     return handleResponse(res);
   },
+
 
   /** Ensure an active authenticated session exists, logging in with default credentials if needed */
   async ensureAuthenticatedSession(): Promise<string | null> {
@@ -663,6 +677,16 @@ export const apiClient = {
   },
 
   /** ── Phase 4: Governed Disaster Alerts ── */
+  async getAllAlerts(statusFilter?: string): Promise<any[]> {
+    const url = statusFilter
+      ? `${API_BASE_URL}/alerts?status=${encodeURIComponent(statusFilter)}`
+      : `${API_BASE_URL}/alerts`;
+    const res = await fetch(url, {
+      headers: authHeaders(),
+    });
+    return handleResponse<any[]>(res);
+  },
+
   async getIncidentAlerts(incidentId: string): Promise<any[]> {
     const res = await fetch(`${API_BASE_URL}/incidents/${incidentId}/alerts`, {
       headers: authHeaders(),
@@ -697,6 +721,28 @@ export const apiClient = {
     return handleResponse<any>(res);
   },
 
+  async evaluateAlertsForIncident(incidentId: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/alerts/evaluate?incident_id=${incidentId}`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    return handleResponse<any>(res);
+  },
+
+  async getDataSourcesHealth(): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/system/data-sources/health`, {
+      headers: authHeaders(),
+    });
+    return handleResponse<any>(res);
+  },
+
+  async getRoadStatuses(): Promise<any[]> {
+    const res = await fetch(`${API_BASE_URL}/roads/status`, {
+      headers: authHeaders(),
+    });
+    return handleResponse<any[]>(res);
+  },
+
   /** ── Phase 4: Road / Transport Corridor Status ── */
   async getIncidentRoadStatus(incidentId: string): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/incidents/${incidentId}/road-status`, {
@@ -704,6 +750,7 @@ export const apiClient = {
     });
     return handleResponse<any>(res);
   },
+
 
   async updateIncidentRoadStatus(incidentId: string, payload: any): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/incidents/${incidentId}/road-status`, {
@@ -765,6 +812,85 @@ export const apiClient = {
       headers: authHeaders(),
     });
     return handleResponse<any>(res);
+  },
+
+  /** ── Citizen Safe & Public Evidence Pipeline ── */
+  async screenCitizenImage(imageBase64: string, filename?: string): Promise<CitizenScreeningResult> {
+    const res = await fetch(`${API_BASE_URL}/citizen/screen-image`, {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        image_base64: imageBase64,
+        filename: filename || "observation.jpg",
+      }),
+    });
+    return handleResponse<CitizenScreeningResult>(res);
+  },
+
+  async reverseGeocode(lat: number, lng: number): Promise<CitizenGeocodingResult> {
+    const res = await fetch(`${API_BASE_URL}/citizen/reverse-geocode?lat=${lat}&lng=${lng}`, {
+      headers: authHeaders(),
+    });
+    return handleResponse<CitizenGeocodingResult>(res);
+  },
+
+  async submitCitizenReport(payload: {
+    image_base64?: string;
+    image_url?: string;
+    latitude: number;
+    longitude: number;
+    gps_accuracy?: number;
+    state?: string;
+    district?: string;
+    locality?: string;
+    road_corridor?: string;
+    citizen_notes?: string;
+    ai_observation?: string;
+    ai_screening_result?: any;
+    reporter_contact?: string;
+    client_submission_id?: string;
+  }): Promise<CitizenReportItem> {
+    const res = await fetch(`${API_BASE_URL}/citizen/report`, {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<CitizenReportItem>(res);
+  },
+
+  async getCitizenReports(
+    statusFilter?: string,
+    nerOnly?: boolean,
+    limit: number = 50
+  ): Promise<CitizenReportItem[]> {
+    const params = new URLSearchParams();
+    if (statusFilter && statusFilter !== "ALL") params.append("status", statusFilter);
+    if (nerOnly) params.append("ner_only", "true");
+    params.append("limit", limit.toString());
+
+    const res = await fetch(`${API_BASE_URL}/citizen/reports?${params.toString()}`, {
+      headers: authHeaders(),
+    });
+    return handleResponse<CitizenReportItem[]>(res);
+  },
+
+  async getCitizenReport(reportId: string): Promise<CitizenReportItem> {
+    const res = await fetch(`${API_BASE_URL}/citizen/reports/${reportId}`, {
+      headers: authHeaders(),
+    });
+    return handleResponse<CitizenReportItem>(res);
+  },
+
+  async reviewCitizenReport(
+    reportId: string,
+    payload: CitizenReviewPayload
+  ): Promise<CitizenReportItem> {
+    const res = await fetch(`${API_BASE_URL}/citizen/reports/${reportId}/review`, {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<CitizenReportItem>(res);
   },
 };
 

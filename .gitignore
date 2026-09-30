@@ -65,7 +65,19 @@ scratch/
 screenshots/
 ANTIGRAVITY_*
 
+# ---------- Uploads & Ephemeral Storage ----------
+services/api/data/uploads/
+uploads/
+
+# ---------- Android ----------
+.gradle/
+**/build/
+*.apk
+*.aab
+local.properties
+
 # ---------- Misc ----------
 *.log
 *.pid
 *.seed
+

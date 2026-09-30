@@ -465,6 +465,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         }
       }
 
+      // Fetch live citizen reports for spatial projection
+      let liveCitizenReports: import("../types/incident").CitizenReportItem[] = [];
+      try {
+        liveCitizenReports = await apiClient.getCitizenReports();
+      } catch {
+        // Non-fatal fallback
+      }
+
       // A. Project Administrative Boundaries
       boundaries.forEach((b: AdminBoundaryFeature) => {
         if (b.geometry_geojson && b.geometry_geojson.coordinates) {
@@ -664,6 +672,46 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               { sticky: true }
             );
             evidenceLayerRef.current.addLayer(evMarker);
+          }
+        });
+      }
+
+      // F2. Project Live Citizen Safe Reports
+      if (liveCitizenReports && liveCitizenReports.length > 0) {
+        liveCitizenReports.forEach((cr) => {
+          if (cr.latitude != null && cr.longitude != null) {
+            const isApproved = cr.review_status === "APPROVED";
+            const isRejected = cr.review_status === "REJECTED";
+            const crColor = isApproved ? "#10b981" : isRejected ? "#ef4444" : "#f59e0b";
+
+            const crIcon = L.divIcon({
+              className: "custom-citizen-report-marker",
+              html: `
+                <div style="background-color: ${crColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                     title="Citizen Report ${cr.tracking_id} (${cr.review_status})">
+                  <span style="font-size: 8px; font-weight: bold; color: white;">C</span>
+                </div>
+              `,
+              iconSize: [14, 14],
+              iconAnchor: [7, 7],
+            });
+
+            const crMarker = L.marker([cr.latitude, cr.longitude], { icon: crIcon });
+            crMarker.bindTooltip(
+              `<div class="p-2 font-mono text-xs space-y-1">
+                <div class="font-bold flex items-center justify-between gap-2">
+                  <span style="color: ${crColor};">${cr.tracking_id}</span>
+                  <span class="text-[9px] px-1 bg-black/40 rounded text-white">${cr.review_status}</span>
+                </div>
+                <div class="text-[11px]">${cr.locality || cr.district}, ${cr.state}</div>
+                <div class="text-[10px] text-slate-400">Corridor: ${cr.road_corridor || "Local Artery"}</div>
+                <div class="text-[10px] text-slate-400">GPS: ${cr.latitude.toFixed(4)}°N, ${cr.longitude.toFixed(4)}°E (±${cr.gps_accuracy ?? 10}m)</div>
+                <div class="text-[10px] text-emerald-400 font-bold">AI Screening: ${cr.ai_screening_result?.hazard_type || "SLOPE_DEBRIS"}</div>
+                ${cr.citizen_notes ? `<div class="text-[10px] text-slate-300 italic">"${cr.citizen_notes}"</div>` : ""}
+              </div>`,
+              { sticky: true }
+            );
+            evidenceLayerRef.current.addLayer(crMarker);
           }
         });
       }

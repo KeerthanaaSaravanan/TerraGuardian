@@ -12,13 +12,22 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+import json
 from typing import Any, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.db.models import AlertChannelModel, AlertModel, IncidentModel
+from app.adapters.fcm import FCMAdapter
+from app.db.models import (
+    AlertChannelModel,
+    AlertModel,
+    IncidentModel,
+    AlertAcknowledgementModel,
+    DeviceRegistrationModel,
+    RoadStatusModel,
+)
 from app.domain.alert import (
     Alert,
     AlertAuthorizeRequest,
@@ -29,6 +38,13 @@ from app.domain.alert import (
     AlertLifecycleUpdateRequest,
     AlertSeverity,
     AlertStage,
+    WarningLevel,
+    AlertTriggerType,
+    HazardType,
+    TargetGeometryType,
+    AlertAcknowledgementRequest,
+    DeviceRegisterRequest,
+    RoadStatusItem,
 )
 from app.domain.enums import ActorRole, AuditEventType
 from app.domain.permissions import OperationalPermission, has_permission
@@ -47,6 +63,8 @@ class AlertService:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.audit_service = AuditService(session)
+        self.fcm_adapter = FCMAdapter()
+
 
     async def list_alerts_for_incident(self, incident_id: uuid.UUID) -> list[Alert]:
         """Retrieve all alerts issued for an incident with discrete channel statuses."""
@@ -92,6 +110,30 @@ class AlertService:
         now = datetime.utcnow()
         alert_code = body.alert_code or f"ALT-{incident.code}-{now.strftime('%H%M')}"
 
+        # Determine warning level and triggers
+        if body.warning_level:
+            warning_level = body.warning_level.value
+        elif body.severity == AlertSeverity.CRITICAL:
+            warning_level = "EMERGENCY"
+        elif body.severity == AlertSeverity.HIGH:
+            warning_level = "WARNING"
+        elif body.severity == AlertSeverity.MODERATE:
+            warning_level = "ADVISORY"
+        else:
+            warning_level = "WATCH"
+
+        trigger_type = body.trigger_type.value if body.trigger_type else "HAZARD_OBSERVATION"
+        hazard_type = body.hazard_type.value if body.hazard_type else "LANDSLIDE"
+        target_geom = body.target_geometry_type.value if body.target_geometry_type else "CORRIDOR"
+        target_state = body.target_state or incident.state
+        target_district = body.target_district or incident.district
+        target_lat = body.target_latitude if body.target_latitude is not None else incident.latitude
+        target_lng = body.target_longitude if body.target_longitude is not None else incident.longitude
+        target_rad = body.target_radius_km if body.target_radius_km is not None else 15.0
+        affected_roads = json.dumps(body.affected_roads) if body.affected_roads else (json.dumps([incident.corridor_name]) if incident.corridor_name else None)
+        target_localities = json.dumps(body.target_localities) if body.target_localities else (json.dumps([incident.location_name]) if incident.location_name else None)
+        evidence_lineage = json.dumps(body.evidence_lineage) if body.evidence_lineage else None
+
         alert_record = AlertModel(
             id=uuid.uuid4(),
             incident_id=incident_id,
@@ -109,6 +151,23 @@ class AlertService:
             is_controlled_demo=body.is_controlled_demo,
             provenance="TERRAGUARDIAN_ALERT_FABRIC",
             generated_at=now,
+            warning_level=warning_level,
+            trigger_type=trigger_type,
+            hazard_type=hazard_type,
+            confidence=body.confidence if body.confidence is not None else 0.85,
+            rationale=body.rationale,
+            target_geometry_type=target_geom,
+            target_state=target_state,
+            target_district=target_district,
+            target_localities=target_localities,
+            target_latitude=target_lat,
+            target_longitude=target_lng,
+            target_radius_km=target_rad,
+            affected_roads=affected_roads,
+            valid_from=body.valid_from or now,
+            valid_until=body.valid_until,
+            evidence_lineage=evidence_lineage,
+            version=1,
         )
         self.session.add(alert_record)
 
@@ -333,6 +392,216 @@ class AlertService:
 
         return await self.get_alert_by_id(alert.id)
 
+    async def list_all_alerts(self, status_filter: Optional[str] = None) -> list[Alert]:
+        """List all alerts across the platform with optional stage/lifecycle filter."""
+        stmt = select(AlertModel).options(selectinload(AlertModel.channels)).order_by(AlertModel.generated_at.desc())
+        if status_filter:
+            sf_upper = status_filter.upper()
+            if sf_upper == "ACTIVE":
+                stmt = stmt.where(
+                    or_(
+                        AlertModel.stage == AlertStage.AUTHORIZED.value,
+                        AlertModel.stage == AlertStage.SENT.value,
+                        AlertModel.stage == AlertStage.DELIVERED.value,
+                    )
+                )
+            elif sf_upper == "CANDIDATES":
+                stmt = stmt.where(AlertModel.stage == AlertStage.ALERT_GENERATED.value)
+            elif sf_upper == "AUTHORIZATION_REQUIRED":
+                stmt = stmt.where(AlertModel.authorized.is_(False))
+            elif sf_upper in ("ACKNOWLEDGED", "ESCALATED", "DELIVERED", "SENT"):
+                stmt = stmt.where(AlertModel.stage == sf_upper)
+
+        res = await self.session.execute(stmt)
+        records = res.scalars().all()
+        return [self._to_domain(r) for r in records]
+
+    async def acknowledge_alert(
+        self,
+        alert_id: uuid.UUID,
+        body: AlertAcknowledgementRequest,
+    ) -> dict[str, Any]:
+        """Record citizen alert acknowledgement and 'I AM SAFE' status signal."""
+        stmt = select(AlertModel).where(AlertModel.id == alert_id)
+        res = await self.session.execute(stmt)
+        alert = res.scalar_one_or_none()
+        if not alert:
+            raise DomainError(f"Alert {alert_id} not found.")
+
+        now = datetime.utcnow()
+        ack_record = AlertAcknowledgementModel(
+            id=uuid.uuid4(),
+            alert_id=alert_id,
+            device_id=body.device_id,
+            citizen_id=body.citizen_id,
+            opened_at=body.opened_at or now,
+            acknowledged_at=body.acknowledged_at or now,
+            is_safe=body.is_safe,
+            safe_notes=body.safe_notes,
+            approx_lat=body.approx_lat,
+            approx_lng=body.approx_lng,
+            created_at=now,
+        )
+        self.session.add(ack_record)
+
+        # Update alert acknowledged timestamp if not set
+        if not alert.acknowledged_at:
+            alert.acknowledged_at = now
+
+        await self.session.flush()
+
+        # Append-oriented audit event
+        await self.audit_service.record_event(
+            incident_id=alert.incident_id,
+            event_type=AuditEventType.STATE_CHANGED,
+            actor_role=ActorRole.CITIZEN,
+            actor_name="Citizen Safe Device",
+            previous_state=alert.stage,
+            new_state=alert.stage,
+            reason=f"Citizen {body.device_id[:8]} acknowledged alert {alert.alert_code}. (is_safe={body.is_safe})",
+            payload={"alert_id": str(alert.id), "device_id": body.device_id, "is_safe": body.is_safe},
+        )
+
+        return {
+            "status": "ACKNOWLEDGED",
+            "alert_id": str(alert_id),
+            "device_id": body.device_id,
+            "is_safe": body.is_safe,
+            "recorded_at": now.isoformat(),
+        }
+
+    async def register_device(self, body: DeviceRegisterRequest) -> dict[str, Any]:
+        """Register or update citizen device for targeted FCM push notifications."""
+        stmt = select(DeviceRegistrationModel).where(DeviceRegistrationModel.device_id == body.device_id)
+        res = await self.session.execute(stmt)
+        device = res.scalar_one_or_none()
+
+        now = datetime.utcnow()
+        districts_json = json.dumps(body.subscribed_districts) if body.subscribed_districts else None
+        corridors_json = json.dumps(body.subscribed_corridors) if body.subscribed_corridors else None
+
+        if device:
+            device.fcm_token = body.fcm_token
+            device.platform = body.platform
+            device.app_version = body.app_version
+            device.notification_permissions = body.notification_permissions
+            device.last_latitude = body.latitude
+            device.last_longitude = body.longitude
+            device.last_accuracy_m = body.accuracy_m
+            device.last_location_time = now
+            device.subscribed_districts = districts_json
+            device.subscribed_corridors = corridors_json
+            device.last_seen = now
+        else:
+            device = DeviceRegistrationModel(
+                id=uuid.uuid4(),
+                device_id=body.device_id,
+                fcm_token=body.fcm_token,
+                platform=body.platform,
+                app_version=body.app_version,
+                notification_permissions=body.notification_permissions,
+                last_latitude=body.latitude,
+                last_longitude=body.longitude,
+                last_accuracy_m=body.accuracy_m,
+                last_location_time=now,
+                subscribed_districts=districts_json,
+                subscribed_corridors=corridors_json,
+                last_seen=now,
+                created_at=now,
+            )
+            self.session.add(device)
+
+        await self.session.flush()
+        return {
+            "status": "REGISTERED",
+            "device_id": body.device_id,
+            "platform": body.platform,
+            "last_seen": now.isoformat(),
+        }
+
+    async def get_road_statuses(self) -> list[RoadStatusItem]:
+        """Get authoritative road and transit corridor statuses."""
+        await self.seed_default_road_statuses()
+        stmt = select(RoadStatusModel).order_by(RoadStatusModel.observed_at.desc())
+        res = await self.session.execute(stmt)
+        records = res.scalars().all()
+        return [
+            RoadStatusItem(
+                id=r.id,
+                road_code=r.road_code,
+                road_name=r.road_name,
+                corridor_section=r.corridor_section,
+                state=r.state,
+                district=r.district,
+                status=r.status,
+                condition_summary=r.condition_summary,
+                closure_reason=r.closure_reason,
+                source=r.source,
+                verified_by=r.verified_by,
+                observed_at=r.observed_at,
+                updated_at=r.updated_at,
+            )
+            for r in records
+        ]
+
+    async def seed_default_road_statuses(self) -> None:
+        """Seed initial ground-truth road statuses if empty."""
+        stmt = select(RoadStatusModel).limit(1)
+        res = await self.session.execute(stmt)
+        if res.scalar_one_or_none():
+            return
+
+        now = datetime.utcnow()
+        default_roads = [
+            RoadStatusModel(
+                id=uuid.uuid4(),
+                road_code="NH-13",
+                road_name="Trans-Arunachal Highway (BCT Corridor)",
+                corridor_section="KM-38 to KM-46 (Bhalukpong-Tenga)",
+                state="Arunachal Pradesh",
+                district="West Kameng",
+                status="CAUTION",
+                condition_summary="One-way traffic operational at KM-42. Heavy machinery clearing roadside shoulder debris.",
+                closure_reason="Debris wash following persistent monsoon precipitation.",
+                source="Border Roads Organisation (BRO Project Vartak)",
+                verified_by="OC 14 BRTF",
+                observed_at=now,
+                updated_at=now,
+            ),
+            RoadStatusModel(
+                id=uuid.uuid4(),
+                road_code="NH-10",
+                road_name="Sevoke-Gangtok Highway",
+                corridor_section="Teesta Bazaar to Rangpo",
+                state="Sikkim",
+                district="Pakyong",
+                status="OPEN",
+                condition_summary="Carriageway clear for all vehicular traffic. Hillside slopes damp but stable.",
+                closure_reason=None,
+                source="Sikkim PWD / Traffic Control",
+                verified_by="Duty Officer Rangpo",
+                observed_at=now,
+                updated_at=now,
+            ),
+            RoadStatusModel(
+                id=uuid.uuid4(),
+                road_code="NH-29",
+                road_name="Dimapur-Kohima Highway",
+                corridor_section="Chumukedima Rockfall Zone",
+                state="Nagaland",
+                district="Chümoukedima",
+                status="CAUTION",
+                condition_summary="Slow movement advisory due to rolling stones during rainfall. Escort pilot vehicles active.",
+                closure_reason=None,
+                source="Nagaland State Police & PWD",
+                verified_by="Traffic Control Dimapur",
+                observed_at=now,
+                updated_at=now,
+            ),
+        ]
+        self.session.add_all(default_roads)
+        await self.session.flush()
+
     def _to_domain(self, r: AlertModel) -> Alert:
         channels = [
             AlertChannelDelivery(
@@ -347,6 +616,28 @@ class AlertService:
             )
             for c in (r.channels or [])
         ]
+
+        localities = None
+        if r.target_localities:
+            try:
+                localities = json.loads(r.target_localities)
+            except Exception:
+                localities = [r.target_localities]
+
+        roads = None
+        if r.affected_roads:
+            try:
+                roads = json.loads(r.affected_roads)
+            except Exception:
+                roads = [r.affected_roads]
+
+        lineage = None
+        if r.evidence_lineage:
+            try:
+                lineage = json.loads(r.evidence_lineage)
+            except Exception:
+                lineage = {"raw": r.evidence_lineage}
+
         return Alert(
             id=r.id,
             incident_id=r.incident_id,
@@ -366,9 +657,28 @@ class AlertService:
             is_controlled_demo=r.is_controlled_demo,
             provenance=r.provenance,
             escalation_reason=r.escalation_reason,
+            warning_level=WarningLevel(r.warning_level) if hasattr(r, "warning_level") and r.warning_level else WarningLevel.WARNING,
+            trigger_type=AlertTriggerType(r.trigger_type) if hasattr(r, "trigger_type") and r.trigger_type else AlertTriggerType.HAZARD_OBSERVATION,
+            hazard_type=HazardType(r.hazard_type) if hasattr(r, "hazard_type") and r.hazard_type else HazardType.LANDSLIDE,
+            confidence=r.confidence if hasattr(r, "confidence") and r.confidence is not None else 0.85,
+            rationale=r.rationale if hasattr(r, "rationale") else None,
+            target_geometry_type=TargetGeometryType(r.target_geometry_type) if hasattr(r, "target_geometry_type") and r.target_geometry_type else TargetGeometryType.CORRIDOR,
+            target_state=r.target_state if hasattr(r, "target_state") and r.target_state else "Arunachal Pradesh",
+            target_district=r.target_district if hasattr(r, "target_district") and r.target_district else "West Kameng",
+            target_localities=localities,
+            target_latitude=r.target_latitude if hasattr(r, "target_latitude") else None,
+            target_longitude=r.target_longitude if hasattr(r, "target_longitude") else None,
+            target_radius_km=r.target_radius_km if hasattr(r, "target_radius_km") and r.target_radius_km is not None else 15.0,
+            affected_roads=roads,
+            valid_from=r.valid_from if hasattr(r, "valid_from") and r.valid_from else r.generated_at,
+            valid_until=r.valid_until if hasattr(r, "valid_until") else None,
+            evidence_lineage=lineage,
+            dedup_hash=r.dedup_hash if hasattr(r, "dedup_hash") else None,
+            version=r.version if hasattr(r, "version") and r.version else 1,
             generated_at=r.generated_at,
             sent_at=r.sent_at,
             delivered_at=r.delivered_at,
             acknowledged_at=r.acknowledged_at,
             escalated_at=r.escalated_at,
         )
+

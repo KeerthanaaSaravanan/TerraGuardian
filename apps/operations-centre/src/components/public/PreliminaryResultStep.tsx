@@ -17,7 +17,14 @@ interface PreliminaryResultStepProps {
 export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
   onGoToOperationsCentre,
 }) => {
-  const { compiledObservation, activeImage, resetReport } = usePublicReport();
+  const { compiledObservation, activeImage, resetReport, persistedReport } = usePublicReport();
+
+  const trackingId = persistedReport?.tracking_id || compiledObservation.observationId;
+  const stateName = persistedReport?.state || compiledObservation.location.state;
+  const districtName = persistedReport?.district || compiledObservation.location.district;
+  const corridorName = persistedReport?.road_corridor || compiledObservation.location.corridorName;
+  const latCoord = persistedReport ? persistedReport.latitude : compiledObservation.location.lat;
+  const lngCoord = persistedReport ? persistedReport.longitude : compiledObservation.location.lng;
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-neutral-950 text-slate-900 dark:text-neutral-100 transition-colors">
@@ -34,7 +41,7 @@ export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
           <ThemeToggle />
           <button
             onClick={resetReport}
-            className="text-xs text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white px-2 py-1 rounded"
+            className="text-xs text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white px-2 py-1 rounded cursor-pointer"
           >
             New Report
           </button>
@@ -50,13 +57,13 @@ export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
           </div>
           <div className="flex-1 text-xs">
             <div className="font-bold text-emerald-900 dark:text-emerald-200 text-sm">
-              Observation Successfully Submitted
+              Observation Successfully Persisted & Queued
             </div>
             <div className="text-slate-600 dark:text-emerald-300/80 text-[11px] font-mono mt-0.5">
-              REFERENCE ID: <span className="font-bold text-emerald-700 dark:text-emerald-400">{compiledObservation.observationId}</span>
+              TRACKING ID: <span className="font-bold text-emerald-700 dark:text-emerald-400">{trackingId}</span>
             </div>
             <div className="text-slate-500 dark:text-neutral-400 text-[11px] mt-1">
-              Logged into DDMA West Kameng & SDRF emergency responder queue.
+              Logged into {districtName}, {stateName} emergency responder review queue. Status: <strong className="text-amber-600 font-mono">UNVERIFIED (PENDING FIELD REVIEW)</strong>.
             </div>
           </div>
         </div>
@@ -66,7 +73,7 @@ export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
             <div>
               <span className="text-[10px] font-mono uppercase text-slate-500 dark:text-neutral-400 block font-semibold">
-                PRELIMINARY COMPUTER VISION HEURISTIC (DEMONSTRATION PROTOCOL — PENDING FIELD VERIFICATION)
+                PRELIMINARY COMPUTER VISION SCREENING
               </span>
               <h3 className="font-bold text-base text-slate-900 dark:text-white mt-0.5">
                 Potential Slope Failure Indicators Detected
@@ -79,7 +86,7 @@ export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
 
           {/* Scientific Transparency & Field Verification Disclaimer */}
           <div className="bg-slate-50 dark:bg-neutral-950 p-2.5 rounded-xl border border-slate-200 dark:border-neutral-800 text-[11px] font-mono text-slate-600 dark:text-neutral-400 leading-snug">
-            <strong>Provenance:</strong> Citizen Crowd Sourced Upload • Automated Edge Feature Extraction (Not authoritative until verified by authorized field officer).
+            <strong>Provenance:</strong> REAL_USER_SUBMITTED • Automated Edge Feature Extraction (Zero automated road closures; human authorization required under NDMA Section 30/34).
           </div>
 
           {/* Photo & Detected Features */}
@@ -107,16 +114,16 @@ export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
           </div>
 
           {/* Critical Infrastructure Match */}
-          <div className="bg-slate-50 dark:bg-neutral-950 p-3.5 rounded-xl border border-slate-200 dark:border-neutral-800 text-xs space-y-1.5">
-            <div className="flex items-center justify-between font-mono text-[10px]">
+          <div className="bg-slate-50 dark:bg-neutral-950 p-3.5 rounded-xl border border-slate-200 dark:border-neutral-800 text-xs space-y-1.5 font-mono">
+            <div className="flex items-center justify-between text-[10px]">
               <span className="text-slate-400 uppercase">INFRASTRUCTURE CORRIDOR MATCH</span>
-              <span className="text-red-600 dark:text-red-400 font-bold">PROXIMITY: 38 METERS</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">PROXIMITY: ARTERIAL CORRIDOR</span>
             </div>
-            <div className="font-bold text-slate-900 dark:text-white">
-              {compiledObservation.criticalAreaMatch.criticalAreaName}
+            <div className="font-bold text-slate-900 dark:text-white text-xs">
+              {corridorName}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-neutral-400">
-              Corridor ID: <span className="font-mono">{compiledObservation.criticalAreaMatch.corridorCode}</span> • Matched to Active Incident <span className="font-bold text-emerald-600 dark:text-emerald-400">TG-2048</span>
+              Coordinates: {latCoord.toFixed(4)}°N, {lngCoord.toFixed(4)}°E • Jurisdiction: {districtName}, {stateName}
             </div>
           </div>
 
@@ -145,15 +152,15 @@ export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
               <span className="font-bold text-xs">OPERATOR BRIDGE (SIH EVALUATION)</span>
             </div>
             <span className="font-mono text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded">
-              SEAMLESS FLOW
+              DURABLE QUEUE
             </span>
           </div>
           <p className="text-[11px] text-slate-300 leading-relaxed">
-            See how this citizen observation (<strong>{compiledObservation.observationId}</strong>) instantly surfaces in the Operations Centre multi-source reconciliation matrix for incident <strong>TG-2048</strong>.
+            See how this real citizen observation (<strong>{trackingId}</strong>) is durably stored in the database and surfaced in the Operations Centre Evidence Review Queue.
           </p>
           <button
             onClick={onGoToOperationsCentre}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
           >
             <span>View in Operations Centre (Step 3)</span>
             <IconArrowRight className="w-4 h-4" />

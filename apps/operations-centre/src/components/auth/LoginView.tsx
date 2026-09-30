@@ -291,7 +291,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
               </span>
               <div className="flex items-center gap-3">
                 <a
-                  href="http://localhost:5174"
+                  href={import.meta.env.VITE_CITIZEN_SAFE_URL || (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1" ? "https://terraguardian-safe.vercel.app" : "http://localhost:5174")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
@@ -299,6 +299,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
                   <span>Open TerraGuardian Safe (Public PWA)</span>
                   <IconArrowRight className="w-3 h-3" />
                 </a>
+
                 {onCancel && (
                   <>
                     <span className="text-slate-300 dark:text-neutral-700">•</span>

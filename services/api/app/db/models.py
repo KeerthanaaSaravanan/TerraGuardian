@@ -101,6 +101,9 @@ class IncidentModel(Base):
     alerts: Mapped[list[AlertModel]] = relationship(
         "AlertModel", back_populates="incident", cascade="all, delete-orphan", order_by="AlertModel.generated_at.desc()"
     )
+    citizen_reports: Mapped[list[CitizenReportModel]] = relationship(
+        "CitizenReportModel", back_populates="incident"
+    )
 
 
 
@@ -411,9 +414,32 @@ class AlertModel(Base):
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Early Warning & Spatial Targeting Extensions
+    warning_level: Mapped[str] = mapped_column(String(32), default="WARNING", nullable=False)
+    trigger_type: Mapped[str] = mapped_column(String(64), default="HAZARD_OBSERVATION", nullable=False)
+    hazard_type: Mapped[str] = mapped_column(String(64), default="LANDSLIDE", nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, default=0.85, nullable=False)
+    rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
+    target_geometry_type: Mapped[str] = mapped_column(String(32), default="CORRIDOR", nullable=False)
+    target_state: Mapped[str] = mapped_column(String(100), default="Arunachal Pradesh", nullable=False)
+    target_district: Mapped[str] = mapped_column(String(100), default="West Kameng", nullable=False)
+    target_localities: Mapped[str | None] = mapped_column(Text, nullable=True)
+    target_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    target_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    target_radius_km: Mapped[float] = mapped_column(Float, default=15.0, nullable=False)
+    affected_roads: Mapped[str | None] = mapped_column(Text, nullable=True)
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    evidence_lineage: Mapped[str | None] = mapped_column(Text, nullable=True)
+    dedup_hash: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+
     incident: Mapped[IncidentModel] = relationship("IncidentModel", back_populates="alerts")
     channels: Mapped[list[AlertChannelModel]] = relationship(
         "AlertChannelModel", back_populates="alert", cascade="all, delete-orphan"
+    )
+    acknowledgements: Mapped[list[AlertAcknowledgementModel]] = relationship(
+        "AlertAcknowledgementModel", back_populates="alert", cascade="all, delete-orphan"
     )
 
 
@@ -437,6 +463,140 @@ class AlertChannelModel(Base):
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     alert: Mapped[AlertModel] = relationship("AlertModel", back_populates="channels")
+
+
+class AlertAcknowledgementModel(Base):
+    """Citizen emergency acknowledgement and 'I AM SAFE' status signals."""
+
+    __tablename__ = "alert_acknowledgements"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    alert_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("alerts.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    device_id: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
+    citizen_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+
+    opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    acknowledged_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    is_safe: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    safe_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    approx_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    approx_lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+
+    alert: Mapped[AlertModel] = relationship("AlertModel", back_populates="acknowledgements")
+
+
+class DeviceRegistrationModel(Base):
+    """Registered citizen mobile and web devices for location-aware geofenced alerts."""
+
+    __tablename__ = "device_registrations"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    device_id: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
+    fcm_token: Mapped[str] = mapped_column(String(512), index=True, nullable=False)
+    platform: Mapped[str] = mapped_column(String(32), default="ANDROID", nullable=False)  # ANDROID, PWA_WEB
+    app_version: Mapped[str] = mapped_column(String(32), default="1.0.0", nullable=False)
+    notification_permissions: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    last_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    last_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    last_accuracy_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+    last_location_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    subscribed_districts: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list e.g. ["West Kameng", "Tawang"]
+    subscribed_corridors: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list e.g. ["NH-13", "BCT Road"]
+
+    last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class RoadStatusModel(Base):
+    """Authoritative corridor and transit route status tracking."""
+
+    __tablename__ = "road_statuses"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    road_code: Mapped[str] = mapped_column(String(64), index=True, nullable=False)  # e.g. "NH-13"
+    road_name: Mapped[str] = mapped_column(String(255), nullable=False)  # e.g. "Trans-Arunachal Highway"
+    corridor_section: Mapped[str] = mapped_column(String(255), nullable=False)  # e.g. "KM-38 to KM-46 (Bhalukpong-Tenga)"
+    state: Mapped[str] = mapped_column(String(100), default="Arunachal Pradesh", nullable=False)
+    district: Mapped[str] = mapped_column(String(100), default="West Kameng", nullable=False)
+
+    status: Mapped[str] = mapped_column(String(32), default="OPEN", index=True, nullable=False)  # OPEN, CAUTION, RESTRICTED, CLOSED, UNKNOWN
+    condition_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    closure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source: Mapped[str] = mapped_column(String(100), default="BRO / State PWD", nullable=False)
+    verified_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class CitizenReportModel(Base):
+    """Authoritative persistent record of a real citizen ground observation report."""
+
+    __tablename__ = "citizen_reports"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tracking_id: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, index=True, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Citizen metadata
+    reporter_contact: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    citizen_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Image Evidence Storage & Validation
+    image_url: Mapped[str] = mapped_column(String(512), nullable=False)
+    image_hash: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    image_file_size: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    image_mime_type: Mapped[str] = mapped_column(String(64), default="image/jpeg", nullable=False)
+
+    # AI Vision Screening Output (Structured)
+    ai_status: Mapped[str] = mapped_column(String(32), default="SUCCESS", nullable=False)
+    ai_observation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ai_screening_result: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+    # Real Device Geolocation Telemetry
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    gps_accuracy: Mapped[float | None] = mapped_column(Float, nullable=True)
+    gps_altitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    gps_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Administrative Geography & Reverse Geocoding
+    state: Mapped[str] = mapped_column(String(100), default="Arunachal Pradesh", nullable=False)
+    district: Mapped[str] = mapped_column(String(100), default="Unknown", nullable=False)
+    locality: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    road_corridor: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    is_ner_region: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # Governance & Verification Lifecycle
+    # Statuses: RECEIVED -> AI_SCREENED -> PENDING_REVIEW -> APPROVED / REJECTED
+    submission_status: Mapped[str] = mapped_column(String(32), default="PENDING_REVIEW", index=True, nullable=False)
+    review_status: Mapped[str] = mapped_column(String(32), default="PENDING_REVIEW", index=True, nullable=False)
+    maturity_status: Mapped[str] = mapped_column(String(32), default="UNVERIFIED", index=True, nullable=False)
+
+    reviewer_role: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reviewer_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    review_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Operational Linking to Incident Twin
+    incident_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("incidents.id", ondelete="SET NULL"), index=True, nullable=True
+    )
+    evidence_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("evidence.id", ondelete="SET NULL"), index=True, nullable=True
+    )
+
+    provenance: Mapped[str] = mapped_column(String(64), default="REAL_USER_SUBMITTED", nullable=False)
+    source_type: Mapped[str] = mapped_column(String(64), default="REAL_CITIZEN_SUBMISSION", nullable=False)
+
+    incident: Mapped[IncidentModel | None] = relationship("IncidentModel", back_populates="citizen_reports")
 
 
 # Authoritative Geospatial Models Registration

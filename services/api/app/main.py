@@ -2,9 +2,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+
 from app.config import settings
 from app.db.session import init_db
-from app.routers import alerts, auth, copilot, gis, health, incidents, ingestion, system
+from app.routers import alerts, auth, citizen, copilot, gis, health, incidents, ingestion, system
 import app.db.models  # noqa: F401
 
 
@@ -72,6 +75,12 @@ def create_app() -> FastAPI:
     application.include_router(gis.router, prefix="/api/v1")
     application.include_router(copilot.router, prefix="/api/v1")
     application.include_router(system.router, prefix="/api/v1")
+    application.include_router(citizen.router, prefix="/api/v1")
+
+    # Static file uploads (citizen evidence photographs)
+    uploads_dir = Path(__file__).resolve().parent.parent / "data" / "uploads"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    application.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
     return application
 

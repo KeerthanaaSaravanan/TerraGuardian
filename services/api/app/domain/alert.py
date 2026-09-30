@@ -93,6 +93,48 @@ class AlertChannelDelivery(BaseModel):
     acknowledged_at: Optional[datetime] = None
 
 
+class WarningLevel(str, enum.Enum):
+    """Standardized Early Warning Levels (Separated from generic risk scores)."""
+
+    NORMAL = "NORMAL"
+    WATCH = "WATCH"
+    ADVISORY = "ADVISORY"
+    WARNING = "WARNING"
+    SEVERE_WARNING = "SEVERE_WARNING"
+    EMERGENCY = "EMERGENCY"
+
+
+class AlertTriggerType(str, enum.Enum):
+    """Authoritative trigger classes for early warning generation."""
+
+    HAZARD_OBSERVATION = "HAZARD_OBSERVATION"
+    WEATHER_TRIGGER = "WEATHER_TRIGGER"
+    MULTI_EVIDENCE_CONVERGENCE = "MULTI_EVIDENCE_CONVERGENCE"
+    OFFICIAL_ALERT = "OFFICIAL_ALERT"
+    INCIDENT_STATE_CHANGE = "INCIDENT_STATE_CHANGE"
+
+
+class HazardType(str, enum.Enum):
+    """Specific geological and environmental hazard types."""
+
+    LANDSLIDE = "LANDSLIDE"
+    DEBRIS_FLOW = "DEBRIS_FLOW"
+    ROCKFALL = "ROCKFALL"
+    SLOPE_CRACK = "SLOPE_CRACK"
+    FLASH_FLOOD = "FLASH_FLOOD"
+    ROAD_SUBSIDENCE = "ROAD_SUBSIDENCE"
+
+
+class TargetGeometryType(str, enum.Enum):
+    """Geofenced warning zone geometries."""
+
+    POINT = "POINT"
+    CORRIDOR = "CORRIDOR"
+    POLYGON = "POLYGON"
+    DISTRICT = "DISTRICT"
+    STATE = "STATE"
+
+
 class Alert(BaseModel):
     """Authoritative persistent Alert record with complete lifecycle and authorization tracking."""
 
@@ -119,6 +161,26 @@ class Alert(BaseModel):
     provenance: str = "TERRAGUARDIAN_ALERT_FABRIC"
     escalation_reason: Optional[str] = None
 
+    # Early Warning & Spatial Targeting Dimensions
+    warning_level: WarningLevel = WarningLevel.WARNING
+    trigger_type: AlertTriggerType = AlertTriggerType.HAZARD_OBSERVATION
+    hazard_type: HazardType = HazardType.LANDSLIDE
+    confidence: float = 0.85
+    rationale: Optional[str] = None
+    target_geometry_type: TargetGeometryType = TargetGeometryType.CORRIDOR
+    target_state: str = "Arunachal Pradesh"
+    target_district: str = "West Kameng"
+    target_localities: Optional[list[str]] = None
+    target_latitude: Optional[float] = None
+    target_longitude: Optional[float] = None
+    target_radius_km: float = 15.0
+    affected_roads: Optional[list[str]] = None
+    valid_from: datetime = Field(default_factory=datetime.utcnow)
+    valid_until: Optional[datetime] = None
+    evidence_lineage: Optional[dict[str, Any]] = None
+    dedup_hash: Optional[str] = None
+    version: int = 1
+
     generated_at: datetime = Field(default_factory=datetime.utcnow)
     sent_at: Optional[datetime] = None
     delivered_at: Optional[datetime] = None
@@ -141,6 +203,24 @@ class AlertCreateRequest(BaseModel):
     actor_name: str = "Duty Operations Officer"
     is_controlled_demo: bool = False
 
+    # Early warning optional parameters
+    warning_level: Optional[WarningLevel] = None
+    trigger_type: Optional[AlertTriggerType] = None
+    hazard_type: Optional[HazardType] = None
+    confidence: Optional[float] = 0.85
+    rationale: Optional[str] = None
+    target_geometry_type: Optional[TargetGeometryType] = None
+    target_state: Optional[str] = "Arunachal Pradesh"
+    target_district: Optional[str] = "West Kameng"
+    target_localities: Optional[list[str]] = None
+    target_latitude: Optional[float] = None
+    target_longitude: Optional[float] = None
+    target_radius_km: Optional[float] = 15.0
+    affected_roads: Optional[list[str]] = None
+    valid_from: Optional[datetime] = None
+    valid_until: Optional[datetime] = None
+    evidence_lineage: Optional[dict[str, Any]] = None
+
 
 class AlertAuthorizeRequest(BaseModel):
     """Statutory human magistrate authorization to broadcast an alert."""
@@ -160,3 +240,69 @@ class AlertLifecycleUpdateRequest(BaseModel):
     actor_role: ActorRole
     reason: Optional[str] = None
     channel_type: Optional[AlertChannelType] = None
+
+
+class AlertAcknowledgementRequest(BaseModel):
+    """Citizen emergency acknowledgement and 'I AM SAFE' status ping."""
+
+    device_id: str
+    citizen_id: Optional[str] = None
+    opened_at: Optional[datetime] = None
+    acknowledged_at: Optional[datetime] = None
+    is_safe: bool = False
+    safe_notes: Optional[str] = None
+    approx_lat: Optional[float] = None
+    approx_lng: Optional[float] = None
+
+
+class DeviceRegisterRequest(BaseModel):
+    """Citizen device registration for FCM push and localized safety updates."""
+
+    device_id: str
+    fcm_token: str
+    platform: str = "ANDROID"
+    app_version: str = "1.0.0"
+    notification_permissions: bool = True
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    accuracy_m: Optional[float] = None
+    subscribed_districts: Optional[list[str]] = None
+    subscribed_corridors: Optional[list[str]] = None
+
+
+class RoadStatusItem(BaseModel):
+    """Authoritative road status."""
+
+    id: uuid.UUID
+    road_code: str
+    road_name: str
+    corridor_section: str
+    state: str
+    district: str
+    status: str
+    condition_summary: str
+    closure_reason: Optional[str] = None
+    source: str
+    verified_by: Optional[str] = None
+    observed_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CitizenSafetyStatusResponse(BaseModel):
+    """Authoritative safety status answering the core citizen safety questions."""
+
+    safety_status: WarningLevel
+    status_color: str  # "GREEN" | "YELLOW" | "ORANGE" | "RED"
+    status_headline: str
+    current_location: dict[str, Any]
+    active_warning: Optional[Alert] = None
+    what_changed: list[str] = Field(default_factory=list)
+    recommended_actions: list[str] = Field(default_factory=list)
+    affected_roads: list[RoadStatusItem] = Field(default_factory=list)
+    nearby_incidents: list[dict[str, Any]] = Field(default_factory=list)
+    emergency_contacts: dict[str, str] = Field(default_factory=dict)
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+    is_cached_stale: bool = False
+
