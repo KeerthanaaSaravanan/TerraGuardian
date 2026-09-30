@@ -13,7 +13,7 @@
 
 ---
 
-### 🔗 **Live Operations Centre**: [terraguardian.vercel.app](https://terraguardian.vercel.app/) &nbsp;|&nbsp; 🎥 **Technical Demonstration**: [Watch on YouTube](https://youtu.be/nhXzRiLlDXI)
+### 🔗 **Live Operations Centre**: [terraguardian.vercel.app](https://terraguardian.vercel.app/) &nbsp;|&nbsp; 🎥 **Technical Demonstration**: [Watch on YouTube](https://youtu.be/98XsFZymbQI)
 
 *Smart India Hackathon 2026 · Problem Statement: SIH26001 / PS26001 · Ministry of Development of North Eastern Region (MDoNER) · Disaster Management · Software Track*
 
@@ -204,6 +204,8 @@ TerraGuardian is structured into three clean, decoupled architectural planes, en
 │  • 21,600s Closure Gate        │  • Order Code Validation       │  • Chronological Event History       │
 └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+<img width="1713" height="918" alt="ChatGPT Image Sep 24, 2026, 08_02_40 AM" src="https://github.com/user-attachments/assets/94684a48-e9c4-49de-a985-6b31aeed32a9" />
+
 
 ### Primary Product Surfaces
 

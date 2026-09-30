@@ -1,3 +1,15 @@
+<div align="center">
+  
+# TERRAGUARDIAN AI
+### Landslide Operational Intelligence System
+### 🔗 **Live Operations Centre**: [terraguardian.vercel.app](https://terraguardian.vercel.app/) &nbsp;|&nbsp; 🎥 **Technical Demonstration**: [Watch on YouTube](https://youtu.be/98XsFZymbQI)
+
+*Smart India Hackathon 2026 · Problem Statement: SIH26001 / PS26001 · Ministry of Development of North Eastern Region (MDoNER) · Disaster Management · Software Track*
+
+---
+
+</div>
+
 # TerraGuardian Demonstration Credentials
 
 > [!NOTE]
@@ -44,3 +56,16 @@ The authoritative credentials below are deterministic and verified against the b
    - $\text{Authorization} \neq \text{Execution}$
    - $\text{Execution} \neq \text{Confirmation}$
 3. **Session Inactivity Timeout**: 12 hours from issuance.
+
+---
+
+<div align="center">
+
+<img src="docs/assets/logo.png" alt="TerraGuardian AI Official Logo" width="130" height="auto" style="background-color: #ffffff; border-radius: 16px; padding: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); margin-bottom: 10px; display: inline-block;" />
+
+### TERRAGUARDIAN AI
+$$\textbf{From Warning to Verified Response}$$
+
+*Built for Smart India Hackathon 2026 · MDoNER · Disaster Management · Software Track*
+
+</div>
