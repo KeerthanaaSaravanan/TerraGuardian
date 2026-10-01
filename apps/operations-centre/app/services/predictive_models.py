@@ -9,10 +9,15 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Ensure root repository is in sys.path so 'ml' package is importable
-_root_path = Path(__file__).resolve().parent.parent.parent.parent.parent
-if _root_path.exists() and str(_root_path) not in sys.path:
-    sys.path.insert(0, str(_root_path))
+# Ensure directory containing 'ml' package is in sys.path
+_this_file = Path(__file__).resolve()
+for candidate in [
+    _this_file.parent.parent.parent,                # e.g. apps/operations-centre or services/api
+    _this_file.parent.parent.parent.parent,         # e.g. apps
+    _this_file.parent.parent.parent.parent.parent,  # repository root
+]:
+    if (candidate / "ml").exists() and str(candidate) not in sys.path:
+        sys.path.insert(0, str(candidate))
 
 try:
     from ml.baseline import (
