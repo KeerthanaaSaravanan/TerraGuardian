@@ -4,9 +4,14 @@ import os
 import sys
 from pathlib import Path
 
-# Add services/api and repository root to sys.path so app and its submodules can be resolved
-api_dir = Path(__file__).resolve().parent
-root_dir = api_dir.parent if api_dir.name != "TerraGuardian" else api_dir
+# Robustly find repository root and services/api
+current = Path(__file__).resolve().parent
+root_dir = current
+for parent in [current, *current.parents]:
+    if (parent / "services" / "api").exists() or (parent / "package.json").exists():
+        root_dir = parent
+        break
+
 services_api_dir = root_dir / "services" / "api"
 
 for p in [str(services_api_dir), str(root_dir)]:
@@ -22,6 +27,6 @@ if os.environ.get("VERCEL"):
 
 from app.main import app
 
-# Export app under all standard ASGI entrypoint names
+# Export app under all standard ASGI entrypoint names for Vercel
 handler = app
 application = app
