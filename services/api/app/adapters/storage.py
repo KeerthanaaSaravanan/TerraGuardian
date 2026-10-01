@@ -22,7 +22,14 @@ logger = logging.getLogger(__name__)
 if os.environ.get("VERCEL"):
     UPLOAD_DIR = Path("/tmp") / "uploads" / "citizen"
 else:
-    UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "uploads" / "citizen"
+    try:
+        candidate = Path(__file__).resolve().parent.parent.parent / "data" / "uploads" / "citizen"
+        if "zip" in str(candidate).lower():
+            candidate = Path(os.environ.get("TEMP", "/tmp")) / "terraguardian" / "uploads" / "citizen"
+        UPLOAD_DIR = candidate
+    except Exception:
+        UPLOAD_DIR = Path(os.environ.get("TEMP", "/tmp")) / "terraguardian" / "uploads" / "citizen"
+
 try:
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 except Exception as e:
@@ -75,7 +82,10 @@ class LocalStorageProvider(BaseStorageProvider):
 
     def __init__(self, base_dir: Path = UPLOAD_DIR):
         self.base_dir = base_dir.resolve()
-        self.base_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.base_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
 
     def save_image(
         self,

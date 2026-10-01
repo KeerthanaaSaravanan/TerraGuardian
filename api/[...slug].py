@@ -5,11 +5,11 @@ import sys
 from pathlib import Path
 
 api_dir = Path(__file__).resolve().parent
-pkg_dir = api_dir / "_pkg"
+bundle_zip = api_dir / "app_bundle.zip"
 root_dir = api_dir.parent
 services_api_dir = root_dir / "services" / "api"
 
-for p in [str(pkg_dir), str(services_api_dir), str(root_dir)]:
+for p in [str(bundle_zip), str(services_api_dir), str(root_dir)]:
     if p not in sys.path:
         sys.path.insert(0, p)
 

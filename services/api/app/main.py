@@ -100,7 +100,12 @@ def create_app() -> FastAPI:
     if os.environ.get("VERCEL"):
         uploads_dir = Path("/tmp") / "uploads"
     else:
-        uploads_dir = Path(__file__).resolve().parent.parent / "data" / "uploads"
+        try:
+            uploads_dir = Path(__file__).resolve().parent.parent / "data" / "uploads"
+            if "zip" in str(uploads_dir).lower():
+                uploads_dir = Path(os.environ.get("TEMP", "/tmp")) / "terraguardian" / "uploads"
+        except Exception:
+            uploads_dir = Path(os.environ.get("TEMP", "/tmp")) / "terraguardian" / "uploads"
     try:
         uploads_dir.mkdir(parents=True, exist_ok=True)
         application.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
