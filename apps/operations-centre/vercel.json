@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/*.py": {
+      "memory": 1024,
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules/**,dist/**,src/**,public/**,**/*.js,**/*.ts,**/*.tsx,**/*.css,**/*.html,**/*.map}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/((?!api).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
