@@ -5,11 +5,11 @@ import sys
 from pathlib import Path
 
 api_dir = Path(__file__).resolve().parent
-bundle_zip = api_dir / "app_bundle.zip"
-root_dir = api_dir.parent
+root_dir = api_dir.parent if api_dir.name != "TerraGuardian" else api_dir
 services_api_dir = root_dir / "services" / "api"
+zip_path = services_api_dir / "app_bundle.zip"
 
-for p in [str(bundle_zip), str(services_api_dir), str(root_dir)]:
+for p in [str(services_api_dir), str(zip_path), str(root_dir)]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
