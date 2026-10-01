@@ -81,3 +81,5 @@ local.properties
 *.pid
 *.seed
 
+.vercel
+.env*
