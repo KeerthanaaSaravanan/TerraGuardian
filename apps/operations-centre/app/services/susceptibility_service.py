@@ -26,8 +26,55 @@ from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
+
+try:
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.preprocessing import StandardScaler
+except ImportError:
+    class StandardScaler:  # type: ignore[no-redef]
+        """Lightweight pure-NumPy StandardScaler fallback."""
+        def __init__(self) -> None:
+            self.mean_: np.ndarray | None = None
+            self.scale_: np.ndarray | None = None
+
+        def fit_transform(self, X: np.ndarray) -> np.ndarray:
+            self.mean_ = np.mean(X, axis=0)
+            self.scale_ = np.std(X, axis=0)
+            self.scale_[self.scale_ == 0.0] = 1.0
+            return (X - self.mean_) / self.scale_
+
+        def transform(self, X: np.ndarray) -> np.ndarray:
+            assert self.mean_ is not None and self.scale_ is not None
+            return (X - self.mean_) / self.scale_
+
+    class LogisticRegression:  # type: ignore[no-redef]
+        """Lightweight pure-NumPy LogisticRegression fallback."""
+        def __init__(self, random_state: int = 42, C: float = 1.0) -> None:
+            self.coef_ = np.zeros((1, 3))
+            self.intercept_ = np.zeros(1)
+
+        def fit(self, X: np.ndarray, y: np.ndarray, lr: float = 0.1, epochs: int = 500) -> None:
+            n, m = X.shape
+            w = np.zeros(m)
+            b = 0.0
+            for _ in range(epochs):
+                z = np.dot(X, w) + b
+                p = 1.0 / (1.0 + np.exp(-np.clip(z, -25, 25)))
+                dw = np.dot(X.T, (p - y)) / n
+                db = float(np.sum(p - y) / n)
+                w -= lr * dw
+                b -= lr * db
+            self.coef_ = w.reshape(1, -1)
+            self.intercept_ = np.array([b])
+
+        def score(self, X: np.ndarray, y: np.ndarray) -> float:
+            p = self.predict_proba(X)[:, 1]
+            return float(np.mean((p >= 0.5) == y))
+
+        def predict_proba(self, X: np.ndarray) -> np.ndarray:
+            z = np.dot(X, self.coef_[0]) + self.intercept_[0]
+            p = 1.0 / (1.0 + np.exp(-np.clip(z, -25, 25)))
+            return np.column_stack([1.0 - p, p])
 
 from app.gis.terrain_engine import TerrainEngine
 from app.services.environmental_data_service import EnvironmentalDataService
