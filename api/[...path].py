@@ -1,4 +1,4 @@
-"""Vercel Serverless Function entrypoint for TerraGuardian AI FastAPI Backend."""
+"""Vercel Serverless Function catch-all for TerraGuardian AI FastAPI Backend."""
 
 import os
 import sys
