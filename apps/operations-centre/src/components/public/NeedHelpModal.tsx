@@ -114,28 +114,28 @@ export const NeedHelpModal: React.FC<NeedHelpModalProps> = ({ isOpen, onClose })
         role="dialog"
         aria-modal="true"
         aria-labelledby="sos-modal-title"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-150"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-150"
       >
-        <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl flex flex-col gap-4 text-white overflow-y-auto max-h-[92vh]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl flex flex-col gap-4 text-slate-900 dark:text-white overflow-y-auto max-h-[92vh]">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
             <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-xl bg-red-600/20 border border-red-500/40 text-red-400">
+              <span className="p-2 rounded-xl bg-red-600/15 dark:bg-red-600/20 border border-red-500/40 text-red-600 dark:text-red-400">
                 <IconPhoneCall className="w-5 h-5" />
               </span>
               <div>
-                <h3 id="sos-modal-title" className="font-extrabold text-base sm:text-lg text-white">
-                  🚨 NEED EMERGENCY HELP?
+                <h3 id="sos-modal-title" className="font-extrabold text-base sm:text-lg">
+                  {t("need_help_title")}
                 </h3>
-                <div className="text-xs text-slate-300">
-                  Choose the quickest option below.
+                <div className="text-xs text-slate-600 dark:text-slate-300">
+                  {t("need_help_subtitle")}
                 </div>
               </div>
             </div>
             <button
               onClick={handleResetAndClose}
               aria-label="Close"
-              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
             >
               <IconX className="w-4 h-4" />
             </button>
@@ -144,42 +144,42 @@ export const NeedHelpModal: React.FC<NeedHelpModalProps> = ({ isOpen, onClose })
           {submittedTicket ? (
             /* Clear Truthful Success Screen */
             <div className="py-4 flex flex-col items-center text-center space-y-4">
-              <div className="h-14 w-14 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shadow-xl">
+              <div className="h-14 w-14 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-500 shadow-xl">
                 <IconCheck className="w-7 h-7 stroke-[3]" />
               </div>
               <div>
-                <h4 className="text-lg font-bold text-emerald-300">
+                <h4 className="text-lg font-extrabold text-emerald-600 dark:text-emerald-300">
                   ✓ Request Received
                 </h4>
-                <p className="text-xs text-slate-300 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
                   Your assistance request has been logged in the Disaster Management Network.
                 </p>
               </div>
 
-              <div className="bg-slate-950 p-3.5 rounded-xl border border-white/10 w-full text-xs space-y-2 text-left">
-                <div className="flex justify-between items-center text-slate-300">
+              <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-white/10 w-full text-xs space-y-2 text-left">
+                <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
                   <span>Request ID:</span>
-                  <span className="text-white font-mono font-bold">{submittedTicket.id}</span>
+                  <span className="text-slate-900 dark:text-white font-mono font-bold">{submittedTicket.id}</span>
                 </div>
-                <div className="flex justify-between items-center text-slate-300">
+                <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
                   <span>Location:</span>
-                  <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                     <IconMapPin className="w-3.5 h-3.5" />
                     Attached ({location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E)
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-slate-300">
+                <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
                   <span>Status:</span>
-                  <span className="text-amber-400 font-mono font-bold">REQUEST_RECEIVED (UNASSIGNED)</span>
+                  <span className="text-amber-600 dark:text-amber-400 font-mono font-bold">REQUEST_RECEIVED (UNASSIGNED)</span>
                 </div>
               </div>
 
-              <div className="p-3 bg-red-950/40 border border-red-500/40 rounded-xl text-xs text-red-200 text-left w-full space-y-2">
-                <div className="font-bold flex items-center gap-1.5 text-red-300">
+              <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-500/40 rounded-xl text-xs text-red-900 dark:text-red-200 text-left w-full space-y-2">
+                <div className="font-bold flex items-center gap-1.5 text-red-700 dark:text-red-300">
                   <IconAlertTriangle className="w-4 h-4" />
                   Call 112 for immediate emergency assistance.
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
                   Submitting a digital request records your coordinates for responder situational awareness, but does NOT guarantee immediate dispatch or vehicle arrival. If in immediate danger, dial 112 immediately.
                 </p>
               </div>
@@ -198,112 +198,91 @@ export const NeedHelpModal: React.FC<NeedHelpModalProps> = ({ isOpen, onClose })
                   onClick={handleResetAndClose}
                   className="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
                 >
-                  Close
+                  Done
                 </button>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              {/* PATH 1: Call For Immediate Emergency Help */}
+              {/* Emergency Hotline Buttons */}
               <div>
-                <div className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <IconPhoneCall className="w-3.5 h-3.5 text-red-400" />
-                  <span>Call for Immediate Emergency Help</span>
-                </div>
+                <label className="block text-slate-700 dark:text-slate-200 font-bold text-xs mb-2">
+                  Emergency Hotlines (Tap to Call / Copy):
+                </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => handleOpenCallDialog("112")}
-                    className="p-3 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 rounded-xl flex items-center gap-3 text-left transition-all cursor-pointer group"
+                    className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-500/40 hover:border-red-500 text-left flex items-center justify-between transition-colors cursor-pointer"
                   >
-                    <div className="h-9 w-9 rounded-lg bg-red-600 text-white font-mono font-black text-sm flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                      112
-                    </div>
                     <div>
-                      <div className="font-bold text-xs text-white">National Emergency</div>
-                      <div className="text-[10px] text-slate-300">Police, Fire, Disaster ERSS</div>
+                      <div className="font-extrabold text-sm text-red-700 dark:text-red-400">112 — National Emergency</div>
+                      <div className="text-[10px] text-slate-600 dark:text-slate-300">Police, Fire, Disaster Response</div>
                     </div>
+                    <IconPhoneCall className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleOpenCallDialog("108")}
-                    className="p-3 bg-slate-800/80 hover:bg-slate-750 border border-white/10 rounded-xl flex items-center gap-3 text-left transition-all cursor-pointer group"
+                    className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-500/40 hover:border-amber-500 text-left flex items-center justify-between transition-colors cursor-pointer"
                   >
-                    <div className="h-9 w-9 rounded-lg bg-emerald-600 text-white font-mono font-black text-sm flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                      108
-                    </div>
                     <div>
-                      <div className="font-bold text-xs text-white">Ambulance & Medical</div>
-                      <div className="text-[10px] text-slate-300">Emergency Patient Triage</div>
+                      <div className="font-extrabold text-sm text-amber-700 dark:text-amber-400">108 — Ambulance</div>
+                      <div className="text-[10px] text-slate-600 dark:text-slate-300">Medical emergencies</div>
                     </div>
+                    <IconPhoneCall className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleOpenCallDialog("1077")}
-                    className="p-3 bg-slate-800/80 hover:bg-slate-750 border border-white/10 rounded-xl flex items-center gap-3 text-left transition-all cursor-pointer group"
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 hover:border-indigo-400 text-left flex items-center justify-between transition-colors cursor-pointer"
                   >
-                    <div className="h-9 w-9 rounded-lg bg-amber-600 text-white font-mono font-black text-xs flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                      1077
-                    </div>
                     <div>
-                      <div className="font-bold text-xs text-white">District Control Room</div>
-                      <div className="text-[10px] text-slate-300">West Kameng DDMA</div>
+                      <div className="font-extrabold text-sm text-slate-900 dark:text-white">1077 — District DDMA</div>
+                      <div className="text-[10px] text-slate-600 dark:text-slate-300">Control room (West Kameng)</div>
                     </div>
+                    <IconPhoneCall className="w-4 h-4 text-slate-400 shrink-0" />
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handleOpenCallDialog("1070")}
-                    className="p-3 bg-slate-800/80 hover:bg-slate-750 border border-white/10 rounded-xl flex items-center gap-3 text-left transition-all cursor-pointer group"
+                    onClick={() => handleOpenCallDialog("1033")}
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 hover:border-indigo-400 text-left flex items-center justify-between transition-colors cursor-pointer"
                   >
-                    <div className="h-9 w-9 rounded-lg bg-indigo-600 text-white font-mono font-black text-xs flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                      1070
-                    </div>
                     <div>
-                      <div className="font-bold text-xs text-white">State Disaster Mgmt</div>
-                      <div className="text-[10px] text-slate-300">State Control Operations</div>
+                      <div className="font-extrabold text-sm text-slate-900 dark:text-white">1033 — Highway Helpline</div>
+                      <div className="text-[10px] text-slate-600 dark:text-slate-300">NHAI road condition info</div>
                     </div>
+                    <IconPhoneCall className="w-4 h-4 text-slate-400 shrink-0" />
                   </button>
                 </div>
               </div>
 
-              {/* Divider */}
-              <div className="relative flex items-center justify-center my-1">
-                <div className="border-t border-white/10 w-full" />
-                <span className="bg-slate-900 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
-                  Or Request Help Through TerraGuardian
-                </span>
-                <div className="border-t border-white/10 w-full" />
-              </div>
-
-              {/* PATH 2: Request Help Through TerraGuardian Form */}
-              <form onSubmit={handleSubmit} className="space-y-3 text-xs">
-                {/* Category */}
+              {/* Digital Assistance Request Form */}
+              <form onSubmit={handleSubmit} className="space-y-3 pt-2 border-t border-slate-200 dark:border-white/10 text-xs">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
-                    Help Category:
+                  <label className="block text-slate-700 dark:text-slate-200 font-bold mb-1">
+                    Or submit a digital assistance request:
                   </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-slate-800 border border-white/15 rounded-xl p-2.5 text-slate-200 text-xs focus:outline-none focus:border-red-400 cursor-pointer"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-2.5 text-slate-900 dark:text-slate-200 text-xs focus:outline-none focus:border-red-500"
                   >
-                    <option value="ROAD_BLOCKED_STRANDED">Stranded on Road / Passage Blocked</option>
-                    <option value="TRAPPED_IN_VEHICLE">Trapped in Vehicle by Mud or Rocks</option>
-                    <option value="MEDICAL_EMERGENCY">Medical Emergency / Injury</option>
-                    <option value="LANDSLIDE_INCOMING">Slope Movement Near House or Camp</option>
-                    <option value="SHELTER_NEEDED">Displaced / Need Shelter</option>
-                    <option value="FOOD_WATER_CRITICAL">Provisions or Water Exhausted</option>
+                    <option value="ROAD_BLOCKED_STRANDED">Stranded vehicle / Road blocked</option>
+                    <option value="MEDICAL_EMERGENCY">Medical emergency / Injured</option>
+                    <option value="SHELTER_NEEDED">Shelter / Evacuation assistance needed</option>
+                    <option value="FAMILY_SEPARATED">Family member missing / Separated</option>
+                    <option value="OTHER_ASSISTANCE">Other assistance</option>
                   </select>
                 </div>
 
-                {/* Persons & Phone */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">
-                      People Affected:
+                    <label className="block text-slate-700 dark:text-slate-200 font-medium mb-1">
+                      Persons with you:
                     </label>
                     <input
                       type="number"
@@ -311,60 +290,44 @@ export const NeedHelpModal: React.FC<NeedHelpModalProps> = ({ isOpen, onClose })
                       max="50"
                       value={personsCount}
                       onChange={(e) => setPersonsCount(e.target.value)}
-                      className="w-full bg-slate-800 border border-white/15 rounded-xl p-2.5 text-slate-200 text-xs focus:outline-none focus:border-red-400 font-mono"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-2.5 text-slate-900 dark:text-slate-200 text-xs focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">
-                      Phone (Optional):
+                    <label className="block text-slate-700 dark:text-slate-200 font-medium mb-1">
+                      Contact phone:
                     </label>
                     <input
                       type="tel"
-                      placeholder="e.g. 94360 00000"
+                      placeholder="+91..."
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-slate-800 border border-white/15 rounded-xl p-2.5 text-slate-200 text-xs focus:outline-none focus:border-red-400 font-mono"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-2.5 text-slate-900 dark:text-slate-200 text-xs focus:outline-none"
                     />
                   </div>
                 </div>
 
-                {/* Location Attached */}
-                <div className="bg-slate-950/70 p-2.5 rounded-xl border border-white/10 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-400 flex items-center gap-1.5">
-                    <IconMapPin className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Your Location:</span>
-                  </span>
-                  <span className="text-slate-200 font-mono font-medium">
-                    Attached ({location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E)
-                  </span>
-                </div>
-
-                {/* Situation Description */}
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
-                    Short Description:
+                  <label className="block text-slate-700 dark:text-slate-200 font-medium mb-1">
+                    Details / landmarks:
                   </label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. 2 adults near KM-38 checkpost. Road blocked ahead."
+                    placeholder="e.g. Near KM-39 checkpost bridge. Red SUV stranded."
                     rows={2}
-                    className="w-full bg-slate-800 border border-white/15 rounded-xl p-2.5 text-slate-200 text-xs focus:outline-none focus:border-red-400 resize-none"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-2.5 text-slate-900 dark:text-slate-200 text-xs focus:outline-none resize-none"
                   />
                 </div>
 
-                {error && (
-                  <div className="text-red-400 text-xs font-mono">{error}</div>
-                )}
+                {error && <div className="text-red-500 font-bold text-xs">{error}</div>}
 
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-red-600 hover:bg-red-500 active:scale-98 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-950/40 transition-all cursor-pointer border border-red-400/40 disabled:opacity-50"
+                  className="w-full bg-red-600 hover:bg-red-500 text-white font-extrabold py-2.5 rounded-xl text-xs transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  <IconPhoneCall className="w-4 h-4" />
-                  <span>{submitting ? "Sending Request..." : "SUBMIT HELP REQUEST"}</span>
+                  {submitting ? "Logging Request..." : "Send Digital Assistance Request"}
                 </button>
               </form>
             </div>
@@ -372,9 +335,9 @@ export const NeedHelpModal: React.FC<NeedHelpModalProps> = ({ isOpen, onClose })
         </div>
       </div>
 
-      {/* Device-Aware Desktop Confirmation / Safe Hotline Dialog */}
+      {/* Emergency Call Dialog */}
       <EmergencyCallDialog
-        isOpen={Boolean(activeHotline)}
+        isOpen={activeHotline !== null}
         onClose={() => setActiveHotline(null)}
         hotline={activeHotline}
       />

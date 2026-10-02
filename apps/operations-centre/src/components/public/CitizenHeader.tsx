@@ -22,11 +22,11 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
   onOpenAlertsModal,
   unreadAlertCount = 1,
 }) => {
-  const { lang, setLanguage, languages } = useCitizenI18n();
+  const { lang, setLanguage, languages, t } = useCitizenI18n();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
 
   return (
-    <header className="relative z-30 border-b border-white/10 bg-slate-900/95 backdrop-blur-md px-3 sm:px-5 py-2.5 flex items-center justify-between text-white shadow-md">
+    <header className="relative z-30 border-b border-white/10 bg-slate-900/90 backdrop-blur-xl px-3 sm:px-5 py-2.5 flex items-center justify-between text-white shadow-md">
       {/* Brand: Logo + Title */}
       <div className="flex items-center gap-2.5">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-white/20 p-1 shadow-sm overflow-hidden shrink-0">
@@ -35,12 +35,12 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
         <div>
           <div className="flex items-center gap-1.5">
             <span className="text-sm sm:text-base font-extrabold tracking-tight text-white">
-              TerraGuardian Safe
+              {t("app_title")}
             </span>
           </div>
           <div className="text-[10px] text-slate-300 font-sans flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            <span>Citizen Disaster Safety</span>
+            <span>{t("portal_badge")}</span>
           </div>
         </div>
       </div>
@@ -70,8 +70,8 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
               />
               <div className="absolute right-0 mt-1.5 w-52 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl p-1.5 z-50 text-slate-200 text-xs backdrop-blur-xl animate-in fade-in duration-100">
                 <div className="px-2.5 py-1 text-[10px] text-slate-400 font-semibold border-b border-slate-800 mb-1 flex justify-between">
-                  <span>SELECT LANGUAGE</span>
-                  <span className="text-emerald-400">8 NER REGIONS</span>
+                  <span>{t("select_language")}</span>
+                  <span className="text-emerald-400">{t("lang_ner_regions")}</span>
                 </div>
                 <div className="max-h-60 overflow-y-auto space-y-0.5">
                   {languages.map((l) => (
@@ -108,7 +108,7 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
             title="View Active Alert"
           >
             <IconAlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Alert</span>
+            <span className="hidden sm:inline">{t("btn_alerts")}</span>
             <span className="rounded-full bg-amber-400 text-slate-950 text-[10px] font-bold px-1.5 py-0.2">
               {unreadAlertCount}
             </span>
@@ -124,7 +124,7 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
           title="Emergency Help & Hotlines"
         >
           <IconPhoneCall className="w-3.5 h-3.5" />
-          <span>SOS</span>
+          <span>{t("btn_sos")}</span>
         </button>
 
         {/* Operations Centre (Secondary on Desktop, hidden on mobile) */}
@@ -134,7 +134,7 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
           title="Authorized Operations Command"
         >
           <IconShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-          <span>Ops</span>
+          <span>{t("btn_ops")}</span>
         </button>
       </div>
     </header>

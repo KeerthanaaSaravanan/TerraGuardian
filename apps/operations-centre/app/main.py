@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.db.session import init_db
-from app.routers import alerts, auth, citizen, copilot, gis, health, incidents, ingestion, system
+from app.routers import alerts, auth, citizen, copilot, gis, health, incidents, ingestion, notifications, system
 import app.db.models  # noqa: F401
 
 
@@ -113,6 +113,10 @@ def create_app() -> FastAPI:
     application.include_router(citizen.router)
     application.include_router(citizen.router, prefix="/v1")
     application.include_router(citizen.router, prefix="/api/v1")
+
+    application.include_router(notifications.router)
+    application.include_router(notifications.router, prefix="/v1")
+    application.include_router(notifications.router, prefix="/api/v1")
 
     # Static file uploads (citizen evidence photographs)
     import os

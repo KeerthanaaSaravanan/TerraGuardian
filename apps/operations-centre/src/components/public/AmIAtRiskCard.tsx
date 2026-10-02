@@ -7,6 +7,7 @@ import {
   IconCrosshair,
   IconChevronRight,
   IconInfo,
+  IconShieldCheck,
 } from "../icons";
 
 interface AmIAtRiskCardProps {
@@ -36,6 +37,7 @@ export const AmIAtRiskCard: React.FC<AmIAtRiskCardProps> = ({
   const { location, requestGps, selectPreset, presets } = useLocationService();
   const { t } = useCitizenI18n();
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const [showPresetPicker, setShowPresetPicker] = useState(false);
 
   // Active TG-2048 Incident Coordinates (NH-13 KM-42 Bhalukpong-Tenga)
   const INCIDENT_LAT = 27.0842;
@@ -48,263 +50,211 @@ export const AmIAtRiskCard: React.FC<AmIAtRiskCardProps> = ({
     INCIDENT_LNG
   );
 
-  // Plain-Language Exposure Determination adhering strictly to invariant (never say "you are safe")
-  let exposure = {
-    badge: "DIRECTLY_AFFECTED",
-    badgeColor: "bg-red-600 text-white",
-    bgColor: "bg-red-950/40 border-red-500/40",
-    headline: "Active landslide incident reported in your immediate vicinity.",
-    why: "Your location is within the immediate active debris runout and tension crack zone.",
-    affectedRoad: "NH-13 KM-38 to KM-42 Corridor",
-    action: "Do not travel toward this sector. Cease transit and remain in stable shelter.",
-    isAffected: true,
-  };
+  // Determine localized exposure based on distance & permissions
+  // Invariant: Never say "You are safe."
+  let exposureKey = "nearby";
+  let badgeColor = "bg-sky-600 text-white";
+  let cardBorder = "border-sky-500/40 bg-sky-50/50 dark:bg-sky-950/20";
+  let isDenied = location.status === "error" && location.permission === "denied";
 
-  if (location.status === "error" && location.permission === "denied") {
-    exposure = {
-      badge: "UNKNOWN",
-      badgeColor: "bg-slate-700 text-slate-200",
-      bgColor: "bg-slate-800/40 border-white/10",
-      headline: "Location permission required to assess personal risk.",
-      why: "Device coordinates could not be retrieved because location permission was denied.",
-      affectedRoad: "Location required to assess road exposure",
-      action: "Enable location in browser settings or select an NER corridor manually.",
-      isAffected: false,
-    };
+  if (isDenied) {
+    exposureKey = "unknown";
+    badgeColor = "bg-slate-700 text-white";
+    cardBorder = "border-slate-300 dark:border-white/10 bg-slate-100/50 dark:bg-slate-900/40";
   } else if (distanceKm <= 2.5) {
-    exposure = {
-      badge: "DIRECTLY_AFFECTED",
-      badgeColor: "bg-red-600 text-white",
-      bgColor: "bg-red-950/40 border-red-500/40",
-      headline: "Active landslide runout and rockfall reported near your current location.",
-      why: "Your position is within 2.5 km of the active slope failure at KM-42.",
-      affectedRoad: "NH-13 KM-38 to KM-42 Corridor",
-      action: "Do not enter this corridor. Move to stable ground away from steep hillside cuts.",
-      isAffected: true,
-    };
+    exposureKey = "directly";
+    badgeColor = "bg-red-600 text-white";
+    cardBorder = "border-red-500/50 bg-red-50/50 dark:bg-red-950/30";
   } else if (distanceKm <= 5.0) {
-    exposure = {
-      badge: "POTENTIALLY_AFFECTED",
-      badgeColor: "bg-amber-600 text-white",
-      bgColor: "bg-amber-950/30 border-amber-500/40",
-      headline: "A landslide incident has been reported near your current corridor.",
-      why: "Your position is within the 5 km potential impact buffer of the KM-42 scarp.",
-      affectedRoad: "NH-13 KM-38 Checkpost closure",
-      action: "Avoid the affected corridor. Route traffic via Rupa bypass if traveling.",
-      isAffected: true,
-    };
+    exposureKey = "potentially";
+    badgeColor = "bg-amber-600 text-white";
+    cardBorder = "border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/25";
   } else if (distanceKm <= 10.0 && location.localityLabel?.includes("NH-13")) {
-    exposure = {
-      badge: "ROAD_IMPACTED",
-      badgeColor: "bg-orange-600 text-white",
-      bgColor: "bg-orange-950/30 border-orange-500/40",
-      headline: "Your transit route approaches the restricted NH-13 sector.",
-      why: "You are traveling along the Trans-Arunachal corridor toward the KM-38 police checkpost.",
-      affectedRoad: "NH-13 restricted at KM-38 checkpost",
-      action: "Do not attempt to cross KM-38 checkpost. Divert via Rupa bypass.",
-      isAffected: true,
-    };
-  } else if (distanceKm <= 15.0) {
-    exposure = {
-      badge: "NEARBY_MONITORED",
-      badgeColor: "bg-yellow-600 text-slate-950 font-bold",
-      bgColor: "bg-yellow-950/20 border-yellow-500/30",
-      headline: "Your position is within the 15 km monitored district weather envelope.",
-      why: "Regional monsoon saturation and hillside runoff are active across this valley basin.",
-      affectedRoad: "NH-13 restricted at KM-38",
-      action: "Maintain caution during mountain transit. Monitor local emergency alerts.",
-      isAffected: true,
-    };
-  } else {
-    // INVARIANT ENFORCED: Never say "You are safe"
-    exposure = {
-      badge: "OUTSIDE_CURRENT_ALERT_AREA",
-      badgeColor: "bg-slate-700 text-slate-200",
-      bgColor: "bg-slate-800/40 border-white/10",
-      headline: "No direct impact is currently identified at your reported location.",
-      why: "Your reported position is outside the active 15 km West Kameng alert envelope.",
-      affectedRoad: "Regional highways normal",
-      action: "Anticipate hill monsoon changes. Confirm road status before travel.",
-      isAffected: false,
-    };
+    exposureKey = "road";
+    badgeColor = "bg-orange-600 text-white";
+    cardBorder = "border-orange-500/50 bg-orange-50/50 dark:bg-orange-950/25";
+  } else if (distanceKm > 15.0) {
+    exposureKey = "outside";
+    badgeColor = "bg-slate-600 text-white";
+    cardBorder = "border-slate-300 dark:border-white/10 bg-slate-100/50 dark:bg-slate-900/40";
   }
 
-  const isLiveGps = location.source === "DEVICE_GEOLOCATION" && location.accuracy !== null;
-  const isDenied = location.permission === "denied";
+  const badgeText = t(`risk_${exposureKey === "directly" ? "directly_affected" : exposureKey === "potentially" ? "potentially_affected" : exposureKey === "road" ? "road_impacted" : exposureKey === "outside" ? "outside_alert" : exposureKey === "unknown" ? "unknown" : "nearby_monitored"}_badge`);
+  const headlineText = t(`risk_${exposureKey === "directly" ? "directly_affected" : exposureKey === "potentially" ? "potentially_affected" : exposureKey === "road" ? "road_impacted" : exposureKey === "outside" ? "outside_alert" : exposureKey === "unknown" ? "unknown" : "nearby_monitored"}_title`);
+  const whyText = t(`risk_${exposureKey === "directly" ? "directly_affected" : exposureKey === "potentially" ? "potentially_affected" : exposureKey === "road" ? "road_impacted" : exposureKey === "outside" ? "outside_alert" : exposureKey === "unknown" ? "unknown" : "nearby_monitored"}_desc`);
+  const actionText = t(`risk_${exposureKey === "directly" ? "directly_affected" : exposureKey === "potentially" ? "potentially_affected" : exposureKey === "road" ? "road_impacted" : exposureKey === "outside" ? "outside_alert" : exposureKey === "unknown" ? "unknown" : "nearby_monitored"}_action`);
+
+  const updatedTime = new Date(location.timestamp).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
-    <div className="w-full bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-xl text-white">
-      {/* Location Bar & Accuracy */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10 text-xs">
-        <div className="flex items-center gap-2">
-          <span className={`p-1.5 rounded-lg ${isLiveGps ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400"}`}>
-            <IconMapPin className="w-4 h-4" />
-          </span>
-          <div>
-            <div className="font-semibold text-white flex items-center gap-1.5">
-              <span>{isLiveGps ? "LIVE DEVICE LOCATION" : location.source === "MANUAL_PIN" ? "SELECTED PIN" : "CORRIDOR APPROXIMATION"}</span>
-              {isLiveGps && location.accuracy ? (
-                <span className="text-emerald-400 font-mono text-[11px]">
-                  (±{Math.round(location.accuracy)}m)
-                </span>
-              ) : (
-                <span className="text-slate-400 font-mono text-[11px]">(Manual/Preset)</span>
-              )}
-            </div>
-            <div className="text-[11px] text-slate-300 font-mono">
-              {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E • Updated {new Date(location.timestamp).toLocaleTimeString()}
-            </div>
-          </div>
-        </div>
-
-        {/* GPS Refresh & Quick Preset Dropdown */}
-        <div className="flex items-center gap-1.5 self-end sm:self-auto">
-          <button
-            type="button"
-            onClick={() => requestGps()}
-            disabled={location.status === "requesting"}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-white/15 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <IconCrosshair className={`w-3.5 h-3.5 text-cyan-400 ${location.status === "requesting" ? "animate-spin" : ""}`} />
-            <span>{location.status === "requesting" ? "Locating..." : "Use My Location"}</span>
-          </button>
-
-          <select
-            aria-label="Corridor preset"
-            onChange={(e) => selectPreset(e.target.value)}
-            value={location.localityLabel ? presets.find(p => p.name === location.localityLabel)?.id || "" : "tg-2048-km42"}
-            className="bg-slate-800 border border-white/15 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-400 cursor-pointer max-w-[150px] sm:max-w-none truncate"
-          >
-            {presets.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* LOCATION ACCESS REQUIRED BANNER (When Permission Denied) */}
-      {isDenied && (
-        <div className="mt-3 p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/50 text-xs space-y-2.5">
-          <div className="flex items-center gap-2 text-amber-300 font-bold">
-            <IconAlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>LOCATION ACCESS REQUIRED</span>
-          </div>
-          <p className="text-slate-200 leading-relaxed">
-            TerraGuardian needs your device location to determine whether the current alert may affect you.
-          </p>
-          <div className="text-[11px] text-slate-400">
-            Browser permission is currently denied. To allow live GPS, open your browser's site settings and set Location to "Allow".
-          </div>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => requestGps()}
-              className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs cursor-pointer shadow-sm"
-            >
-              ENABLE LOCATION
-            </button>
-            <button
-              type="button"
-              onClick={() => requestGps()}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-white/15 cursor-pointer"
-            >
-              RETRY
-            </button>
-            <button
-              type="button"
-              onClick={() => selectPreset("tg-2048-km42")}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 font-medium text-xs border border-white/15 cursor-pointer"
-            >
-              SELECT LOCATION MANUALLY
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* AM I AT RISK? Result Card */}
-      <div className={`mt-3.5 p-4 rounded-xl border ${exposure.bgColor}`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
+    <section aria-labelledby="am-i-at-risk-title" className="w-full">
+      <div className={`rounded-2xl border p-4 sm:p-5 shadow-xl backdrop-blur-xl transition-colors ${cardBorder} text-slate-900 dark:text-white`}>
+        
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase tracking-wider ${exposure.badgeColor}`}>
-              {exposure.badge}
+            <span className="p-1.5 rounded-lg bg-red-500/15 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+              <IconAlertTriangle className="w-4 h-4" />
             </span>
-            <span className="font-extrabold text-sm sm:text-base text-white">
-              {exposure.headline}
-            </span>
+            <div>
+              <h2 id="am-i-at-risk-title" className="text-base sm:text-lg font-extrabold tracking-tight">
+                {t("am_i_at_risk_title")}
+              </h2>
+              <div className="text-xs text-slate-600 dark:text-slate-300">
+                {t("risk_assessment_subtitle")}
+              </div>
+            </div>
           </div>
-          <span className="text-[11px] text-slate-300 font-mono">
-            {distanceKm} km from incident
+
+          {/* Exposure State Badge */}
+          <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider self-start sm:self-auto shadow-sm ${badgeColor}`}>
+            {badgeText}
           </span>
         </div>
 
-        <div className="text-xs text-slate-200 space-y-1 mt-2">
-          <div>
-            <strong className="text-slate-100">Affected corridor:</strong> {exposure.affectedRoad}
+        {/* Location Permission Blocked Notice */}
+        {isDenied && (
+          <div className="mt-3 p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs space-y-2">
+            <div className="font-bold flex items-center gap-1.5">
+              <span>⚠️ {t("location_denied_banner")}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={requestGps}
+                className="px-2.5 py-1 rounded-lg bg-amber-600 text-white font-bold hover:bg-amber-500 cursor-pointer"
+              >
+                {t("btn_try_again")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPresetPicker(true)}
+                className="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold hover:bg-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              >
+                {t("btn_select_ner_corridor")}
+              </button>
+            </div>
           </div>
-          <div>
-            <strong className="text-amber-300">What to do:</strong> {exposure.action}
+        )}
+
+        {/* Core Plain-Language Risk Answer */}
+        <div className="mt-3 space-y-2">
+          <h3 className="font-extrabold text-sm sm:text-base leading-snug">
+            {headlineText}
+          </h3>
+
+          <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed">
+            {whyText}
+          </p>
+
+          <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 text-xs space-y-1 shadow-sm">
+            <div className="font-bold text-red-600 dark:text-red-400">
+              👉 {actionText}
+            </div>
           </div>
         </div>
 
-        {/* Action Links */}
-        <div className="mt-3.5 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+        {/* Distance & Telemetry Bar */}
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div className="p-2 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("label_distance")}</div>
+            <div className="font-extrabold text-sm text-slate-900 dark:text-white mt-0.5">
+              {distanceKm} km
+            </div>
+          </div>
+
+          <div className="p-2 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("label_accuracy")}</div>
+            <div className="font-extrabold text-sm text-slate-900 dark:text-white mt-0.5">
+              ±{Math.round(location.accuracyMeters || location.accuracy || 15)}m
+            </div>
+          </div>
+
+          <div className="p-2 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("label_last_updated")}</div>
+            <div className="font-extrabold text-sm text-slate-900 dark:text-white mt-0.5">
+              {updatedTime}
+            </div>
+          </div>
+
+          <div className="p-2 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("label_data_status")}</div>
+            <div className="font-bold text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">
+              {location.source === "DEVICE_GEOLOCATION" ? "LIVE GPS" : "APPROXIMATE"}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Controls & Modal Links */}
+        <div className="mt-3.5 pt-3 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={requestGps}
+              disabled={location.status === "requesting"}
+              className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            >
+              <IconCrosshair className="w-3.5 h-3.5" />
+              <span>{location.status === "requesting" ? t("location_detecting") : t("btn_use_my_location")}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowPresetPicker((prev) => !prev)}
+              className="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium transition-colors cursor-pointer"
+            >
+              {t("btn_select_ner_corridor")}
+            </button>
+          </div>
+
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={onViewImpactMap}
-              className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
+              onClick={onOpenWhyAlertModal}
+              className="font-bold text-indigo-600 dark:text-cyan-400 hover:underline cursor-pointer"
             >
-              <span>View Danger Area</span>
-              <IconChevronRight className="w-3.5 h-3.5" />
+              {t("why_this_alert")}
             </button>
 
             <button
               type="button"
-              onClick={onOpenWhyAlertModal}
-              className="text-xs font-medium text-slate-300 hover:text-white underline cursor-pointer"
+              onClick={onViewImpactMap}
+              className="font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-white flex items-center gap-0.5 cursor-pointer"
             >
-              Why this result?
+              <span>{t("view_danger_map")}</span>
+              <IconChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setShowTechnicalDetails((prev) => !prev)}
-            className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-1 cursor-pointer"
-          >
-            <IconInfo className="w-3 h-3" />
-            <span>{showTechnicalDetails ? "Hide technical data" : "Technical details"}</span>
-          </button>
         </div>
 
-        {/* Progressive Disclosure: Technical Invariants (Collapsed by default) */}
-        {showTechnicalDetails && (
-          <div className="mt-3 p-3 bg-slate-950/80 border border-white/10 rounded-xl space-y-2 animate-in fade-in duration-100">
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider font-mono font-semibold">
-              Operational Incident Invariants (TG-2048)
+        {/* NER Corridor Preset Dropdown */}
+        {showPresetPicker && (
+          <div className="mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 space-y-1.5 animate-in fade-in">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+              Select Monitored Regional Corridor:
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="bg-slate-900 p-2 rounded border border-white/10">
-                <div className="text-[10px] text-slate-400">Risk Assessment</div>
-                <div className="font-bold text-red-400 mt-0.5">High (86/100)</div>
-                <div className="text-[9px] text-slate-400">Rain 184mm</div>
-              </div>
-              <div className="bg-slate-900 p-2 rounded border border-white/10">
-                <div className="text-[10px] text-slate-400">Confidence</div>
-                <div className="font-bold text-emerald-400 mt-0.5">High (94%)</div>
-                <div className="text-[9px] text-slate-400">SDRF Verified</div>
-              </div>
-              <div className="bg-slate-900 p-2 rounded border border-white/10">
-                <div className="text-[10px] text-slate-400">Priority</div>
-                <div className="font-bold text-amber-400 mt-0.5">Critical (P1)</div>
-                <div className="text-[9px] text-slate-400">Lifeline Corridor</div>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {presets.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    selectPreset(p.id);
+                    setShowPresetPicker(false);
+                  }}
+                  className="p-2 rounded-lg text-left bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 hover:border-indigo-400 text-xs transition-colors cursor-pointer"
+                >
+                  <div className="font-bold text-slate-900 dark:text-white">{p.name}</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">{p.district}, {p.state}</div>
+                </button>
+              ))}
             </div>
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 };

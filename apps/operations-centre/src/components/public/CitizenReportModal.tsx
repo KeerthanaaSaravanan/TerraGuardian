@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useLocationService } from "../../hooks/useLocationService";
+import { useCitizenI18n } from "../../hooks/useCitizenI18n";
 import {
   IconCamera,
   IconMapPin,
@@ -14,16 +15,17 @@ interface CitizenReportModalProps {
 }
 
 const HAZARD_TYPES = [
-  { id: "LANDSLIDE", label: "Landslide / Slope Collapse" },
-  { id: "ROCKFALL", label: "Rockfall on Roadway" },
-  { id: "ROAD_BLOCKED", label: "Road Blocked by Mud / Water" },
-  { id: "SLOPE_CRACK", label: "Tension Cracks on Hillside" },
-  { id: "DEBRIS_FLOW", label: "Rapid Mud / Debris Flow" },
-  { id: "OTHER", label: "Other Hazard" },
+  { id: "LANDSLIDE", labelKey: "hazard_type_landslide" },
+  { id: "ROCKFALL", labelKey: "hazard_type_rockfall" },
+  { id: "ROAD_BLOCKED", labelKey: "hazard_type_road_blocked" },
+  { id: "SLOPE_CRACK", labelKey: "hazard_type_slope_crack" },
+  { id: "DEBRIS_FLOW", labelKey: "hazard_type_debris_flow" },
+  { id: "OTHER", labelKey: "hazard_type_other" },
 ];
 
 export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, onClose }) => {
   const { location, requestGps } = useLocationService();
+  const { t } = useCitizenI18n();
 
   const [selectedHazard, setSelectedHazard] = useState("LANDSLIDE");
   const [notes, setNotes] = useState("");
@@ -125,28 +127,28 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
       role="dialog"
       aria-modal="true"
       aria-labelledby="report-hazard-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-150"
     >
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl flex flex-col gap-4 text-white overflow-y-auto max-h-[92vh]">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl flex flex-col gap-4 text-slate-900 dark:text-white overflow-y-auto max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+            <span className="p-2 rounded-xl bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
               <IconCamera className="w-5 h-5" />
             </span>
             <div>
-              <h3 id="report-hazard-title" className="font-bold text-base sm:text-lg text-white">
-                📷 Report a Hazard
+              <h3 id="report-hazard-title" className="font-extrabold text-base sm:text-lg">
+                {t("report_hazard_title")}
               </h3>
-              <div className="text-xs text-slate-300">
-                Submit field evidence to safety authorities
+              <div className="text-xs text-slate-600 dark:text-slate-300">
+                {t("report_hazard_subtitle")}
               </div>
             </div>
           </div>
           <button
             onClick={handleResetAndClose}
             aria-label="Close"
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
           >
             <IconX className="w-4 h-4" />
           </button>
@@ -155,46 +157,46 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
         {submittedTicket ? (
           /* Report Success Screen */
           <div className="py-4 flex flex-col items-center text-center space-y-3">
-            <div className="h-12 w-12 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shadow-md">
+            <div className="h-12 w-12 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-500 shadow-md">
               <IconCheck className="w-6 h-6 stroke-[3]" />
             </div>
             <div>
-              <h4 className="text-base font-bold text-emerald-300">
-                ✓ Report Received
+              <h4 className="text-base font-extrabold text-emerald-600 dark:text-emerald-300">
+                {t("report_success_title")}
               </h4>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                Thank you for helping protect fellow commuters.
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                {t("report_success_desc")}
               </p>
             </div>
 
-            <div className="bg-slate-950 p-3 rounded-xl border border-white/10 w-full text-xs space-y-1.5 text-left font-mono">
-              <div className="flex justify-between text-slate-300">
-                <span>Evidence ID:</span>
-                <span className="text-white font-bold">{submittedTicket.id}</span>
+            <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-white/10 w-full text-xs space-y-1.5 text-left font-mono">
+              <div className="flex justify-between text-slate-600 dark:text-slate-300">
+                <span>{t("report_evidence_id")}:</span>
+                <span className="text-slate-900 dark:text-white font-bold">{submittedTicket.id}</span>
               </div>
-              <div className="flex justify-between text-slate-300">
+              <div className="flex justify-between text-slate-600 dark:text-slate-300">
                 <span>Associated Incident:</span>
-                <span className="text-amber-300 font-bold">{submittedTicket.incidentCode || "TG-2048"}</span>
+                <span className="text-amber-600 dark:text-amber-400 font-bold">{submittedTicket.incidentCode || "TG-2048"}</span>
               </div>
-              <div className="flex justify-between text-slate-300">
+              <div className="flex justify-between text-slate-600 dark:text-slate-300">
                 <span>Location:</span>
-                <span className="text-emerald-400">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                   {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E
                 </span>
               </div>
-              <div className="flex justify-between text-slate-300">
+              <div className="flex justify-between text-slate-600 dark:text-slate-300">
                 <span>Status:</span>
-                <span className="text-amber-400 font-mono font-bold">UNVERIFIED CITIZEN OBSERVATION</span>
+                <span className="text-amber-600 dark:text-amber-400 font-mono font-bold">UNVERIFIED CITIZEN OBSERVATION</span>
               </div>
             </div>
 
-            <div className="p-2.5 bg-slate-950/70 border border-white/10 rounded-xl text-[11px] text-slate-400 leading-normal w-full text-left">
+            <div className="p-2.5 bg-slate-100 dark:bg-slate-950/70 border border-slate-200 dark:border-white/10 rounded-xl text-[11px] text-slate-600 dark:text-slate-400 leading-normal w-full text-left">
               <strong>Evidence Provenance:</strong> Recorded as <em>Citizen Observation (Unverified)</em> until checked by SDRF field teams. Never approach unstable slopes to capture photos.
             </div>
 
             <button
               onClick={handleResetAndClose}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-xs transition-colors cursor-pointer mt-1"
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer mt-1"
             >
               Done
             </button>
@@ -203,34 +205,38 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
           <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
             {/* What do you see? */}
             <div>
-              <label className="block text-slate-300 font-semibold mb-1.5">
-                What do you see?
+              <label className="block text-slate-700 dark:text-slate-200 font-bold mb-1.5">
+                {t("report_what_see")}
               </label>
               <div className="grid grid-cols-2 gap-1.5">
-                {HAZARD_TYPES.map((h) => (
-                  <button
-                    key={h.id}
-                    type="button"
-                    onClick={() => setSelectedHazard(h.id)}
-                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
-                      selectedHazard === h.id
-                        ? "bg-amber-600/30 border-amber-400 text-amber-200 font-bold"
-                        : "bg-slate-800/80 border-white/10 text-slate-300 hover:bg-slate-750"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className={`h-2 w-2 rounded-full ${selectedHazard === h.id ? "bg-amber-400" : "bg-slate-500"}`} />
-                      <span className="text-[11px] leading-tight">{h.label}</span>
-                    </div>
-                  </button>
-                ))}
+                {HAZARD_TYPES.map((h) => {
+                  const isSelected = selectedHazard === h.id;
+                  const label = t(h.labelKey) || h.id;
+                  return (
+                    <button
+                      key={h.id}
+                      type="button"
+                      onClick={() => setSelectedHazard(h.id)}
+                      className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-amber-500/15 dark:bg-amber-600/30 border-amber-500 text-amber-900 dark:text-amber-200 font-bold"
+                          : "bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className={`h-2 w-2 rounded-full ${isSelected ? "bg-amber-500" : "bg-slate-400"}`} />
+                        <span className="text-[11px] leading-tight">{label}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Photo Capture / Upload */}
             <div>
-              <label className="block text-slate-300 font-semibold mb-1.5">
-                Photo (Optional):
+              <label className="block text-slate-700 dark:text-slate-200 font-bold mb-1.5">
+                {t("report_photo_label")}:
               </label>
               <input
                 type="file"
@@ -244,66 +250,66 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/15 text-slate-200 font-medium text-xs flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-white/15 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <IconCamera className="w-4 h-4 text-cyan-400" />
-                  <span>{photoName ? "Change Photo" : "Take Photo / Choose Image"}</span>
+                  <IconCamera className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                  <span>{photoName ? "Change Photo" : t("btn_take_photo")}</span>
                 </button>
                 {photoName && (
-                  <span className="text-emerald-400 text-xs truncate max-w-[160px]">
+                  <span className="text-emerald-600 dark:text-emerald-400 text-xs truncate max-w-[160px] font-medium">
                     ✓ {photoName}
                   </span>
                 )}
               </div>
               {photoBase64 && (
-                <div className="mt-2 w-20 h-20 rounded-lg overflow-hidden border border-white/20 bg-slate-950">
+                <div className="mt-2 w-20 h-20 rounded-lg overflow-hidden border border-slate-300 dark:border-white/20 bg-slate-950">
                   <img src={photoBase64} alt="Preview" className="w-full h-full object-cover" />
                 </div>
               )}
             </div>
 
             {/* Location Bar */}
-            <div className="bg-slate-950/70 p-2.5 rounded-xl border border-white/10 flex items-center justify-between text-[11px]">
-              <span className="text-slate-400 flex items-center gap-1.5">
-                <IconMapPin className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Location:</span>
+            <div className="bg-slate-50 dark:bg-slate-950/70 p-2.5 rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-between text-[11px]">
+              <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                <IconMapPin className="w-3.5 h-3.5 text-emerald-500" />
+                <span>{t("label_location")}:</span>
               </span>
-              <span className="text-slate-200 font-mono font-medium">
+              <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
                 {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E (±{Math.round(location.accuracy || 10)}m)
               </span>
             </div>
 
             {/* What did you observe? */}
             <div>
-              <label className="block text-slate-300 font-medium mb-1">
-                Optional observation notes:
+              <label className="block text-slate-700 dark:text-slate-200 font-bold mb-1">
+                {t("label_notes")}:
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="e.g. Tree and boulders blocking uphill lane near KM-41. Water runoff crossing road."
                 rows={2}
-                className="w-full bg-slate-800 border border-white/15 rounded-xl p-2.5 text-slate-200 text-xs focus:outline-none focus:border-amber-400 resize-none"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-2.5 text-slate-900 dark:text-slate-200 text-xs focus:outline-none focus:border-amber-500 resize-none"
               />
             </div>
 
-            {error && <div className="text-red-400 text-xs">{error}</div>}
+            {error && <div className="text-red-500 text-xs font-bold">{error}</div>}
 
             {/* Actions */}
             <div className="space-y-2 pt-1">
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-amber-600 hover:bg-amber-500 active:scale-98 text-white font-bold py-2.5 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/30 transition-all cursor-pointer border border-amber-400/40 disabled:opacity-50"
+                className="w-full bg-amber-600 hover:bg-amber-500 active:scale-98 text-white font-black py-2.5 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/30 transition-all cursor-pointer border border-amber-400/40 disabled:opacity-50"
               >
                 <IconCamera className="w-4 h-4" />
-                <span>{submitting ? "Uploading..." : "Submit Hazard Report"}</span>
+                <span>{submitting ? "Uploading..." : t("btn_submit_report")}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleResetAndClose}
-                className="w-full py-2 rounded-xl text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                className="w-full py-2 rounded-xl text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
                 Cancel
               </button>

@@ -678,19 +678,27 @@ export const EvidenceReconciliationView: React.FC = () => {
 
                     {/* Photo + Telemetry Row */}
                     <div className="grid grid-cols-3 gap-3 items-center">
-                      <div
-                        onClick={() => setExpandedImage(report.image_url)}
-                        className="col-span-1 h-24 rounded-lg overflow-hidden bg-slate-950 relative border border-slate-300 dark:border-neutral-700 cursor-pointer group"
-                      >
-                        <img
-                          src={report.image_url}
-                          alt="Citizen Upload"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                        <div className="absolute bottom-1 left-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-mono text-white">
-                          🔍 View
+                      {report.image_url && report.image_url !== "NO_MEDIA_ATTACHED" && !report.image_url.startsWith("NO_MEDIA") ? (
+                        <div
+                          onClick={() => setExpandedImage(report.image_url)}
+                          className="col-span-1 h-24 rounded-lg overflow-hidden bg-slate-950 relative border border-slate-300 dark:border-neutral-700 cursor-pointer group"
+                        >
+                          <img
+                            src={report.image_url}
+                            alt="Citizen Upload"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute bottom-1 left-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-mono text-white">
+                            🔍 View
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="col-span-1 h-24 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-dashed border-slate-300 dark:border-neutral-700 flex flex-col items-center justify-center p-2 text-center text-slate-500 dark:text-neutral-400">
+                          <span className="text-base">📝</span>
+                          <span className="text-[10px] font-mono font-bold mt-1">NO PHOTO</span>
+                          <span className="text-[8px] opacity-75">Direct Observation</span>
+                        </div>
+                      )}
 
                       <div className="col-span-2 space-y-1 text-xs font-mono">
                         <div className="text-[11px] font-bold text-slate-900 dark:text-white">

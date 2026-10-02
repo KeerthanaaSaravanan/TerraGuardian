@@ -184,51 +184,55 @@ async def submit_citizen_report(
         except ValueError as err:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
-    if not image_url:
-        # Generate an authoritative SVG observation placeholder when no photo is attached
-        note_text = payload.citizen_notes or "Field hazard observation"
-        obs_svg = (
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">'
-            f'<rect width="600" height="400" fill="#0f172a"/>'
-            f'<rect x="20" y="20" width="560" height="360" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>'
-            f'<text x="300" y="170" fill="#38bdf8" font-size="20" font-family="sans-serif" font-weight="bold" text-anchor="middle">CITIZEN FIELD OBSERVATION</text>'
-            f'<text x="300" y="210" fill="#cbd5e1" font-size="14" font-family="sans-serif" text-anchor="middle">{note_text[:50]}</text>'
-            f'<text x="300" y="250" fill="#94a3b8" font-size="12" font-family="sans-serif" text-anchor="middle">Lat: {payload.latitude:.4f}°N, Lng: {payload.longitude:.4f}°E</text>'
-            f'</svg>'
-        )
-        image_url = f"data:image/svg+xml;base64,{base64.b64encode(obs_svg.encode()).decode()}"
-        image_hash = "SVG_OBSERVATION"
-        file_size = len(obs_svg)
-        mime_type = "image/svg+xml"
-
-    # 2. Vision screening validation
-    ai_result = payload.ai_screening_result
+    has_photo = bool(image_url)
     ai_obs = payload.ai_observation
-    ai_status_val = "SUCCESS"
-
-    if ai_result:
-        is_relevant = ai_result.get("is_hazard_relevant", True)
-        ai_status_val = ai_result.get("ai_status", "SUCCESS")
-        if not is_relevant or ai_status_val in ("REJECTED_UNRELATED", "INSUFFICIENT_IMAGE"):
-            # Enforce rejection of unrelated/insufficient images
-            reason = ai_result.get("reasoning", "The uploaded photograph does not show visible slope or road hazards.")
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Image rejected by AI screening: {reason}. Please upload a clear photograph of a landslide, slope failure, tension crack, rockfall, debris flow, or road obstruction.",
-            )
-    else:
+    if not image_url:
+        # Truthful invariant: Do not fabricate a synthetic SVG image pretending to be a photograph
+        image_url = "NO_MEDIA_ATTACHED"
+        image_hash = "NO_MEDIA_ATTACHED"
+        file_size = 0
+        mime_type = "text/plain"
+        ai_status_val = "NO_MEDIA_ATTACHED"
         ai_result = {
             "is_hazard_relevant": True,
-            "hazard_type": "SLOPE_DEBRIS",
-            "visual_observations": [ai_obs or "Citizen field hazard observation"],
-            "severity_screen": "MEDIUM",
-            "image_quality": "SUFFICIENT",
-            "confidence": "MODERATE VISUAL EVIDENCE",
-            "recommended_followup": "Human verification required by authorized field responder.",
-            "reasoning": "Standard citizen observation submitted for review.",
+            "hazard_type": payload.ai_observation or "FIELD_OBSERVATION",
+            "visual_observations": [payload.citizen_notes or "Citizen field hazard observation"],
+            "severity_screen": "PENDING_VERIFICATION",
+            "image_quality": "NO_MEDIA",
+            "confidence": "UNVERIFIED CITIZEN REPORT",
+            "recommended_followup": "Field verification required by authorized SDRF responder.",
+            "reasoning": "Citizen observation recorded without photographic media attachment.",
             "needs_human_verification": True,
-            "ai_status": "SUCCESS",
+            "ai_status": "NO_MEDIA_ATTACHED",
         }
+    else:
+        # 2. Vision screening validation for attached photographs
+        ai_result = payload.ai_screening_result
+        ai_status_val = "SUCCESS"
+
+        if ai_result:
+            is_relevant = ai_result.get("is_hazard_relevant", True)
+            ai_status_val = ai_result.get("ai_status", "SUCCESS")
+            if not is_relevant or ai_status_val in ("REJECTED_UNRELATED", "INSUFFICIENT_IMAGE"):
+                # Enforce rejection of unrelated/insufficient images
+                reason = ai_result.get("reasoning", "The uploaded photograph does not show visible slope or road hazards.")
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Image rejected by AI screening: {reason}. Please upload a clear photograph of a landslide, slope failure, tension crack, rockfall, debris flow, or road obstruction.",
+                )
+        else:
+            ai_result = {
+                "is_hazard_relevant": True,
+                "hazard_type": "SLOPE_DEBRIS",
+                "visual_observations": [ai_obs or "Citizen field hazard observation"],
+                "severity_screen": "MEDIUM",
+                "image_quality": "SUFFICIENT",
+                "confidence": "MODERATE VISUAL EVIDENCE",
+                "recommended_followup": "Human verification required by authorized field responder.",
+                "reasoning": "Standard citizen observation submitted for review.",
+                "needs_human_verification": True,
+                "ai_status": "SUCCESS",
+            }
 
     # 3. Location context resolution
     state_val = payload.state
