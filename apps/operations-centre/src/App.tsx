@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
 import { DemoScenarioProvider, useDemoScenario } from "./context/DemoScenarioContext";
 import { PublicReportProvider, usePublicReport } from "./context/PublicReportContext";
@@ -36,21 +36,22 @@ import {
   AnalysisProgressStep,
   PreliminaryResultStep,
 } from "./components/public";
-import {
-  IconRadar,
-  IconMapPin,
-  IconLayers,
-  IconActivity,
-  IconShieldCheck,
-  IconClock,
-  IconAlertTriangle,
-  IconRadio,
-  IconFileText,
-} from "./components/icons";
 
-type AppMode = "public" | "operator";
+type AppRoute = "/" | "/citizen" | "/operations";
 
-const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitchToPublic }) => {
+function parseInitialRoute(): AppRoute {
+  if (typeof window !== "undefined") {
+    const path = window.location.pathname.toLowerCase();
+    if (path.startsWith("/citizen")) return "/citizen";
+    if (path.startsWith("/operations")) return "/operations";
+  }
+  return "/";
+}
+
+const OperatorWorkflow: React.FC<{
+  onSwitchToPublic: () => void;
+  onExitToPortal: () => void;
+}> = ({ onSwitchToPublic, onExitToPortal }) => {
   const {
     currentStep,
     setStep,
@@ -90,6 +91,7 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
       <CommandSidebar
         onSwitchToPublic={onSwitchToPublic}
         onOpenReportModal={() => setShowReportModal(true)}
+        onExitToPortal={onExitToPortal}
       />
 
       {/* Main Container */}
@@ -97,6 +99,7 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
         <CommandHeader
           onToggleCopilot={() => setShowCopilot((prev) => !prev)}
           isCopilotOpen={showCopilot}
+          onExitToPortal={onExitToPortal}
         />
 
         <main className="flex-1 pb-10 min-w-0 w-full overflow-x-hidden">
@@ -156,7 +159,7 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
 
             <div className="text-xs text-slate-600 dark:text-neutral-300 leading-relaxed space-y-2">
               <p>
-                <strong>TerraGuardian Safe</strong> is the mobile-first citizen PWA companion. While the Operations Centre handles multi-agency command, Safe provides localized alerts, camera-based hazard reporting, and offline-oriented architecture.
+                <strong>TerraGuardian Safe</strong> is the public citizen companion. While the Operations Centre handles multi-agency command, Safe provides localized alerts, camera-based hazard reporting, and offline-oriented architecture.
               </p>
               <div className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800 font-mono text-[11px] space-y-1">
                 <div>• Offline-oriented PWA architecture with service worker caching</div>
@@ -242,92 +245,104 @@ const OperatorWorkflow: React.FC<{ onSwitchToPublic: () => void }> = ({ onSwitch
   );
 };
 
-const PublicWorkflow: React.FC<{ onSwitchToOperator: () => void; onGoToEvidenceReconciliation: () => void }> = ({
-  onSwitchToOperator,
-  onGoToEvidenceReconciliation,
-}) => {
-  const { currentPublicStep } = usePublicReport();
-
-  return (
-    <div className="min-h-screen w-full">
-      {currentPublicStep === "LANDING" && (
-        <CitizenPortalView onSelectOperatorLogin={onSwitchToOperator} />
-      )}
-      {currentPublicStep === "ACCESS" && (
-        <PublicAccessView onSelectOperatorLogin={onSwitchToOperator} />
-      )}
-      {currentPublicStep === "CAPTURE_PHOTO" && <PhotoCaptureStep />}
-      {currentPublicStep === "LOCATION_CONTEXT" && <LocationCaptureStep />}
-      {currentPublicStep === "REVIEW" && <ObservationReviewStep />}
-      {currentPublicStep === "PROCESSING" && <AnalysisProgressStep />}
-      {currentPublicStep === "RESULT" && (
-        <PreliminaryResultStep onGoToOperationsCentre={onGoToEvidenceReconciliation} />
-      )}
-    </div>
-  );
-};
-
 const AppCore: React.FC = () => {
   const { isAuthorityUser } = useAuth();
   const { setStep } = useDemoScenario();
-  const [appMode, setAppMode] = useState<AppMode>(() => {
-    if (typeof window !== "undefined") {
-      const savedMode = localStorage.getItem("tg_app_mode");
-      if (savedMode === "operator" || savedMode === "public") {
-        return savedMode;
-      }
-      if (localStorage.getItem("tg_current_user") || localStorage.getItem("tg_auth_token")) {
-        return "operator";
-      }
-    }
-    return "public";
-  });
+  const { currentPublicStep, setPublicStep } = usePublicReport();
+
+  const [route, setRoute] = useState<AppRoute>(parseInitialRoute);
   const [pendingStep, setPendingStep] = useState<number | null>(null);
 
-  const handleSetAppMode = (mode: AppMode) => {
-    setAppMode(mode);
+  // Synchronize route with browser history
+  const navigate = (newRoute: AppRoute) => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("tg_app_mode", mode);
+      if (window.location.pathname !== newRoute) {
+        window.history.pushState({}, "", newRoute);
+      }
     }
+    setRoute(newRoute);
   };
+
+  useEffect(() => {
+    const onPopState = () => {
+      setRoute(parseInitialRoute());
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   const handleGoToEvidenceReconciliation = () => {
     if (isAuthorityUser) {
-      handleSetAppMode("operator");
+      navigate("/operations");
       setStep(3); // Jump right into Step 3: Evidence Reconciliation to see the fused citizen report
     } else {
       setPendingStep(3);
-      handleSetAppMode("operator");
+      navigate("/operations");
     }
-  };
-
-  const handleSwitchToOperator = () => {
-    handleSetAppMode("operator");
   };
 
   return (
     <>
-      {appMode === "public" ? (
-        <PublicWorkflow
-          onSwitchToOperator={handleSwitchToOperator}
-          onGoToEvidenceReconciliation={handleGoToEvidenceReconciliation}
+      {/* 1. ROOT PATHWAY: Translucent Government-Grade Landing Portal */}
+      {route === "/" && (
+        <PublicLandingView
+          onEnterCitizenSafe={() => navigate("/citizen")}
+          onSelectOperatorLogin={() => navigate("/operations")}
+          onStartObservationReport={() => {
+            setPublicStep("CAPTURE_PHOTO");
+            navigate("/citizen");
+          }}
         />
-      ) : isAuthorityUser ? (
-        <OperatorWorkflow onSwitchToPublic={() => handleSetAppMode("public")} />
-      ) : (
-        <LoginView
-          onSuccess={() => {
-            handleSetAppMode("operator");
-            if (pendingStep) {
-              setStep(pendingStep as any);
+      )}
+
+      {/* 2. CITIZEN SAFE: Public Hazard Companion (No Auth Barrier) */}
+      {route === "/citizen" && (
+        <div className="min-h-screen w-full">
+          {currentPublicStep === "LANDING" && (
+            <CitizenPortalView
+              onGoHome={() => navigate("/")}
+              onSelectOperatorLogin={() => navigate("/operations")}
+              onStartGuidedReport={() => setPublicStep("CAPTURE_PHOTO")}
+            />
+          )}
+          {currentPublicStep === "ACCESS" && (
+            <PublicAccessView onSelectOperatorLogin={() => navigate("/operations")} />
+          )}
+          {currentPublicStep === "CAPTURE_PHOTO" && <PhotoCaptureStep />}
+          {currentPublicStep === "LOCATION_CONTEXT" && <LocationCaptureStep />}
+          {currentPublicStep === "REVIEW" && <ObservationReviewStep />}
+          {currentPublicStep === "PROCESSING" && <AnalysisProgressStep />}
+          {currentPublicStep === "RESULT" && (
+            <PreliminaryResultStep onGoToOperationsCentre={handleGoToEvidenceReconciliation} />
+          )}
+        </div>
+      )}
+
+      {/* 3. OPERATIONS CENTRE: Authorized Government Gateway */}
+      {route === "/operations" && (
+        isAuthorityUser ? (
+          <OperatorWorkflow
+            onSwitchToPublic={() => navigate("/citizen")}
+            onExitToPortal={() => navigate("/")}
+          />
+        ) : (
+          <LoginView
+            onSuccess={() => {
+              if (pendingStep) {
+                setStep(pendingStep as any);
+                setPendingStep(null);
+              }
+            }}
+            onCancel={() => {
               setPendingStep(null);
-            }
-          }}
-          onCancel={() => {
-            setPendingStep(null);
-            handleSetAppMode("public");
-          }}
-        />
+              navigate("/");
+            }}
+            onNavigateCitizen={() => {
+              setPendingStep(null);
+              navigate("/citizen");
+            }}
+          />
+        )
       )}
     </>
   );

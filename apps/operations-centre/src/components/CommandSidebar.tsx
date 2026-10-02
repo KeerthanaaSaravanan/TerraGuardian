@@ -29,11 +29,13 @@ interface NavSection {
 interface CommandSidebarProps {
   onSwitchToPublic: () => void;
   onOpenReportModal: () => void;
+  onExitToPortal?: () => void;
 }
 
 export const CommandSidebar: React.FC<CommandSidebarProps> = ({
   onSwitchToPublic,
   onOpenReportModal,
+  onExitToPortal,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const {
@@ -229,6 +231,20 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
           <IconRadio className="w-4 h-4 text-emerald-600 shrink-0" />
           {!isCollapsed && <span className="font-bold truncate">Citizen Safe</span>}
         </button>
+
+        {/* Exit to Main Portal */}
+        {onExitToPortal && (
+          <button
+            onClick={onExitToPortal}
+            title="Exit Operations Centre and Return to Main Landing Portal"
+            className={`w-full flex items-center gap-2 p-2 rounded-lg text-xs font-mono transition-colors border border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer ${
+              isCollapsed ? "justify-center" : ""
+            }`}
+          >
+            <IconShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
+            {!isCollapsed && <span className="font-semibold truncate">Exit to Portal</span>}
+          </button>
+        )}
 
         {/* Executive Incident Briefing */}
         <button

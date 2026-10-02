@@ -188,6 +188,28 @@ export const AmIAtRiskCard: React.FC<AmIAtRiskCardProps> = ({
           </div>
         </div>
 
+        {/* Out-of-Region Evaluator Context Banner */}
+        {distanceKm > 50 && (
+          <div className="mt-3 p-3 rounded-xl bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm">
+            <div className="space-y-0.5">
+              <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span>CURRENT LOCATION OUTSIDE ACTIVE MONITORED SCENARIO</span>
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                Device GPS: {location.localityLabel || `${location.latitude.toFixed(3)}°, ${location.longitude.toFixed(3)}°`} ({distanceKm} km from NH-13 West Kameng).
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onViewImpactMap}
+              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shrink-0 cursor-pointer shadow-xs transition-colors"
+            >
+              Explore Northeast Monitoring →
+            </button>
+          </div>
+        )}
+
         {/* Action Controls & Modal Links */}
         <div className="mt-3.5 pt-3 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2">

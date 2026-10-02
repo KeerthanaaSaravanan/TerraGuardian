@@ -14,6 +14,7 @@ interface CitizenHeaderProps {
   onOpenSOSModal: () => void;
   onOpenAlertsModal?: () => void;
   unreadAlertCount?: number;
+  onGoHome?: () => void;
 }
 
 export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
@@ -21,6 +22,7 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
   onOpenSOSModal,
   onOpenAlertsModal,
   unreadAlertCount = 1,
+  onGoHome,
 }) => {
   const { lang, setLanguage, languages, t } = useCitizenI18n();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -28,13 +30,17 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
   return (
     <header className="relative z-30 border-b border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl px-3 sm:px-5 py-2.5 flex items-center justify-between text-slate-900 dark:text-white shadow-sm transition-colors">
       {/* Brand: Logo + Title */}
-      <div className="flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-slate-200 dark:border-white/20 p-1 shadow-sm overflow-hidden shrink-0">
+      <div
+        onClick={onGoHome}
+        className={`flex items-center gap-2.5 ${onGoHome ? "cursor-pointer group" : ""}`}
+        title={onGoHome ? "Return to TerraGuardian Portal Home" : undefined}
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-slate-200 dark:border-white/20 p-1 shadow-sm overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
           <img src="/logo-shield.png" alt="TerraGuardian Safe Logo" className="h-full w-full object-contain" />
         </div>
         <div>
           <div className="flex items-center gap-1.5">
-            <span className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white">
+            <span className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
               {t("app_title")}
             </span>
           </div>

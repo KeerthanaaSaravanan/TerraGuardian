@@ -22,9 +22,15 @@ import {
 
 interface CitizenPortalViewProps {
   onSelectOperatorLogin: () => void;
+  onGoHome?: () => void;
+  onStartGuidedReport?: () => void;
 }
 
-export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ onSelectOperatorLogin }) => {
+export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({
+  onSelectOperatorLogin,
+  onGoHome,
+  onStartGuidedReport,
+}) => {
   const { t } = useCitizenI18n();
   const { location, requestGps } = useLocationService();
 
@@ -73,6 +79,7 @@ export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ onSelectOp
         onSelectOperatorLogin={onSelectOperatorLogin}
         onOpenSOSModal={() => setIsSOSModalOpen(true)}
         onOpenAlertsModal={() => setIsWhyModalOpen(true)}
+        onGoHome={onGoHome}
         unreadAlertCount={1}
       />
 
@@ -292,14 +299,25 @@ export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ onSelectOp
                     {t("cta_report_desc")}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsReportModalOpen(true)}
-                  className="w-full sm:w-auto bg-amber-600 hover:bg-amber-500 active:scale-98 text-white font-black py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-amber-400/40 shrink-0 shadow-md shadow-amber-950/30"
-                >
-                  <IconCamera className="w-4 h-4" />
-                  <span>{t("btn_report_observation")}</span>
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                  {onStartGuidedReport && (
+                    <button
+                      type="button"
+                      onClick={onStartGuidedReport}
+                      className="flex-1 sm:flex-initial bg-amber-600 hover:bg-amber-500 active:scale-98 text-white font-extrabold py-2.5 px-3.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-amber-400/40 shadow-md shadow-amber-950/30"
+                    >
+                      <IconCamera className="w-3.5 h-3.5" />
+                      <span>Guided AI Report</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="flex-1 sm:flex-initial bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-slate-200 dark:border-white/10"
+                  >
+                    <span>Quick Report</span>
+                  </button>
+                </div>
               </div>
             </section>
 
@@ -344,6 +362,7 @@ export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ onSelectOp
       <CitizenReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
+        onStartGuidedFlow={onStartGuidedReport}
       />
     </div>
   );

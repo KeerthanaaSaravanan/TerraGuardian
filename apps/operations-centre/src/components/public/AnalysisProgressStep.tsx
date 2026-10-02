@@ -7,27 +7,39 @@ export const AnalysisProgressStep: React.FC = () => {
 
   const stages = [
     {
-      title: "Verifying Device & Image Provenance",
-      description: "Checking EXIF timestamp, sensor integrity, and optical sharpness.",
+      title: "1. Image Quality & Sensor Provenance",
+      description: "Verifying EXIF timestamp, optical sharpness, exposure validity, and camera sensor integrity.",
       status: processingStage >= 1 ? "COMPLETED" : "IN_PROGRESS",
     },
     {
-      title: "Computer Vision Slope Feature Extraction",
-      description: "Detecting tension cracks, scar boundaries, and active debris runoff.",
+      title: "2. Multimodal Slope Feature Extraction",
+      description: "Edge computer vision detecting tension cracks, scar boundaries, and active debris runoff.",
       status:
         processingStage >= 2 ? "COMPLETED" : processingStage === 1 ? "IN_PROGRESS" : "PENDING",
     },
     {
-      title: "Corridor & Infrastructure Proximity Check",
-      description: "Geofencing against NH-13 West Kameng high-susceptibility arterial corridor.",
+      title: "3. Geotechnical Hazard Classification",
+      description: "Classifying failure mechanics (debris slump, rockfall, scree movement, or carriageway breach).",
       status:
         processingStage >= 3 ? "COMPLETED" : processingStage === 2 ? "IN_PROGRESS" : "PENDING",
     },
     {
-      title: "Synthesizing Preliminary Safety Assessment",
-      description: "Formulating citizen precautions and logging evidence into operations queue.",
+      title: "4. Spatial Geofencing & Corridor Lookup",
+      description: "Geofencing coordinates against NH-13 Trans-Arunachal arterial lifeline and habitations.",
       status:
         processingStage >= 4 ? "COMPLETED" : processingStage === 3 ? "IN_PROGRESS" : "PENDING",
+    },
+    {
+      title: "5. Active Incident Correlation",
+      description: "Correlating observation with active monitoring event TG-2048 (KM-42 Bhalukpong-Tenga).",
+      status:
+        processingStage >= 5 ? "COMPLETED" : processingStage === 4 ? "IN_PROGRESS" : "PENDING",
+    },
+    {
+      title: "6. Operational Assessment & Queue Persistence",
+      description: "Persisting unverified citizen observation to Operations Centre Incident Twin evidence queue.",
+      status:
+        processingStage >= 6 ? "COMPLETED" : processingStage === 5 ? "IN_PROGRESS" : "PENDING",
     },
   ];
 

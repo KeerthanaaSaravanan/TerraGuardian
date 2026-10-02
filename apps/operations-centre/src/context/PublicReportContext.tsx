@@ -224,10 +224,12 @@ export const PublicReportProvider: React.FC<{ children: ReactNode }> = ({ childr
     setSubmissionError(null);
 
     const stages = [
-      () => setProcessingStage(1), // Digital watermarking & SHA256 integrity
-      () => setProcessingStage(2), // Multimodal slope feature analysis
-      () => setProcessingStage(3), // North Eastern Region corridor match
-      () => setProcessingStage(4), // Persisting to Operations Incident Twin
+      () => setProcessingStage(1), // Stage 1: Image Quality & Sensor Provenance
+      () => setProcessingStage(2), // Stage 2: Multimodal Slope Feature Extraction
+      () => setProcessingStage(3), // Stage 3: Geotechnical Hazard Classification
+      () => setProcessingStage(4), // Stage 4: Spatial Geofencing & Corridor Lookup
+      () => setProcessingStage(5), // Stage 5: Active Incident Correlation
+      () => setProcessingStage(6), // Stage 6: Operational Assessment & Queue Persistence
       async () => {
         try {
           const lat = customCoordinates ? customCoordinates.lat : 27.2023;

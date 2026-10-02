@@ -162,8 +162,14 @@ export const PreliminaryResultStep: React.FC<PreliminaryResultStepProps> = ({
             onClick={onGoToOperationsCentre}
             className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
           >
-            <span>View in Operations Centre (Step 3)</span>
+            <span>View in Operations Centre Evidence Queue</span>
             <IconArrowRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={resetReport}
+            className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-white/10"
+          >
+            <span>Return to Citizen Safe</span>
           </button>
         </div>
       </main>

@@ -12,6 +12,7 @@ import {
 interface CitizenReportModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onStartGuidedFlow?: () => void;
 }
 
 const HAZARD_TYPES = [
@@ -202,10 +203,39 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-            {/* What do you see? */}
-            <div>
-              <label className="block text-slate-700 dark:text-slate-200 font-bold mb-1.5">
+          <div className="space-y-3.5">
+            {/* Guided 6-Stage AI Hazard Analysis Launch Banner */}
+            {onStartGuidedFlow && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs shadow-xs">
+                <div className="space-y-0.5">
+                  <div className="font-extrabold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                    <IconCamera className="w-4 h-4 text-amber-500" />
+                    <span>Guided 6-Stage AI Evidence Flow</span>
+                  </div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
+                    Optical sharpness validation, tension crack detection, and corridor geofencing.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleResetAndClose();
+                    onStartGuidedFlow();
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shrink-0 cursor-pointer shadow-xs transition-colors"
+                >
+                  Start Guided Flow →
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+              {/* What do you see? */}
+              <div>
+                <div className="text-[11px] font-mono font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                  Or Quick Hazard Submission:
+                </div>
+                <label className="block text-slate-700 dark:text-slate-200 font-bold mb-1.5">
                 {t("report_what_see")}
               </label>
               <div className="grid grid-cols-2 gap-1.5">
@@ -315,7 +345,8 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
               </button>
             </div>
           </form>
-        )}
+        </div>
+      )}
       </div>
     </div>
   );

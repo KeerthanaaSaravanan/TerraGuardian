@@ -8,11 +8,13 @@ import { IconRotateCcw, IconShieldCheck, IconAlertTriangle, IconSparkles } from 
 interface CommandHeaderProps {
   onToggleCopilot?: () => void;
   isCopilotOpen?: boolean;
+  onExitToPortal?: () => void;
 }
 
 export const CommandHeader: React.FC<CommandHeaderProps> = ({
   onToggleCopilot,
   isCopilotOpen = false,
+  onExitToPortal,
 }) => {
   const {
     resetDemo,
@@ -192,6 +194,16 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
             <IconRotateCcw className="w-3.5 h-3.5 shrink-0" />
             <span className="hidden xl:inline">Reset</span>
           </button>
+
+          {onExitToPortal && (
+            <button
+              onClick={onExitToPortal}
+              title="Exit Operations Centre and Return to Main Portal"
+              className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 text-xs font-mono font-semibold transition-colors border border-slate-300 dark:border-neutral-700 shrink-0 cursor-pointer"
+            >
+              <span>Exit to Portal</span>
+            </button>
+          )}
 
           <ThemeToggle />
 

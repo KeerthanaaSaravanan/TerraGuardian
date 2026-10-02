@@ -125,6 +125,7 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
 
   // Interactive UI State
   const [mapMode, setMapMode] = useState<"ALL" | "PREDICTED" | "OBSERVED">("ALL");
+  const [mapContext, setMapContext] = useState<"NORTHEAST" | "MY_LOCATION">("NORTHEAST");
   const [isPinningMode, setIsPinningMode] = useState<boolean>(false);
   const [activeCallout, setActiveCallout] = useState<MapFeatureCallout | null>(null);
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
@@ -462,20 +463,33 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
     renderUserLayer();
   }, [renderRoadLayers, renderHazardLayers, renderUserLayer]);
 
-  // ── 7. Map Navigation Controls ──
-  const handleRecenterMe = () => {
+  // ── 7. Map Navigation Controls & Dual-Context Handlers ──
+  const handleSwitchToNortheast = useCallback(() => {
+    setMapContext("NORTHEAST");
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    map.flyTo([27.080, 92.562], 13, { duration: 0.8 });
+  }, []);
+
+  const handleSwitchToMyLocation = useCallback(() => {
+    setMapContext("MY_LOCATION");
     const map = mapInstanceRef.current;
     if (!map) return;
     map.flyTo([location.latitude, location.longitude], 14, { duration: 0.8 });
+  }, [location.latitude, location.longitude]);
+
+  const handleRecenterMe = () => {
+    handleSwitchToMyLocation();
   };
 
   const handleFitHazard = () => {
+    setMapContext("NORTHEAST");
     const map = mapInstanceRef.current;
     if (!map) return;
     const bounds = L.latLngBounds([
       ...ANCHORS.PREDICTED_BOUNDS,
-      [location.latitude, location.longitude],
       [ANCHORS.ROADBLOCK.lat, ANCHORS.ROADBLOCK.lng],
+      [ANCHORS.OBSERVED_INCIDENT.lat, ANCHORS.OBSERVED_INCIDENT.lng],
     ]);
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
   };
@@ -492,57 +506,94 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
     <section aria-labelledby="citizen-hazard-map-title" id="citizen-danger-map" className="w-full">
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-2xl p-3 sm:p-5 shadow-xl transition-colors text-slate-900 dark:text-white">
         
-        {/* Header & Mode Switcher */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200 dark:border-white/10">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300">
-                <IconLayers className="w-4 h-4" />
-              </span>
-              <h2 id="citizen-hazard-map-title" className="text-base sm:text-lg font-extrabold tracking-tight">
-                {t("danger_map_title")}
-              </h2>
+        {/* Header: Title + Dual-Context Switcher */}
+        <div className="flex flex-col gap-2.5 pb-3 border-b border-slate-200 dark:border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300">
+                  <IconLayers className="w-4 h-4" />
+                </span>
+                <h2 id="citizen-hazard-map-title" className="text-base sm:text-lg font-extrabold tracking-tight">
+                  {t("danger_map_title")}
+                </h2>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                {t("danger_map_subtitle")}
+              </p>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-              {t("danger_map_subtitle")}
-            </p>
+
+            {/* DUAL-CONTEXT TOGGLE: [ NORTHEAST MONITORING ] vs [ MY LOCATION ] */}
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold self-start sm:self-auto shadow-inner">
+              <button
+                type="button"
+                onClick={handleSwitchToNortheast}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                  mapContext === "NORTHEAST"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span>🏔️</span>
+                <span>Northeast Monitoring</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSwitchToMyLocation}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                  mapContext === "MY_LOCATION"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <IconCrosshair className="w-3.5 h-3.5" />
+                <span>My Location</span>
+              </button>
+            </div>
           </div>
 
-          {/* 3 Clear Modes: ALL | PREDICTED | OBSERVED */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => setMapMode("ALL")}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                mapMode === "ALL"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              {t("map_mode_all")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMapMode("PREDICTED")}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                mapMode === "PREDICTED"
-                  ? "bg-amber-600 text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              {t("map_mode_predicted")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMapMode("OBSERVED")}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                mapMode === "OBSERVED"
-                  ? "bg-red-600 text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              {t("map_mode_observed")}
-            </button>
+          {/* Sub-bar: Hazard Layer Filter (ALL | PREDICTED | OBSERVED) */}
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-slate-400">
+              {mapContext === "NORTHEAST" ? "Active Scenario: NH-13 West Kameng" : "Evaluator Device Coordinates"}
+            </span>
+
+            <div className="flex items-center gap-1 text-[11px] font-semibold">
+              <button
+                type="button"
+                onClick={() => setMapMode("ALL")}
+                className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                  mapMode === "ALL"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                {t("map_mode_all")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapMode("PREDICTED")}
+                className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                  mapMode === "PREDICTED"
+                    ? "bg-amber-600 text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                {t("map_mode_predicted")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapMode("OBSERVED")}
+                className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                  mapMode === "OBSERVED"
+                    ? "bg-red-600 text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                {t("map_mode_observed")}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -554,13 +605,48 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             aria-label="Interactive Hazard Map"
           />
 
-          {/* Map Floating Tool Overlay: Compass & Quick Nav */}
+          {/* Top Scenario Indicator Pill */}
+          {mapContext === "NORTHEAST" && (
+            <div className="absolute top-3 left-12 z-10 px-2.5 py-1 rounded-lg bg-indigo-950/90 backdrop-blur-md border border-indigo-400/50 text-[10px] sm:text-[11px] font-mono text-indigo-200 font-bold shadow-md flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span>MONITORED: NH-13 KM-42 (West Kameng)</span>
+            </div>
+          )}
+
+          {/* Map Floating Tool Overlay: Compass */}
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
             <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-white/15 text-[11px] font-bold shadow-md">
               <IconCompass className="w-3.5 h-3.5 text-indigo-500" />
               <span>N</span>
             </div>
           </div>
+
+          {/* Out of Northeast Active Zone Floating Context Banner (When in MY_LOCATION mode and outside Northeast) */}
+          {mapContext === "MY_LOCATION" && distanceToIncident > 50 && (
+            <div className="absolute bottom-3 left-3 right-3 z-20 bg-slate-900/95 border border-amber-400/50 backdrop-blur-xl rounded-xl p-3 sm:p-3.5 shadow-2xl text-white animate-in slide-in-from-bottom duration-150">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    <span className="font-extrabold text-[11px] sm:text-xs tracking-wide text-amber-300 font-mono uppercase">
+                      CURRENT LOCATION OUTSIDE ACTIVE MONITORED SCENARIO
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-slate-200 leading-snug">
+                    Device GPS: <strong className="text-white">{location.localityLabel || `${location.latitude.toFixed(3)}°, ${location.longitude.toFixed(3)}°`}</strong> ({distanceToIncident} km from NH-13 West Kameng). No active geological hazard alerts detected in your immediate sector.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSwitchToNortheast}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shrink-0 flex items-center justify-center gap-1.5 shadow-md border border-indigo-400/40 transition-colors cursor-pointer"
+                >
+                  <span>Explore Northeast Monitoring</span>
+                  <IconChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Floating Map Actions: Recenter, Fit Hazard, Drop Pin */}
           <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5">

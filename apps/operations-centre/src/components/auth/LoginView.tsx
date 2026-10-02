@@ -12,9 +12,14 @@ import {
 interface LoginViewProps {
   onCancel?: () => void;
   onSuccess?: () => void;
+  onNavigateCitizen?: () => void;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => {
+export const LoginView: React.FC<LoginViewProps> = ({
+  onCancel,
+  onSuccess,
+  onNavigateCitizen,
+}) => {
   const { login, isLoading, loginError } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -290,15 +295,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
                 Looking for Public Citizen Hazard Reporting?
               </span>
               <div className="flex items-center gap-3">
-                <a
-                  href={import.meta.env.VITE_CITIZEN_SAFE_URL || (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1" ? "https://terraguardian-safe.vercel.app" : "http://localhost:5174")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                <button
+                  type="button"
+                  onClick={onNavigateCitizen || onCancel}
+                  className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                 >
-                  <span>Open TerraGuardian Safe (Public PWA)</span>
+                  <span>Open Citizen Safe Portal</span>
                   <IconArrowRight className="w-3 h-3" />
-                </a>
+                </button>
 
                 {onCancel && (
                   <>
@@ -308,7 +312,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onCancel, onSuccess }) => 
                       onClick={onCancel}
                       className="text-[11px] font-mono text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200 hover:underline cursor-pointer"
                     >
-                      Integrated View
+                      Exit to Portal
                     </button>
                   </>
                 )}
