@@ -599,6 +599,28 @@ class CitizenReportModel(Base):
     incident: Mapped[IncidentModel | None] = relationship("IncidentModel", back_populates="citizen_reports")
 
 
+class CitizenHelpRequestModel(Base):
+    """Urgent citizen assistance request recorded via Citizen Safe."""
+
+    __tablename__ = "citizen_help_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    request_id: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    incident_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("incidents.id", ondelete="SET NULL"), index=True, nullable=True
+    )
+    device_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    contact_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    help_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    accuracy_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="REQUEST_RECEIVED", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 # Authoritative Geospatial Models Registration
 import app.gis.models  # noqa: F401
 

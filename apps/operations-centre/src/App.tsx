@@ -28,6 +28,7 @@ import { OperationalCopilot } from "./components/common/OperationalCopilot";
 import { IconSparkles } from "./components/icons";
 import {
   PublicLandingView,
+  CitizenPortalView,
   PublicAccessView,
   PhotoCaptureStep,
   LocationCaptureStep,
@@ -250,7 +251,7 @@ const PublicWorkflow: React.FC<{ onSwitchToOperator: () => void; onGoToEvidenceR
   return (
     <div className="min-h-screen w-full">
       {currentPublicStep === "LANDING" && (
-        <PublicLandingView onSelectOperatorLogin={onSwitchToOperator} />
+        <CitizenPortalView onSelectOperatorLogin={onSwitchToOperator} />
       )}
       {currentPublicStep === "ACCESS" && (
         <PublicAccessView onSelectOperatorLogin={onSwitchToOperator} />

@@ -110,6 +110,7 @@ def create_app() -> FastAPI:
     application.include_router(system.router, prefix="/v1")
     application.include_router(system.router, prefix="/api/v1")
 
+    application.include_router(citizen.router)
     application.include_router(citizen.router, prefix="/v1")
     application.include_router(citizen.router, prefix="/api/v1")
 

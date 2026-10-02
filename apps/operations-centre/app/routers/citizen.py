@@ -20,7 +20,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.adapters.geocoding import GeocodingProvider, GeocodingResult
 from app.adapters.storage import EvidenceStorageProvider, StoredImageMetadata
 from app.adapters.vision import VisionProvider, VisionScreeningResult
-from app.db.models import AuditEventModel, CitizenReportModel, EvidenceModel, IncidentModel, UserModel
+from app.db.models import (
+    AlertAcknowledgementModel,
+    AlertModel,
+    AuditEventModel,
+    CitizenHelpRequestModel,
+    CitizenReportModel,
+    EvidenceModel,
+    IncidentModel,
+    UserModel,
+)
 from app.db.session import get_db_session
 from app.domain.enums import ActorRole, AuditEventType, EvidenceSource
 from app.domain.permissions import OperationalPermission
@@ -624,3 +633,201 @@ async def review_citizen_report(
         provenance=report.provenance,
         source_type=report.source_type,
     )
+
+
+class SubmitHelpRequestPayload(BaseModel):
+    """Payload for submitting an urgent assistance request from Citizen Safe."""
+    help_type: Optional[str] = Field(None, description="MEDICAL_ASSISTANCE, TRAPPED, ROAD_BLOCKED, MISSING_PERSON, EVACUATION_ASSISTANCE, OTHER")
+    category: Optional[str] = None
+    latitude: Optional[float] = Field(None, ge=-90.0, le=90.0)
+    approx_lat: Optional[float] = Field(None, ge=-90.0, le=90.0)
+    longitude: Optional[float] = Field(None, ge=-180.0, le=180.0)
+    approx_lng: Optional[float] = Field(None, ge=-180.0, le=180.0)
+    accuracy_m: Optional[float] = None
+    contact_number: Optional[str] = None
+    contact_phone: Optional[str] = None
+    persons_count: Optional[int] = 1
+    message: Optional[str] = None
+    notes: Optional[str] = None
+    incident_id: Optional[uuid.UUID] = None
+    device_id: Optional[str] = None
+
+
+class ImSafeCheckinPayload(BaseModel):
+    """Payload for citizen 'I'm Safe' check-in signal."""
+    device_id: str
+    latitude: Optional[float] = Field(None, ge=-90.0, le=90.0)
+    approx_lat: Optional[float] = Field(None, ge=-90.0, le=90.0)
+    longitude: Optional[float] = Field(None, ge=-180.0, le=180.0)
+    approx_lng: Optional[float] = Field(None, ge=-180.0, le=180.0)
+    is_safe: Optional[bool] = True
+    incident_id: Optional[uuid.UUID] = None
+    alert_id: Optional[Any] = None
+    citizen_name: Optional[str] = None
+    notes: Optional[str] = None
+    safe_notes: Optional[str] = None
+
+
+@router.post("/help-request")
+async def submit_help_request(
+    payload: SubmitHelpRequestPayload,
+    session: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    """Submit an urgent citizen help / SOS request to district emergency operations."""
+    now = datetime.utcnow()
+    req_uuid = uuid.uuid4()
+    short_hash = req_uuid.hex[:8].upper()
+    req_id = f"TG-HELP-{short_hash}"
+
+    resolved_lat = payload.latitude if payload.latitude is not None else payload.approx_lat if payload.approx_lat is not None else 27.0842
+    resolved_lng = payload.longitude if payload.longitude is not None else payload.approx_lng if payload.approx_lng is not None else 92.5681
+    resolved_type = (payload.help_type or payload.category or "ROAD_BLOCKED_STRANDED").upper()
+    resolved_contact = payload.contact_number or payload.contact_phone
+    resolved_msg = payload.message or payload.notes or "Assistance requested via TerraGuardian Citizen Safe."
+
+    help_req = CitizenHelpRequestModel(
+        id=req_uuid,
+        request_id=req_id,
+        incident_id=payload.incident_id,
+        device_id=payload.device_id or "cit-pwa-default",
+        contact_number=resolved_contact,
+        help_type=resolved_type,
+        message=resolved_msg,
+        latitude=resolved_lat,
+        longitude=resolved_lng,
+        accuracy_m=payload.accuracy_m,
+        status="REQUEST_RECEIVED",
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(help_req)
+
+    if payload.incident_id:
+        audit = AuditEventModel(
+            id=uuid.uuid4(),
+            incident_id=payload.incident_id,
+            event_type="STATE_CHANGED",
+            actor_role="CITIZEN",
+            actor_name=f"Citizen ({resolved_contact or 'Anonymous'})",
+            payload={
+                "action": "HELP_REQUEST_RECEIVED",
+                "request_id": req_id,
+                "help_type": resolved_type,
+                "latitude": resolved_lat,
+                "longitude": resolved_lng,
+                "dispatch_state": "UNASSIGNED",
+            },
+            created_at=now,
+        )
+        session.add(audit)
+    await session.flush()
+
+    return {
+        "request_id": req_id,
+        "status": "REQUEST_RECEIVED",
+        "dispatch_state": "UNASSIGNED",
+        "help_type": resolved_type,
+        "latitude": resolved_lat,
+        "longitude": resolved_lng,
+        "created_at": now.isoformat(),
+        "hotlines": {
+            "national_emergency": "112",
+            "ddma_control_room": "1077",
+            "sdrf_helpline": "1070",
+            "ambulance": "108",
+            "bro_project_vartak": "03778-222044",
+        },
+        "note": "Help request recorded and queued for emergency operations coordination. For immediate life-safety peril, dial 112 directly.",
+    }
+
+
+@router.get("/help-requests")
+async def list_help_requests(
+    device_id: Optional[str] = Query(None),
+    session: AsyncSession = Depends(get_db_session),
+) -> list[dict[str, Any]]:
+    """List recent citizen help requests."""
+    stmt = select(CitizenHelpRequestModel).order_by(desc(CitizenHelpRequestModel.created_at)).limit(50)
+    if device_id:
+        stmt = stmt.where(CitizenHelpRequestModel.device_id == device_id)
+    res = await session.execute(stmt)
+    records = res.scalars().all()
+    return [
+        {
+            "request_id": r.request_id,
+            "help_type": r.help_type,
+            "status": r.status,
+            "message": r.message,
+            "latitude": r.latitude,
+            "longitude": r.longitude,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        }
+        for r in records
+    ]
+
+
+@router.post("/im-safe")
+async def confirm_im_safe(
+    payload: ImSafeCheckinPayload,
+    session: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    """Citizen emergency safety check-in ('I AM SAFE')."""
+    now = datetime.utcnow()
+
+    resolved_lat = payload.latitude if payload.latitude is not None else payload.approx_lat if payload.approx_lat is not None else 27.0842
+    resolved_lng = payload.longitude if payload.longitude is not None else payload.approx_lng if payload.approx_lng is not None else 92.5681
+    resolved_notes = payload.safe_notes or payload.notes or "Reported safe via TerraGuardian Citizen Safe."
+
+    alert_uuid = None
+    if payload.alert_id:
+        try:
+            alert_uuid = uuid.UUID(str(payload.alert_id))
+        except Exception:
+            alert_uuid = None
+
+    if alert_uuid:
+        ack_record = AlertAcknowledgementModel(
+            id=uuid.uuid4(),
+            alert_id=alert_uuid,
+            device_id=payload.device_id,
+            citizen_id=payload.citizen_name or "Public Citizen",
+            opened_at=now,
+            acknowledged_at=now,
+            is_safe=True,
+            safe_notes=resolved_notes,
+            approx_lat=resolved_lat,
+            approx_lng=resolved_lng,
+            created_at=now,
+        )
+        session.add(ack_record)
+
+    if payload.incident_id:
+        audit = AuditEventModel(
+            id=uuid.uuid4(),
+            incident_id=payload.incident_id,
+            event_type="STATE_CHANGED",
+            actor_role="CITIZEN",
+            actor_name=payload.citizen_name or f"Citizen ({payload.device_id[:8]})",
+            payload={
+                "action": "CITIZEN_IM_SAFE_CHECKIN",
+                "is_safe": True,
+                "latitude": resolved_lat,
+                "longitude": resolved_lng,
+                "notes": resolved_notes,
+            },
+            created_at=now,
+        )
+        session.add(audit)
+    await session.flush()
+
+    return {
+        "status": "SAFE_CONFIRMATION_RECEIVED",
+        "is_safe": True,
+        "device_id": payload.device_id,
+        "timestamp": now.isoformat(),
+        "latitude": resolved_lat,
+        "longitude": resolved_lng,
+        "message": "Citizen safety confirmation recorded successfully.",
+        "disclaimer": "IMPORTANT: 'I'm Safe' is a citizen-reported status. It does NOT alter physical slope hazard, declare the road open, or close active emergency operations.",
+    }
+
