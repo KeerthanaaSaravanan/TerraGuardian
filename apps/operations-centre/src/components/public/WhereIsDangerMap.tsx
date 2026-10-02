@@ -181,15 +181,12 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
       map.removeLayer(tileLayerRef.current);
     }
 
-    // Esri Himalayan World Topo gives authentic mountain contours & relief
-    const tileUrl = isDark
-      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      : "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{x}/{y}";
+    // OpenStreetMap provides continuous complete topographic and road coverage without any missing data tiles
+    const tileUrl = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
     const tile = L.tileLayer(tileUrl, {
       maxZoom: 18,
-      subdomains: "abcd",
-      className: isDark ? "" : "",
+      className: isDark ? "leaflet-tile-tactical-dark" : "",
     });
 
     tile.addTo(map);
