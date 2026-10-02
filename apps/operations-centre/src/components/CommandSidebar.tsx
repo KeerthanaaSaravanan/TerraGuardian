@@ -218,6 +218,37 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
         ))}
       </nav>
 
+      {/* NER Regional Summary matching media_1790946143288.jpg */}
+      {!isCollapsed && (
+        <div className="mx-2 mb-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md">
+          <div className="flex items-center justify-between text-xs font-mono font-bold text-cyan-400">
+            <span>NER Region</span>
+            <span className="text-[10px] text-slate-400 font-normal">7 States • 122 Districts</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-2 font-mono text-[11px]">
+            <div>
+              <div className="font-bold text-white">298</div>
+              <div className="text-[9px] text-slate-400">Monitoring Sites</div>
+            </div>
+            <div>
+              <div className="font-bold text-white">84</div>
+              <div className="text-[9px] text-slate-400">Weather Stations</div>
+            </div>
+            <div>
+              <div className="font-bold text-cyan-400">12</div>
+              <div className="text-[9px] text-slate-400">Active Incidents</div>
+            </div>
+            <div>
+              <div className="font-bold text-red-400">3</div>
+              <div className="text-[9px] text-slate-400">Critical</div>
+            </div>
+          </div>
+          <div className="mt-2 pt-1.5 border-t border-slate-800 text-[9px] font-mono text-slate-400 text-center">
+            Resilient Mountains, Safer Communities
+          </div>
+        </div>
+      )}
+
       {/* Footer Utilities & System Connection */}
       <div className="p-2 border-t border-slate-200 dark:border-neutral-800 space-y-2">
         {/* Switch to Citizen Safe Portal */}
