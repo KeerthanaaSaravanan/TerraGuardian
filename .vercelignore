@@ -1,0 +1,14 @@
+.venv
+venv
+ENV
+apps/terra-guardian-android
+.git
+.github
+__pycache__
+*.pyc
+tests
+.pytest_cache
+*.log
+ml
+/services/api/data
+*.png
