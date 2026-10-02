@@ -17,9 +17,19 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
   const { location, requestGps } = useLocationService();
   const { t } = useCitizenI18n();
 
-  // Active view target focus
+  // Active view target focus and hazard state
   const [mapFocus, setMapFocus] = useState<"ALL" | "INCIDENT" | "USER" | "ROADBLOCK">("ALL");
+  const [hazardMode, setHazardMode] = useState<"OPERATIONAL_ALERT" | "PREDICTIVE_WARNING" | "OBSERVED_INCIDENT">("OPERATIONAL_ALERT");
   const [showExplanation, setShowExplanation] = useState(false);
+  const [updatedTime, setUpdatedTime] = useState<string>(new Date().toLocaleTimeString());
+
+  // Keep time updated
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setUpdatedTime(new Date().toLocaleTimeString());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Geospatial anchors (West Kameng NH-13 Corridor)
   const INCIDENT = { lat: 27.0842, lng: 92.5681, label: "TG-2048: NH-13 KM-42" };
@@ -69,33 +79,79 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
           </p>
         </div>
 
-        {/* Data Status Badge & Focus Controls */}
-        <div className="flex items-center gap-2">
+        {/* Data Status Badge & Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">
-            DATA STATUS: PROTOTYPE OPERATIONAL ASSESSMENT
+            DATA STATUS: PROTOTYPE OPERATIONAL ASSESSMENT • UPDATED {updatedTime}
           </span>
-          <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg border border-white/10 text-[11px]">
-            <button
-              onClick={() => setMapFocus("ALL")}
-              className={`px-2 py-1 rounded transition-colors ${mapFocus === "ALL" ? "bg-indigo-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
-            >
-              Corridor
-            </button>
-            <button
-              onClick={() => {
-                setMapFocus("USER");
-                requestGps();
-              }}
-              className={`px-2 py-1 rounded transition-colors ${mapFocus === "USER" ? "bg-emerald-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
-            >
-              My Pin
-            </button>
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 bg-slate-800 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono">
+              <button
+                type="button"
+                onClick={() => setHazardMode("OPERATIONAL_ALERT")}
+                className={`px-2 py-0.5 rounded transition-colors ${hazardMode === "OPERATIONAL_ALERT" ? "bg-indigo-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
+              >
+                All Hazards
+              </button>
+              <button
+                type="button"
+                onClick={() => setHazardMode("PREDICTIVE_WARNING")}
+                className={`px-2 py-0.5 rounded transition-colors ${hazardMode === "PREDICTIVE_WARNING" ? "bg-amber-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
+              >
+                Predictive
+              </button>
+              <button
+                type="button"
+                onClick={() => setHazardMode("OBSERVED_INCIDENT")}
+                className={`px-2 py-0.5 rounded transition-colors ${hazardMode === "OBSERVED_INCIDENT" ? "bg-red-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
+              >
+                Observed
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg border border-white/10 text-[10px]">
+              <button
+                type="button"
+                onClick={() => setMapFocus("ALL")}
+                className={`px-2 py-0.5 rounded transition-colors ${mapFocus === "ALL" ? "bg-slate-700 text-white font-bold" : "text-slate-400 hover:text-white"}`}
+              >
+                Corridor
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMapFocus("USER");
+                  requestGps();
+                }}
+                className={`px-2 py-0.5 rounded transition-colors ${mapFocus === "USER" ? "bg-emerald-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
+              >
+                My Pin
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Dynamic Hazard Mode Context Banner */}
+      <div className={`mt-2 px-3 py-1.5 rounded-lg border text-xs font-mono flex items-center justify-between ${
+        hazardMode === "PREDICTIVE_WARNING"
+          ? "bg-amber-950/40 border-amber-500/40 text-amber-300"
+          : hazardMode === "OBSERVED_INCIDENT"
+          ? "bg-red-950/40 border-red-500/40 text-red-300"
+          : "bg-indigo-950/40 border-indigo-500/40 text-indigo-300"
+      }`}>
+        <span className="font-bold">
+          {hazardMode === "PREDICTIVE_WARNING"
+            ? "PREDICTIVE WARNING (HORIZON 6H): IMD rainfall >65mm/24h triggers 5 km critical advisory."
+            : hazardMode === "OBSERVED_INCIDENT"
+            ? "OBSERVED INCIDENT: Landslide debris at KM-42. Physical roadblock enforced at KM-38."
+            : "OPERATIONAL ALERT: Authoritative envelope combining predictive model & field observation."}
+        </span>
+        <span className="text-[10px] text-slate-400">TG-2048</span>
+      </div>
+
       {/* SVG Citizen Map */}
-      <div className="mt-3 relative w-full h-[320px] sm:h-[360px] rounded-xl overflow-hidden bg-slate-950 border border-white/10 flex items-center justify-center select-none">
+      <div className="mt-2.5 relative w-full h-[320px] sm:h-[360px] rounded-xl overflow-hidden bg-slate-950 border border-white/10 flex items-center justify-center select-none">
         {/* Subtle grid */}
         <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:20px_20px]" />
 
@@ -276,7 +332,7 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
               YOU
             </text>
             <text x="0" y="-8" fill="#6ee7b7" fontSize="7.5" textAnchor="middle">
-              {location.accuracyMeters ? `±${Math.round(location.accuracyMeters)}m` : "Selected Pin"}
+              {location.source === "DEVICE_GEOLOCATION" && location.accuracy ? `±${Math.round(location.accuracy)}m` : location.source === "MANUAL_PIN" ? "Selected Pin" : "Approximation"}
             </text>
           </g>
         </svg>

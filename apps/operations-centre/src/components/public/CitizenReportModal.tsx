@@ -30,7 +30,11 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [photoName, setPhotoName] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [submittedTicket, setSubmittedTicket] = useState<{ id: string } | null>(null);
+  const [submittedTicket, setSubmittedTicket] = useState<{
+    id: string;
+    incidentCode?: string | null;
+    status: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -63,7 +67,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
         body: JSON.stringify({
           latitude: location.latitude,
           longitude: location.longitude,
-          gps_accuracy: location.accuracyMeters || 10.0,
+          gps_accuracy: location.accuracy || 10.0,
           road_corridor: "NH-13 Trans-Arunachal Highway",
           citizen_notes: notes.trim() || `Citizen report: ${selectedHazard}`,
           ai_observation: selectedHazard,
@@ -79,6 +83,8 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
       const data = await response.json();
       setSubmittedTicket({
         id: data.tracking_id || trackingId,
+        incidentCode: data.incident_code || "TG-2048",
+        status: data.maturity_status || "UNVERIFIED CITIZEN OBSERVATION",
       });
     } catch {
       // Offline fallback
@@ -94,7 +100,11 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
           })
         );
       }
-      setSubmittedTicket({ id: trackingId });
+      setSubmittedTicket({
+        id: trackingId,
+        incidentCode: "TG-2048",
+        status: "UNVERIFIED CITIZEN OBSERVATION",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -161,6 +171,10 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
               <div className="flex justify-between text-slate-300">
                 <span>Evidence ID:</span>
                 <span className="text-white font-bold">{submittedTicket.id}</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span>Associated Incident:</span>
+                <span className="text-amber-300 font-bold">{submittedTicket.incidentCode || "TG-2048"}</span>
               </div>
               <div className="flex justify-between text-slate-300">
                 <span>Location:</span>
@@ -241,6 +255,11 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
                   </span>
                 )}
               </div>
+              {photoBase64 && (
+                <div className="mt-2 w-20 h-20 rounded-lg overflow-hidden border border-white/20 bg-slate-950">
+                  <img src={photoBase64} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
 
             {/* Location Bar */}
@@ -250,7 +269,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
                 <span>Location:</span>
               </span>
               <span className="text-slate-200 font-mono font-medium">
-                {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E (±{Math.round(location.accuracyMeters || 10)}m)
+                {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E (±{Math.round(location.accuracy || 10)}m)
               </span>
             </div>
 

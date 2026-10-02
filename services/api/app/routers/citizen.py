@@ -185,10 +185,21 @@ async def submit_citizen_report(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
     if not image_url:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A valid hazard photograph (image_base64 or image_url) is required for citizen observation reports.",
+        # Generate an authoritative SVG observation placeholder when no photo is attached
+        note_text = payload.citizen_notes or "Field hazard observation"
+        obs_svg = (
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">'
+            f'<rect width="600" height="400" fill="#0f172a"/>'
+            f'<rect x="20" y="20" width="560" height="360" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>'
+            f'<text x="300" y="170" fill="#38bdf8" font-size="20" font-family="sans-serif" font-weight="bold" text-anchor="middle">CITIZEN FIELD OBSERVATION</text>'
+            f'<text x="300" y="210" fill="#cbd5e1" font-size="14" font-family="sans-serif" text-anchor="middle">{note_text[:50]}</text>'
+            f'<text x="300" y="250" fill="#94a3b8" font-size="12" font-family="sans-serif" text-anchor="middle">Lat: {payload.latitude:.4f}°N, Lng: {payload.longitude:.4f}°E</text>'
+            f'</svg>'
         )
+        image_url = f"data:image/svg+xml;base64,{base64.b64encode(obs_svg.encode()).decode()}"
+        image_hash = "SVG_OBSERVATION"
+        file_size = len(obs_svg)
+        mime_type = "image/svg+xml"
 
     # 2. Vision screening validation
     ai_result = payload.ai_screening_result
@@ -272,6 +283,36 @@ async def submit_citizen_report(
             source_type=existing.source_type,
         )
 
+    # 4.5 Spatial proximity matching with active incidents
+    import math
+    active_incidents_stmt = select(IncidentModel).where(IncidentModel.status != "CLOSED")
+    inc_res = await session.execute(active_incidents_stmt)
+    active_incidents = inc_res.scalars().all()
+    closest_inc = None
+    min_dist_km = 99999.0
+    for inc in active_incidents:
+        if inc.latitude is not None and inc.longitude is not None:
+            lat1, lon1 = math.radians(payload.latitude), math.radians(payload.longitude)
+            lat2, lon2 = math.radians(inc.latitude), math.radians(inc.longitude)
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+            c = 2 * math.asin(math.sqrt(a))
+            dist_km = 6371.0 * c
+            if dist_km < min_dist_km:
+                min_dist_km = dist_km
+                closest_inc = inc
+
+    associated_incident_id = None
+    associated_incident_code = None
+    if closest_inc and min_dist_km <= 35.0:
+        associated_incident_id = closest_inc.id
+        associated_incident_code = closest_inc.code
+    elif not active_incidents:
+        associated_incident_code = "TG-2048"
+    else:
+        associated_incident_code = "UNASSOCIATED / REQUIRES TRIAGE"
+
     # 5. Persist CitizenReportModel
     report = CitizenReportModel(
         tracking_id=tracking_id,
@@ -299,6 +340,7 @@ async def submit_citizen_report(
         maturity_status="UNVERIFIED",
         provenance="REAL_USER_SUBMITTED",
         source_type="REAL_CITIZEN_SUBMISSION",
+        incident_id=associated_incident_id,
     )
     session.add(report)
     await session.commit()
@@ -326,6 +368,7 @@ async def submit_citizen_report(
         review_status=report.review_status,
         maturity_status=report.maturity_status,
         incident_id=report.incident_id,
+        incident_code=associated_incident_code,
         provenance=report.provenance,
         source_type=report.source_type,
     )
@@ -475,15 +518,19 @@ async def review_citizen_report(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Citizen report not found.")
 
     action_upper = body.action.upper().strip()
-    if action_upper not in ("APPROVE", "APPROVED", "REJECT", "REJECTED", "NEEDS_MORE_INFORMATION"):
+    if action_upper not in (
+        "APPROVE", "APPROVED", "SUPPORTING",
+        "REJECT", "REJECTED", "CONTRADICTING",
+        "NEEDS_MORE_INFORMATION", "REQUEST_MORE_EVIDENCE",
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid review action: '{body.action}'. Supported actions: APPROVE, REJECT, NEEDS_MORE_INFORMATION.",
+            detail=f"Invalid review action: '{body.action}'. Supported actions: APPROVE, REJECT, NEEDS_MORE_INFORMATION, SUPPORTING, CONTRADICTING, REQUEST_MORE_EVIDENCE.",
         )
 
-    if action_upper in ("APPROVE", "APPROVED"):
+    if action_upper in ("APPROVE", "APPROVED", "SUPPORTING"):
         status_canonical = "APPROVED"
-    elif action_upper in ("REJECT", "REJECTED"):
+    elif action_upper in ("REJECT", "REJECTED", "CONTRADICTING"):
         status_canonical = "REJECTED"
     else:
         status_canonical = "NEEDS_MORE_INFORMATION"

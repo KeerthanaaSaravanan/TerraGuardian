@@ -67,22 +67,35 @@ export const EvidenceReconciliationView: React.FC = () => {
 
   useEffect(() => {
     loadCitizenReports();
+    const interval = setInterval(() => {
+      loadCitizenReports();
+    }, 5000);
+    return () => clearInterval(interval);
   }, [citizenStatusFilter]);
 
-  const handleReviewAction = async (reportId: string, action: "APPROVE" | "REJECT") => {
+  const handleReviewAction = async (
+    reportId: string,
+    action: "APPROVE" | "REJECT" | "SUPPORTING" | "CONTRADICTING" | "REQUEST_MORE_EVIDENCE"
+  ) => {
     setReviewLoadingId(reportId);
     setReviewFeedback(null);
     try {
+      let notes = "";
+      if (action === "APPROVE" || action === "SUPPORTING") {
+        notes = `Verified by ${userProfile?.fullName || "Operations Officer"} (${userProfile?.role || "OPERATOR"}). Classified as SUPPORTING ground evidence. Reassessment triggered.`;
+      } else if (action === "CONTRADICTING") {
+        notes = `Classified as CONTRADICTING ground report by ${userProfile?.fullName || "Operations Officer"}: Obstructed/inconsistent with active telemetry.`;
+      } else if (action === "REQUEST_MORE_EVIDENCE") {
+        notes = `Requested additional photographic or location verification from field teams.`;
+      } else {
+        notes = `Rejected by ${userProfile?.fullName || "Operations Officer"}: Non-actionable.`;
+      }
+
       await apiClient.reviewCitizenReport(reportId, {
         action,
-        review_notes:
-          action === "APPROVE"
-            ? `Verified by ${userProfile?.fullName || "Operations Officer"} (${userProfile?.role || "OPERATOR"}). Integrated into authoritative incident evidence.`
-            : `Rejected by ${userProfile?.fullName || "Operations Officer"}: Non-actionable or insufficient ground evidence.`,
+        review_notes: notes,
       });
-      setReviewFeedback(
-        `Report ${action === "APPROVE" ? "APPROVED and integrated to Incident Twin" : "REJECTED"}.`
-      );
+      setReviewFeedback(`Citizen report classified as ${action}. Incident reassessment triggered.`);
       await loadCitizenReports();
       await reconcileEvidence();
     } catch (err: any) {
@@ -739,24 +752,40 @@ export const EvidenceReconciliationView: React.FC = () => {
 
                   {/* Operator Review Actions (RBAC enforced) */}
                   {isPending && (
-                    <div className="pt-2 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between gap-2">
+                    <div className="pt-2 border-t border-slate-200 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-1.5">
                       {canReconcile ? (
                         <>
-                          <button
-                            onClick={() => handleReviewAction(report.id, "REJECT")}
-                            disabled={reviewLoadingId === report.id}
-                            className="bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 font-medium text-xs px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-800 transition-colors cursor-pointer"
-                          >
-                            {reviewLoadingId === report.id ? "Processing..." : "Reject Report"}
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleReviewAction(report.id, "REJECT")}
+                              disabled={reviewLoadingId === report.id}
+                              className="bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 font-medium text-[11px] px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-neutral-700 transition-colors cursor-pointer"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              onClick={() => handleReviewAction(report.id, "CONTRADICTING")}
+                              disabled={reviewLoadingId === report.id}
+                              className="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-medium text-[11px] px-2.5 py-1.5 rounded-lg border border-rose-300 dark:border-rose-800 transition-colors cursor-pointer"
+                            >
+                              Contradicting
+                            </button>
+                            <button
+                              onClick={() => handleReviewAction(report.id, "REQUEST_MORE_EVIDENCE")}
+                              disabled={reviewLoadingId === report.id}
+                              className="bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 font-medium text-[11px] px-2.5 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 transition-colors cursor-pointer"
+                            >
+                              Request More
+                            </button>
+                          </div>
 
                           <button
-                            onClick={() => handleReviewAction(report.id, "APPROVE")}
+                            onClick={() => handleReviewAction(report.id, "SUPPORTING")}
                             disabled={reviewLoadingId === report.id}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1"
                           >
                             <IconCheck className="w-3.5 h-3.5" />
-                            <span>{reviewLoadingId === report.id ? "Integrating..." : "Approve & Integrate to Incident"}</span>
+                            <span>{reviewLoadingId === report.id ? "Reassessing..." : "Supporting (Integrate & Reassess)"}</span>
                           </button>
                         </>
                       ) : (

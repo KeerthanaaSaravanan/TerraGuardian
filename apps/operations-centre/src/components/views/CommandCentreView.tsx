@@ -104,6 +104,24 @@ export const CommandCentreView: React.FC = () => {
         </div>
       </div>
 
+      {/* Real-time Citizen Evidence Queue Callout */}
+      <div className="bg-slate-900 border border-cyan-500/40 p-3 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs text-white shadow-sm font-mono">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+          <span className="font-bold text-cyan-300">CITIZEN SAFE EVIDENCE INGEST:</span>
+          <span className="text-slate-300 text-[11px]">Real-time public field observations active. Reconcile evidence to update hazard twin.</span>
+        </div>
+        <button
+          onClick={() => {
+            openIncident("TG-2048", "EVIDENCE");
+          }}
+          className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+        >
+          <span>Review Citizen Queue</span>
+          <IconArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
       {/* ── 4 Foundational Operational Questions (Phase 0 North Star Section 0.13 & Phase 1 Section 6) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
         <div

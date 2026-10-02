@@ -14,12 +14,13 @@
  */
 
 export type LocationPermissionState = "prompt" | "granted" | "denied" | "unavailable";
-export type LocationStatus = "idle" | "requesting" | "acquiring" | "ready" | "stale" | "error";
+export type LocationStatus = "idle" | "requesting" | "tracking" | "error";
 export type LocationSource = "DEVICE_GEOLOCATION" | "MANUAL_PIN" | "FALLBACK_APPROXIMATION";
 
 export interface GeoLocationSnapshot {
   latitude: number;
   longitude: number;
+  accuracy: number | null;
   accuracyMeters: number | null;
   altitudeMeters: number | null;
   timestamp: number;
@@ -108,17 +109,19 @@ class CitizenLocationService {
     const savedLat = typeof window !== "undefined" ? localStorage.getItem("tg_loc_lat") : null;
     const savedLng = typeof window !== "undefined" ? localStorage.getItem("tg_loc_lng") : null;
     const savedSource = (typeof window !== "undefined" ? localStorage.getItem("tg_loc_source") : null) as LocationSource | null;
+    const savedAcc = typeof window !== "undefined" ? localStorage.getItem("tg_loc_acc") : null;
 
     this.currentSnapshot = {
       latitude: savedLat ? parseFloat(savedLat) : 27.0842,
       longitude: savedLng ? parseFloat(savedLng) : 92.5681,
-      accuracyMeters: null,
+      accuracy: savedAcc ? parseFloat(savedAcc) : null,
+      accuracyMeters: savedAcc ? parseFloat(savedAcc) : null,
       altitudeMeters: null,
       timestamp: Date.now(),
       source: savedSource || "FALLBACK_APPROXIMATION",
       status: "idle",
       permission: "prompt",
-      localityLabel: "KM-42 Bhalukpong-Tenga (NH-13, West Kameng)",
+      localityLabel: savedSource === "DEVICE_GEOLOCATION" ? "Cached Device GPS" : "KM-42 Bhalukpong-Tenga (NH-13, West Kameng)",
     };
 
     if (typeof window !== "undefined") {
@@ -190,7 +193,7 @@ class CitizenLocationService {
       return this.getSnapshot();
     }
 
-    this.currentSnapshot.status = "acquiring";
+    this.currentSnapshot.status = "requesting";
     this.notify();
 
     return new Promise((resolve) => {
@@ -205,7 +208,7 @@ class CitizenLocationService {
           if (err.code === err.PERMISSION_DENIED) {
             this.currentSnapshot.status = "error";
             this.currentSnapshot.permission = "denied";
-            this.currentSnapshot.errorMessage = "Location permission was denied. Please allow location in your browser settings.";
+            this.currentSnapshot.errorMessage = "Location permission was denied. Please allow location access in your browser settings.";
             this.notify();
             resolve(this.getSnapshot());
             return;
@@ -220,10 +223,14 @@ class CitizenLocationService {
             },
             (finalErr) => {
               this.currentSnapshot.status = "error";
-              this.currentSnapshot.errorMessage =
-                finalErr.code === finalErr.TIMEOUT
-                  ? "Location request timed out. Please check device GPS or choose an NER corridor preset."
-                  : `GPS Error: ${finalErr.message}`;
+              if (finalErr.code === finalErr.PERMISSION_DENIED) {
+                this.currentSnapshot.permission = "denied";
+                this.currentSnapshot.errorMessage = "Location permission was denied. Please allow location access in your browser settings.";
+              } else if (finalErr.code === finalErr.TIMEOUT) {
+                this.currentSnapshot.errorMessage = "Location request timed out. Please check device GPS or choose an NER corridor preset.";
+              } else {
+                this.currentSnapshot.errorMessage = `GPS Error: ${finalErr.message}`;
+              }
               this.notify();
               resolve(this.getSnapshot());
             },
@@ -233,6 +240,46 @@ class CitizenLocationService {
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
       );
     });
+  }
+
+  /**
+   * Start continuous position tracking (watchPosition).
+   */
+  public startTracking(): void {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    if (this.watchId !== null) return;
+
+    this.currentSnapshot.status = "tracking";
+    this.notify();
+
+    this.watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        this.handlePositionSuccess(pos, "DEVICE_GEOLOCATION");
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          this.currentSnapshot.permission = "denied";
+          this.currentSnapshot.status = "error";
+          this.stopTracking();
+        }
+        this.notify();
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+    );
+  }
+
+  /**
+   * Stop continuous position tracking.
+   */
+  public stopTracking(): void {
+    if (this.watchId !== null && typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.clearWatch(this.watchId);
+      this.watchId = null;
+    }
+    if (this.currentSnapshot.status === "tracking") {
+      this.currentSnapshot.status = "idle";
+      this.notify();
+    }
   }
 
   private handlePositionSuccess(pos: GeolocationPosition, source: LocationSource) {
@@ -251,11 +298,12 @@ class CitizenLocationService {
     this.currentSnapshot = {
       latitude: Number(lat.toFixed(6)),
       longitude: Number(lng.toFixed(6)),
+      accuracy: acc,
       accuracyMeters: acc,
       altitudeMeters: pos.coords.altitude ? Math.round(pos.coords.altitude) : null,
       timestamp: pos.timestamp || Date.now(),
       source,
-      status: "ready",
+      status: this.watchId !== null ? "tracking" : "idle",
       permission: "granted",
       errorMessage: undefined,
       isNerCorridor: this.checkIsNerCorridor(lat, lng),
@@ -265,6 +313,7 @@ class CitizenLocationService {
     if (typeof window !== "undefined") {
       localStorage.setItem("tg_loc_lat", this.currentSnapshot.latitude.toString());
       localStorage.setItem("tg_loc_lng", this.currentSnapshot.longitude.toString());
+      localStorage.setItem("tg_loc_acc", acc.toString());
       localStorage.setItem("tg_loc_source", source);
     }
 
@@ -282,11 +331,12 @@ class CitizenLocationService {
     this.currentSnapshot = {
       latitude: Number(lat.toFixed(6)),
       longitude: Number(lng.toFixed(6)),
+      accuracy: null,
       accuracyMeters: null,
       altitudeMeters: null,
       timestamp: Date.now(),
       source: "MANUAL_PIN",
-      status: "ready",
+      status: "idle",
       permission: this.currentSnapshot.permission,
       errorMessage: undefined,
       isNerCorridor: this.checkIsNerCorridor(lat, lng),
@@ -297,6 +347,7 @@ class CitizenLocationService {
       localStorage.setItem("tg_loc_lat", this.currentSnapshot.latitude.toString());
       localStorage.setItem("tg_loc_lng", this.currentSnapshot.longitude.toString());
       localStorage.setItem("tg_loc_source", "MANUAL_PIN");
+      localStorage.removeItem("tg_loc_acc");
     }
 
     this.notify();

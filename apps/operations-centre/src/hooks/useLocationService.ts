@@ -20,6 +20,14 @@ export function useLocationService() {
     return await locationService.requestDeviceLocation();
   }, []);
 
+  const startTracking = useCallback(() => {
+    locationService.startTracking();
+  }, []);
+
+  const stopTracking = useCallback(() => {
+    locationService.stopTracking();
+  }, []);
+
   const setManualPin = useCallback((lat: number, lng: number, label?: string) => {
     return locationService.setManualPin(lat, lng, label);
   }, []);
@@ -31,6 +39,8 @@ export function useLocationService() {
   return {
     location,
     requestGps,
+    startTracking,
+    stopTracking,
     setManualPin,
     selectPreset,
     presets: NER_CORRIDOR_PRESETS,
