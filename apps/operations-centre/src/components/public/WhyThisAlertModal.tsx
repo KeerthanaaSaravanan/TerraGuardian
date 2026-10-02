@@ -92,12 +92,12 @@ export const WhyThisAlertModal: React.FC<WhyThisAlertModalProps> = ({ isOpen, on
           {/* Source & Metadata Summary */}
           <div className="p-3 bg-slate-950/70 border border-white/10 rounded-xl space-y-1.5 font-mono text-[11px] text-slate-300">
             <div className="flex justify-between">
-              <span>SOURCE AUTHORITY:</span>
-              <span className="text-white font-bold">DDMA West Kameng & SDRF</span>
+              <span>SOURCE PROVENANCE:</span>
+              <span className="text-white font-bold">West Kameng Scenario (DDMA / SDRF)</span>
             </div>
             <div className="flex justify-between">
               <span>DATA STATUS:</span>
-              <span className="text-cyan-400 font-bold">OPERATIONAL ASSESSMENT</span>
+              <span className="text-cyan-400 font-bold">PROTOTYPE OPERATIONAL ASSESSMENT</span>
             </div>
             <div className="flex justify-between">
               <span>CORRIDOR:</span>
@@ -105,7 +105,7 @@ export const WhyThisAlertModal: React.FC<WhyThisAlertModalProps> = ({ isOpen, on
             </div>
             <div className="flex justify-between">
               <span>LAST UPDATED:</span>
-              <span className="text-slate-200">Live telemetry</span>
+              <span className="text-slate-200">Current scenario assessment</span>
             </div>
           </div>
         </div>
@@ -124,10 +124,10 @@ export const WhyThisAlertModal: React.FC<WhyThisAlertModalProps> = ({ isOpen, on
           {showTechnicalDetails && (
             <div className="mt-2.5 p-3 rounded-xl bg-slate-950/90 border border-white/10 text-[11px] space-y-2 font-mono text-slate-300 animate-in fade-in duration-100">
               <div>
-                <strong className="text-amber-300">RAINFALL SATURATION:</strong> 184.6 mm recorded over 7 days (geotechnical trigger threshold is 120.0 mm).
+                <strong className="text-amber-300">RECENT RAINFALL & GROUND CONDITIONS:</strong> 184.6 mm recorded over 7 days (operational assessment threshold is 120.0 mm).
               </div>
               <div>
-                <strong className="text-indigo-300">STATUTORY ORDER:</strong> Enacted by DC/DM West Kameng (#DDMA-WK-884) under Disaster Management Act 2005.
+                <strong className="text-indigo-300">ADMINISTRATIVE CONTEXT:</strong> Scenario exercise (#DDMA-WK-884) demonstrating early warning coordination under Disaster Management Act 2005.
               </div>
               <div className="text-[10px] text-slate-400 pt-1 border-t border-white/10">
                 <strong>LEGAL INVARIANT:</strong> AI models generate risk predictions; statutory orders require administrative executive enactment.

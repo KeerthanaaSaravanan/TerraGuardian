@@ -32,12 +32,12 @@ export const RoadStatusCard: React.FC<RoadStatusCardProps> = ({ onViewOnMap }) =
                 Road Conditions Near You
               </h3>
               <div className="text-xs text-slate-300">
-                Arterial highway passes verified with BRO & District Police
+                Regional arterial corridor monitoring (current prototype data)
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded">
-            DATA STATUS: LIVE
+          <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">
+            DATA STATUS: PROTOTYPE OPERATIONAL DATA
           </span>
         </div>
 
@@ -58,18 +58,18 @@ export const RoadStatusCard: React.FC<RoadStatusCardProps> = ({ onViewOnMap }) =
           </div>
 
           <p className="text-xs text-slate-200 leading-relaxed">
-            Landslide and active debris runout at KM-42. Road restricted at KM-38 checkpost by SDRF & Police.
+            Landslide debris runout reported at KM-42. Prototype scenario indicates road restriction at KM-38 checkpost.
           </p>
 
           <div className="bg-slate-900/80 p-2.5 rounded-lg border border-white/10 text-xs space-y-1">
             <div className="text-red-300 font-bold flex items-center gap-1.5">
               <span>⚠️ Action:</span>
-              <span>Avoid this corridor. Do not attempt night transit.</span>
+              <span>Avoid this corridor. Do not attempt transit during active rainfall.</span>
             </div>
             <div className="text-emerald-300 font-medium">
-              <span>✓ Authorized Alternative:</span>{" "}
+              <span>✓ Suggested Alternate Corridor (Prototype Advisory):</span>{" "}
               <span className="text-slate-200">
-                Divert via Rupa-Kalaktang Bypass (light vehicles only). Heavy commercial freight barred.
+                Divert via Rupa-Kalaktang Bypass (light vehicles only, subject to on-ground checkpost direction).
               </span>
             </div>
           </div>
@@ -100,7 +100,7 @@ export const RoadStatusCard: React.FC<RoadStatusCardProps> = ({ onViewOnMap }) =
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shrink-0" />
                 <div>
                   <div className="font-bold text-white">NH-10 (Sevoke-Gangtok)</div>
-                  <div className="text-[11px] text-slate-300">No current road restriction identified</div>
+                  <div className="text-[11px] text-slate-300">Prototype scenario: No current closure reported</div>
                 </div>
               </div>
               <span className="text-[10px] text-emerald-300 font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
@@ -114,7 +114,7 @@ export const RoadStatusCard: React.FC<RoadStatusCardProps> = ({ onViewOnMap }) =
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-400 shrink-0" />
                 <div>
                   <div className="font-bold text-white">NH-29 (Dimapur-Kohima)</div>
-                  <div className="text-[11px] text-slate-300">Caution — rolling stones near Chumukedima</div>
+                  <div className="text-[11px] text-slate-300">Prototype scenario: Caution advisory near Chumukedima</div>
                 </div>
               </div>
               <span className="text-[10px] text-amber-300 font-mono px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
@@ -124,19 +124,29 @@ export const RoadStatusCard: React.FC<RoadStatusCardProps> = ({ onViewOnMap }) =
           </div>
         </div>
 
-        {/* Highway Control Assistance with Safe Dialog */}
+        {/* Highway Helpline Assistance with Safe Dialog */}
         <div className="mt-3 pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
           <span className="text-slate-300">
-            Need highway pass clearance confirmation?
+            Need highway assistance or route clarification?
           </span>
-          <button
-            type="button"
-            onClick={() => setActiveHotline(EMERGENCY_HOTLINES["1077"])}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/15 text-indigo-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <IconPhoneCall className="w-3.5 h-3.5" />
-            <span>Call Highway Control (1077)</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveHotline(EMERGENCY_HOTLINES["1033"])}
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/15 text-cyan-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <IconPhoneCall className="w-3.5 h-3.5" />
+              <span>Highway Helpline (1033)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveHotline(EMERGENCY_HOTLINES["1077"])}
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/15 text-indigo-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <IconPhoneCall className="w-3.5 h-3.5" />
+              <span>District Cell (1077)</span>
+            </button>
+          </div>
         </div>
       </div>
 

@@ -71,8 +71,8 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
 
         {/* Data Status Badge & Focus Controls */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 rounded">
-            STATUS: OPERATIONAL ASSESSMENT
+          <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">
+            DATA STATUS: PROTOTYPE OPERATIONAL ASSESSMENT
           </span>
           <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg border border-white/10 text-[11px]">
             <button
@@ -126,10 +126,10 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             x={incidentX - 140}
             y={incidentY - 135}
             fill="#eab308"
-            fontSize="9"
+            fontSize="8.5"
             className="opacity-75 font-semibold"
           >
-            Monitoring area (15 km)
+            MONITORING AREA (15 km)
           </text>
 
           {/* 5 km Potential Impact Area */}
@@ -143,13 +143,13 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             strokeDasharray="3 3"
           />
           <text
-            x={incidentX + 60}
+            x={incidentX + 45}
             y={incidentY - 55}
             fill="#fbbf24"
-            fontSize="9"
+            fontSize="8.5"
             fontWeight="bold"
           >
-            Potential impact area
+            POTENTIAL IMPACT AREA
           </text>
 
           {/* 2.5 km Affected Danger Zone */}
@@ -161,6 +161,15 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             stroke="#ef4444"
             strokeWidth="2"
           />
+          <text
+            x={incidentX - 35}
+            y={incidentY + 36}
+            fill="#f87171"
+            fontSize="8"
+            fontWeight="bold"
+          >
+            AFFECTED AREA
+          </text>
 
           {/* Arterial Highway Network: NH-13 */}
           <path
@@ -189,7 +198,7 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             NH-13 TRANS-ARUNACHAL HIGHWAY
           </text>
 
-          {/* Authorized Bypass: Rupa-Kalaktang */}
+          {/* Alternate Corridor: Rupa-Kalaktang */}
           <path
             d={`M 140,310 Q ${detourX},${detourY} 480,130`}
             fill="none"
@@ -197,8 +206,8 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             strokeWidth="2.5"
             strokeDasharray="5 3"
           />
-          <text x={detourX - 45} y={detourY - 10} fill="#34d399" fontSize="8.5" fontWeight="bold">
-            Authorized Detour: Rupa Bypass
+          <text x={detourX - 55} y={detourY - 10} fill="#34d399" fontSize="8" fontWeight="bold">
+            ALTERNATIVE CORRIDOR: RUPA BYPASS (SCENARIO ADVISORY)
           </text>
 
           {/* Distance Line from User to Incident */}
@@ -238,10 +247,10 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             <circle r="8" fill="#dc2626" stroke="#ffffff" strokeWidth="1.8" />
             <rect x="-55" y="12" width="110" height="22" rx="4" fill="#1e293b" stroke="#dc2626" strokeWidth="1" />
             <text x="0" y="22" fill="#f87171" fontSize="8.5" fontWeight="bold" textAnchor="middle">
-              ROAD CLOSED: KM-38
+              ROAD BLOCK: KM-38
             </text>
             <text x="0" y="31" fill="#94a3b8" fontSize="7.5" textAnchor="middle">
-              SDRF Checkpost Alpha
+              Traffic Restriction Post
             </text>
           </g>
 
@@ -251,7 +260,7 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             <circle r="10" fill="#ef4444" stroke="#ffffff" strokeWidth="2" />
             <rect x="-65" y="-30" width="130" height="22" rx="4" fill="#0f172a" stroke="#ef4444" strokeWidth="1.2" />
             <text x="0" y="-19" fill="#fca5a5" fontSize="9" fontWeight="bold" textAnchor="middle">
-              LANDSLIDE: NH-13 KM-42
+              INCIDENT: NH-13 KM-42
             </text>
             <text x="0" y="-10" fill="#cbd5e1" fontSize="7.5" textAnchor="middle">
               Active slope movement
@@ -262,12 +271,12 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
           <g transform={`translate(${userX}, ${userY})`}>
             <circle r="7" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
             <circle r="2.5" fill="#ffffff" />
-            <rect x="-45" y="-26" width="90" height="20" rx="4" fill="#064e3b" stroke="#34d399" strokeWidth="1" />
+            <rect x="-35" y="-26" width="70" height="20" rx="4" fill="#064e3b" stroke="#34d399" strokeWidth="1" />
             <text x="0" y="-17" fill="#a7f3d0" fontSize="8.5" fontWeight="bold" textAnchor="middle">
-              YOU ARE HERE
+              YOU
             </text>
             <text x="0" y="-8" fill="#6ee7b7" fontSize="7.5" textAnchor="middle">
-              {location.accuracyMeters ? `±${Math.round(location.accuracyMeters)}m` : "Current Location"}
+              {location.accuracyMeters ? `±${Math.round(location.accuracyMeters)}m` : "Selected Pin"}
             </text>
           </g>
         </svg>
@@ -282,28 +291,28 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
       <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
         <div className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-full bg-red-500 shrink-0" />
-          <span className="text-slate-200">Incident Area</span>
+          <span className="text-slate-200">AFFECTED AREA</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-full bg-amber-500 shrink-0" />
-          <span className="text-slate-200">Potential Impact</span>
+          <span className="text-slate-200">POTENTIAL IMPACT AREA</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded bg-red-600 flex items-center justify-center text-[8px] font-bold text-white shrink-0">
             ⛔
           </span>
-          <span className="text-slate-200">Road Blocked</span>
+          <span className="text-slate-200">ROAD BLOCK</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-full bg-emerald-400 shrink-0" />
-          <span className="text-slate-200">Your Position</span>
+          <span className="text-slate-200">YOU</span>
         </div>
       </div>
 
       {/* Plain Language Explanations */}
       <div className="mt-2.5 pt-2 border-t border-white/10 flex items-start justify-between gap-2 text-[11px] text-slate-300">
         <div>
-          Prototype-derived operational awareness area. It does not predict an exact future landslide location.
+          Prototype-derived operational awareness area. It does not represent an official government danger boundary.
         </div>
         <button
           type="button"

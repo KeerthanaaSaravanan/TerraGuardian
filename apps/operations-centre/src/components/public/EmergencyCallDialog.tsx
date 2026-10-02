@@ -12,26 +12,32 @@ export const EMERGENCY_HOTLINES: Record<string, EmergencyHotlineInfo> = {
   "112": {
     number: "112",
     name: "National Emergency Response (ERSS)",
-    subtitle: "24/7 Police, Fire, and Immediate Disaster Rescue",
+    subtitle: "Emergency contact — Police, Fire, Disaster Response",
     category: "ERSS",
   },
   "108": {
     number: "108",
     name: "Emergency Medical & Ambulance",
-    subtitle: "Critical Medical Care and Patient Evacuation",
+    subtitle: "Emergency contact — Medical care and ambulance dispatch",
     category: "AMBULANCE",
   },
   "1077": {
     number: "1077",
     name: "District Disaster Control Room (DDMA)",
-    subtitle: "West Kameng District Disaster Management Authority",
+    subtitle: "Emergency contact — District disaster management authority",
     category: "DDMA",
   },
   "1070": {
     number: "1070",
     name: "State Disaster Management (SDMA)",
-    subtitle: "State Emergency Operations Centre Control Room",
+    subtitle: "Emergency contact — State emergency operations centre",
     category: "SDMA",
+  },
+  "1033": {
+    number: "1033",
+    name: "National Highway Helpline",
+    subtitle: "Emergency contact — Highway assistance and road conditions",
+    category: "HIGHWAY",
   },
 };
 
@@ -55,6 +61,7 @@ export const EmergencyCallDialog: React.FC<EmergencyCallDialogProps> = ({
   hotline,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [callAttempted, setCallAttempted] = useState(false);
   const mobile = isMobileDevice();
 
   if (!isOpen || !hotline) return null;
@@ -64,7 +71,6 @@ export const EmergencyCallDialog: React.FC<EmergencyCallDialogProps> = ({
       if (typeof navigator !== "undefined" && navigator.clipboard) {
         await navigator.clipboard.writeText(hotline.number);
       } else {
-        // Fallback for older browsers
         const el = document.createElement("textarea");
         el.value = hotline.number;
         document.body.appendChild(el);
@@ -81,7 +87,8 @@ export const EmergencyCallDialog: React.FC<EmergencyCallDialogProps> = ({
   };
 
   const handleTryCall = () => {
-    // Controlled safe trigger: do NOT use window.location which reloads or blanks desktop browsers
+    setCallAttempted(true);
+    // Controlled safe trigger: do NOT use router navigation or window.location which reloads/blanks browsers
     try {
       const a = document.createElement("a");
       a.href = `tel:${hotline.number}`;
@@ -92,6 +99,12 @@ export const EmergencyCallDialog: React.FC<EmergencyCallDialogProps> = ({
     } catch (e) {
       console.warn("Direct telephone call trigger unavailable on this device:", e);
     }
+  };
+
+  const handleCloseDialog = () => {
+    setCallAttempted(false);
+    setCopied(false);
+    onClose();
   };
 
   return (
@@ -110,7 +123,7 @@ export const EmergencyCallDialog: React.FC<EmergencyCallDialogProps> = ({
             </span>
             <div>
               <div className="text-[10px] font-bold text-red-400 uppercase tracking-wider">
-                Emergency Hotline
+                Emergency Contact
               </div>
               <h3 id="hotline-dialog-title" className="font-bold text-base text-white">
                 {hotline.name}
@@ -118,7 +131,7 @@ export const EmergencyCallDialog: React.FC<EmergencyCallDialogProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleCloseDialog}
             aria-label="Close dialog"
             className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
           >
@@ -141,18 +154,26 @@ export const EmergencyCallDialog: React.FC<EmergencyCallDialogProps> = ({
           <IconInfo className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
           <div>
             {mobile ? (
-              <span>Tap below to call directly from your phone's dialer, or copy the number.</span>
+              <span>Tap below to open your phone dialer with <strong>{hotline.number}</strong>, or copy the number.</span>
             ) : (
               <span>
-                You are on a desktop/laptop computer. Please dial <strong>{hotline.number}</strong> from your phone or mobile device, or copy it.
+                Desktop / non-telephony device: Copy <strong>{hotline.number}</strong> and dial directly from a mobile phone or landline.
               </span>
             )}
           </div>
         </div>
 
+        {/* Non-telephony device feedback */}
+        {callAttempted && (
+          <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-[11px] text-amber-200 leading-normal">
+            Call attempt triggered on device. If no dialer opened, please dial <strong>{hotline.number}</strong> directly from your phone.
+          </div>
+        )}
+
         {/* Actions */}
         <div className="space-y-2 pt-1">
           <button
+            type="button"
             onClick={handleCopyNumber}
             className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer border ${
               copied
@@ -163,7 +184,7 @@ export const EmergencyCallDialog: React.FC<EmergencyCallDialogProps> = ({
             {copied ? (
               <>
                 <IconCheck className="w-4 h-4" />
-                <span>Number Copied ({hotline.number})</span>
+                <span>Copied {hotline.number} to Clipboard</span>
               </>
             ) : (
               <>
@@ -173,18 +194,20 @@ export const EmergencyCallDialog: React.FC<EmergencyCallDialogProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={handleTryCall}
             className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white transition-all cursor-pointer border border-red-400/40 shadow-md shadow-red-950/30"
           >
             <IconPhoneCall className="w-4 h-4" />
-            <span>{mobile ? `Call ${hotline.number} Now` : `Try Call From Device`}</span>
+            <span>{mobile ? `Call ${hotline.number}` : `Try Call (${hotline.number})`}</span>
           </button>
 
           <button
-            onClick={onClose}
-            className="w-full py-2 px-4 rounded-xl text-xs text-slate-400 hover:text-slate-200 transition-colors"
+            type="button"
+            onClick={handleCloseDialog}
+            className="w-full py-2 px-4 rounded-xl text-xs text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
           >
-            Cancel / Return to Safety App
+            Close
           </button>
         </div>
       </div>

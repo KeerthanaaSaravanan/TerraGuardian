@@ -170,7 +170,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, 
               </div>
               <div className="flex justify-between text-slate-300">
                 <span>Status:</span>
-                <span className="text-amber-400 font-bold">Submitted for review</span>
+                <span className="text-amber-400 font-mono font-bold">UNVERIFIED CITIZEN OBSERVATION</span>
               </div>
             </div>
 

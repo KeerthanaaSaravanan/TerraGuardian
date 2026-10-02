@@ -170,17 +170,17 @@ export const NeedHelpModal: React.FC<NeedHelpModalProps> = ({ isOpen, onClose })
                 </div>
                 <div className="flex justify-between items-center text-slate-300">
                   <span>Status:</span>
-                  <span className="text-amber-400 font-bold">Received — awaiting assignment</span>
+                  <span className="text-amber-400 font-mono font-bold">REQUEST_RECEIVED (UNASSIGNED)</span>
                 </div>
               </div>
 
               <div className="p-3 bg-red-950/40 border border-red-500/40 rounded-xl text-xs text-red-200 text-left w-full space-y-2">
                 <div className="font-bold flex items-center gap-1.5 text-red-300">
                   <IconAlertTriangle className="w-4 h-4" />
-                  If you are in immediate life danger, call 112 directly.
+                  Call 112 for immediate emergency assistance.
                 </div>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Operational teams prioritize life safety. Stay in a stable area away from steep slopes.
+                  Submitting a digital request records your coordinates for responder situational awareness, but does NOT guarantee immediate dispatch or vehicle arrival. If in immediate danger, dial 112 immediately.
                 </p>
               </div>
 

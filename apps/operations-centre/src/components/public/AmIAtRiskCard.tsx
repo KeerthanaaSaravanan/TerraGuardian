@@ -59,7 +59,17 @@ export const AmIAtRiskCard: React.FC<AmIAtRiskCardProps> = ({
     isAffected: true,
   };
 
-  if (distanceKm <= 2.5) {
+  if (location.status === "error" || (location.latitude === 0 && location.longitude === 0)) {
+    exposure = {
+      badge: "UNKNOWN",
+      badgeColor: "bg-slate-700 text-slate-200",
+      bgColor: "bg-slate-800/40 border-white/10",
+      headline: "Location unavailable — unable to determine exposure.",
+      affectedRoad: "Corridor selection required",
+      action: "Enable GPS location access or choose your corridor section from the menu.",
+      isAffected: false,
+    };
+  } else if (distanceKm <= 2.5) {
     exposure = {
       badge: "DIRECTLY AFFECTED",
       badgeColor: "bg-red-600 text-white",
@@ -81,7 +91,7 @@ export const AmIAtRiskCard: React.FC<AmIAtRiskCardProps> = ({
     };
   } else if (distanceKm <= 15.0) {
     exposure = {
-      badge: "WITHIN MONITORING AREA",
+      badge: "NEARBY / MONITORED",
       badgeColor: "bg-yellow-600 text-slate-950 font-bold",
       bgColor: "bg-yellow-950/20 border-yellow-500/30",
       headline: "Your position is within the 15 km monitored district weather envelope.",
@@ -92,7 +102,7 @@ export const AmIAtRiskCard: React.FC<AmIAtRiskCardProps> = ({
   } else {
     // INVARIANT ENFORCED: Never say "You are safe"
     exposure = {
-      badge: "OUTSIDE ALERT AREA",
+      badge: "OUTSIDE CURRENT ALERT AREA",
       badgeColor: "bg-slate-700 text-slate-200",
       bgColor: "bg-slate-800/40 border-white/10",
       headline: "No direct impact is currently identified at your reported location.",

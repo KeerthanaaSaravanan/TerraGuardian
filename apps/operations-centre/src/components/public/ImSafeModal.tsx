@@ -118,16 +118,17 @@ export const ImSafeModal: React.FC<ImSafeModalProps> = ({ isOpen, onClose }) => 
               <IconCheck className="w-6 h-6 stroke-[3]" />
             </div>
             <div>
-              <h4 className="text-base font-bold text-emerald-300">
-                Safety Confirmation Received
+              <h4 className="text-base font-bold text-emerald-300 font-mono">
+                SAFE_CONFIRMATION_RECEIVED
               </h4>
               <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                Your response and location have been registered. Emergency teams know you are secure.
+                Citizen self-reported safe. Your individual status has been recorded.
               </p>
             </div>
 
-            <div className="p-2.5 bg-slate-950/70 border border-white/10 rounded-xl text-[11px] text-slate-400 leading-normal w-full text-left">
-              <strong>Notice:</strong> Your response confirms individual safety. It does not resolve active slope hazard or reopen restricted highway passes.
+            <div className="p-2.5 bg-slate-950/70 border border-white/10 rounded-xl text-[11px] text-slate-400 leading-normal w-full text-left space-y-1">
+              <div><strong>Notice:</strong> This confirmation only records your personal self-report.</div>
+              <div className="text-slate-400">It does NOT mean the incident is closed, the road reopened, or the landslide hazard removed. Continue to observe local police checkpost restrictions.</div>
             </div>
 
             <button

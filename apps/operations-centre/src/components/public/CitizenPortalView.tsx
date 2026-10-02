@@ -64,17 +64,17 @@ export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ onSelectOp
 
       {/* MAIN CONTAINER */}
       <main className="relative z-10 flex-1 px-3 sm:px-5 py-4 sm:py-6 max-w-2xl mx-auto w-full space-y-4">
-        {/* 2. ACTIVE SAFETY ALERT (Clean, prioritized emergency card) */}
+        {/* 2. ACTIVE SAFETY ALERT (Emergency Mode) */}
         <section aria-labelledby="active-alert-heading" className="w-full">
-          <div className="bg-red-950/40 border border-red-500/40 backdrop-blur-md rounded-2xl p-4 shadow-xl text-white">
-            <div className="flex items-start justify-between gap-2">
+          <div className="bg-red-950/40 border border-red-500/40 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-xl text-white">
+            <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
                 <span className="p-1.5 rounded-lg bg-red-600 text-white shrink-0">
                   <IconAlertTriangle className="w-4 h-4" />
                 </span>
                 <div>
                   <div className="text-[10px] font-bold text-red-400 font-mono uppercase tracking-wider">
-                    ACTIVE SAFETY ALERT • LANDSLIDE
+                    ACTIVE SAFETY ALERT • LANDSLIDE (TG-2048)
                   </div>
                   <h2 id="active-alert-heading" className="font-bold text-base sm:text-lg text-white">
                     NH-13 KM-38 Corridor Restricted
@@ -86,31 +86,65 @@ export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ onSelectOp
               </span>
             </div>
 
-            <div className="mt-2.5 text-xs text-slate-200 leading-relaxed space-y-1">
-              <p>
-                Active debris runout reported near KM-42. Traffic stopped at KM-38 checkpost for safety.
-              </p>
-              <p className="text-amber-300 font-semibold">
-                ⚠️ Avoid this corridor. Use Rupa bypass for light vehicles.
-              </p>
+            {/* 5 Core Citizen Safety Questions */}
+            <div className="mt-3 grid grid-cols-1 gap-2 text-xs">
+              <div className="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 space-y-1">
+                <div className="text-slate-400 font-semibold text-[11px]">WHAT HAPPENED?</div>
+                <div className="text-slate-100 font-medium">Active slope failure with mud and boulder runout across carriageway.</div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 space-y-1">
+                  <div className="text-slate-400 font-semibold text-[11px]">WHERE?</div>
+                  <div className="text-slate-100 font-medium">NH-13 KM-42 (Bhalukpong-Tenga Corridor, West Kameng).</div>
+                </div>
+
+                <div className="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 space-y-1">
+                  <div className="text-slate-400 font-semibold text-[11px]">DOES IT AFFECT ME?</div>
+                  <div className="text-amber-300 font-medium">Check your live location card below to see your corridor distance.</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 space-y-1">
+                  <div className="text-slate-400 font-semibold text-[11px]">WHAT SHOULD I DO?</div>
+                  <div className="text-slate-100 font-medium">Halt transit toward KM-38. Divert light vehicles via Rupa bypass if safe.</div>
+                </div>
+
+                <div className="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 space-y-1">
+                  <div className="text-slate-400 font-semibold text-[11px]">WHICH ROAD SHOULD I AVOID?</div>
+                  <div className="text-red-300 font-bold">Avoid NH-13 KM-38 to KM-46 section.</div>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
+            {/* Immediate 3 Action Buttons */}
+            <div className="mt-3.5 pt-3 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={handleScrollToMap}
-                className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
+                onClick={() => setIsImSafeModalOpen(true)}
+                className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-emerald-950/30"
               >
-                <span>View Danger on Map</span>
-                <IconChevronRight className="w-3.5 h-3.5" />
+                <IconShieldCheck className="w-4 h-4 text-emerald-200" />
+                <span>I'M SAFE</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setIsWhyModalOpen(true)}
-                className="text-xs text-slate-300 hover:text-white underline cursor-pointer"
+                onClick={() => setIsSOSModalOpen(true)}
+                className="py-2.5 px-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-red-950/30"
               >
-                Why this alert?
+                <IconPhoneCall className="w-4 h-4 text-red-200" />
+                <span>NEED HELP</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleScrollToMap}
+                className="py-2.5 px-3 bg-slate-800 hover:bg-slate-750 text-cyan-300 border border-white/15 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>VIEW DANGER</span>
+                <IconChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -127,11 +161,11 @@ export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ onSelectOp
         {/* 4. WHAT SHOULD I DO? (Concise Action Instructions & Emergency Buttons) */}
         <section aria-labelledby="safety-actions-heading" className="w-full bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-xl text-white">
           <h3 id="safety-actions-heading" className="text-base font-bold tracking-tight text-white mb-2">
-            What Should I Do Now?
+            Safety Guidance Checklist
           </h3>
           <ul className="text-xs text-slate-300 space-y-1.5 list-disc list-inside leading-relaxed mb-4">
             <li>Do not attempt to cross the NH-13 KM-38 checkpost while restricted.</li>
-            <li>If currently in transit, divert via the authorized Rupa-Kalaktang bypass.</li>
+            <li>If currently in transit, divert via the suggested Rupa-Kalaktang bypass if directed by local wardens.</li>
             <li>Confirm you are safe, or request assistance if stranded.</li>
           </ul>
 
@@ -205,7 +239,7 @@ export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ onSelectOp
 
       {/* FOOTER */}
       <footer className="relative z-10 border-t border-white/10 bg-slate-950 px-4 py-3 text-center text-[11px] text-slate-400 font-sans">
-        TerraGuardian Safe • National Disaster Management Network • Govt. of India
+        TerraGuardian Safe • Landslide Early Warning & Citizen Safety Interface (Prototype Assessment)
       </footer>
 
       {/* IN-PAGE MODALS */}

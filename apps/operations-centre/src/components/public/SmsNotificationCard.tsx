@@ -56,8 +56,8 @@ export const SmsNotificationCard: React.FC = () => {
       {showFullMessage && (
         <div className="mt-3 p-3.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-slate-100 leading-relaxed shadow-inner animate-in fade-in duration-100">
           <div className="text-[10px] font-mono text-slate-400 mb-1.5 flex justify-between">
-            <span>SENDER: GOV-DISASTER-ALERT (CAP/CB)</span>
-            <span className="text-emerald-400">ACTIVE CELL BROADCAST</span>
+            <span>SENDER: DISASTER-ALERT (CAP/CB)</span>
+            <span className="text-amber-400 font-mono text-[9px]">SIMULATED PROTOTYPE CONTENT</span>
           </div>
           <div className="p-2.5 bg-slate-900 rounded-lg border border-white/10 text-slate-200">
             {t("sms_sample_alert")}
