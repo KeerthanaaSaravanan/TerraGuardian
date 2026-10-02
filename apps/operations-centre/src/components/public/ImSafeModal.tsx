@@ -4,8 +4,8 @@ import { useCitizenI18n } from "../../hooks/useCitizenI18n";
 import {
   IconShieldCheck,
   IconMapPin,
-  IconCrosshair,
   IconCheck,
+  IconX,
 } from "../icons";
 
 interface ImSafeModalProps {
@@ -41,7 +41,7 @@ export const ImSafeModal: React.FC<ImSafeModalProps> = ({ isOpen, onClose }) => 
         body: JSON.stringify({
           device_id: deviceId,
           is_safe: true,
-          safe_notes: notes.trim() || "Reported safe via TerraGuardian Citizen Safe.",
+          safe_notes: notes.trim() || "Citizen safe confirmation.",
           approx_lat: location.latitude,
           approx_lng: location.longitude,
           alert_id: "tg-alert-2048",
@@ -53,18 +53,18 @@ export const ImSafeModal: React.FC<ImSafeModalProps> = ({ isOpen, onClose }) => 
       }
 
       setConfirmed(true);
-      setTimeout(() => {
-        // Auto reset after 3s
-      }, 3000);
-    } catch (err: any) {
-      // In offline or degraded network, still record locally
+    } catch {
+      // Offline fallback
       if (typeof localStorage !== "undefined") {
-        localStorage.setItem("tg_im_safe_checkin", JSON.stringify({
-          timestamp: new Date().toISOString(),
-          lat: location.latitude,
-          lng: location.longitude,
-          notes,
-        }));
+        localStorage.setItem(
+          "tg_im_safe_checkin",
+          JSON.stringify({
+            timestamp: new Date().toISOString(),
+            lat: location.latitude,
+            lng: location.longitude,
+            notes,
+          })
+        );
       }
       setConfirmed(true);
     } finally {
@@ -80,107 +80,115 @@ export const ImSafeModal: React.FC<ImSafeModalProps> = ({ isOpen, onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-150">
-      <div className="bg-slate-900 border border-white/20 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl flex flex-col gap-4 text-white">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="im-safe-dialog-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150"
+    >
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-sm w-full p-5 sm:p-6 shadow-2xl flex flex-col gap-4 text-white">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300">
+            <span className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400">
               <IconShieldCheck className="w-5 h-5" />
             </span>
             <div>
-              <h3 className="font-extrabold text-base sm:text-lg text-white">
-                {t("im_safe_title")}
+              <h3 id="im-safe-dialog-title" className="font-bold text-base text-white">
+                ✓ I'm Safe
               </h3>
-              <div className="text-[11px] font-mono text-slate-400">
-                Citizen Safety Signal Check-in
+              <div className="text-xs text-slate-300">
+                Confirm your current safety status
               </div>
             </div>
           </div>
           <button
             onClick={handleResetAndClose}
-            className="text-slate-400 hover:text-white font-mono text-sm px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+            aria-label="Close"
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
           >
-            ✕
+            <IconX className="w-4 h-4" />
           </button>
         </div>
 
         {confirmed ? (
-          <div className="py-6 flex flex-col items-center text-center space-y-3">
-            <div className="h-16 w-16 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shadow-xl">
-              <IconCheck className="w-8 h-8 stroke-[3]" />
+          /* Clean Confirmation Screen */
+          <div className="py-4 flex flex-col items-center text-center space-y-3">
+            <div className="h-12 w-12 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shadow-md">
+              <IconCheck className="w-6 h-6 stroke-[3]" />
             </div>
-            <h4 className="text-lg font-bold text-emerald-300">
-              {t("im_safe_confirmed")}
-            </h4>
-            <p className="text-xs text-slate-300 leading-relaxed max-w-sm">
-              Your safety signal has been attached to the Incident Twin at ({location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E). Emergency teams have been notified that you and your companions are secure.
-            </p>
-            <div className="p-2.5 bg-slate-950/70 border border-white/10 rounded-lg text-[10px] font-mono text-slate-400">
-              <strong>OPERATIONAL INVARIANT:</strong> Your check-in does not close active roadblock or evacuation orders for this sector.
+            <div>
+              <h4 className="text-base font-bold text-emerald-300">
+                Safety Confirmation Received
+              </h4>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                Your response and location have been registered. Emergency teams know you are secure.
+              </p>
             </div>
+
+            <div className="p-2.5 bg-slate-950/70 border border-white/10 rounded-xl text-[11px] text-slate-400 leading-normal w-full text-left">
+              <strong>Notice:</strong> Your response confirms individual safety. It does not resolve active slope hazard or reopen restricted highway passes.
+            </div>
+
             <button
               onClick={handleResetAndClose}
-              className="mt-2 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs transition-colors cursor-pointer mt-1"
             >
               Done
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
             <p className="text-slate-300 leading-relaxed">
-              {t("im_safe_description")}
+              Confirm that you and your companions are currently out of immediate danger.
             </p>
 
-            {/* GPS Attachment Notice */}
-            <div className="bg-slate-950/60 p-3 rounded-xl border border-white/10 space-y-1 font-mono text-[11px]">
-              <div className="flex items-center justify-between text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <IconMapPin className="w-3.5 h-3.5 text-emerald-400" />
-                  Attached Coordinates:
-                </span>
-                <span className="text-slate-200 font-bold">
-                  {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <IconCrosshair className="w-3.5 h-3.5 text-cyan-400" />
-                  Accuracy:
-                </span>
-                <span className="text-emerald-400 font-semibold">
-                  {location.accuracyMeters ? `±${Math.round(location.accuracyMeters)}m` : "Corridor Preset"}
-                </span>
-              </div>
+            {/* Location Attached */}
+            <div className="bg-slate-950/70 p-2.5 rounded-xl border border-white/10 flex items-center justify-between text-[11px]">
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <IconMapPin className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Your Location:</span>
+              </span>
+              <span className="text-slate-200 font-mono font-medium">
+                {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E
+              </span>
             </div>
 
-            {/* Optional Notes */}
+            {/* Optional note */}
             <div>
-              <label className="block text-slate-300 font-medium mb-1.5">
-                {t("im_safe_notes_label")}
+              <label className="block text-slate-300 font-medium mb-1">
+                Optional note (e.g. family count / shelter location):
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g. 2 adults and 1 child sheltered at Rupa Inspection Bungalow. All uninjured."
-                rows={3}
-                className="w-full bg-slate-800/80 border border-white/15 rounded-xl p-3 text-slate-100 text-xs focus:outline-none focus:border-emerald-400 font-sans resize-none"
+                placeholder="e.g. 2 people sheltered at Rupa town hall. Safe."
+                rows={2}
+                className="w-full bg-slate-800 border border-white/15 rounded-xl p-2.5 text-slate-200 text-xs focus:outline-none focus:border-emerald-400 resize-none"
               />
             </div>
 
-            {error && (
-              <div className="text-red-400 text-xs font-mono">{error}</div>
-            )}
+            {error && <div className="text-red-400 text-xs">{error}</div>}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer border border-emerald-400/40 disabled:opacity-50"
-            >
-              <IconShieldCheck className="w-4 h-4 text-emerald-200" />
-              <span>{submitting ? "Transmitting..." : t("im_safe_btn_submit")}</span>
-            </button>
+            {/* Submit / Cancel Actions */}
+            <div className="space-y-2 pt-1">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-bold py-2.5 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/30 transition-all cursor-pointer border border-emerald-400/40 disabled:opacity-50"
+              >
+                <IconShieldCheck className="w-4 h-4 text-emerald-200" />
+                <span>{submitting ? "Sending..." : "Confirm I'm Safe"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetAndClose}
+                className="w-full py-2 rounded-xl text-xs text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         )}
       </div>

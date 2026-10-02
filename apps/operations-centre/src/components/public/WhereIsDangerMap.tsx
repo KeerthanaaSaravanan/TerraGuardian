@@ -5,11 +5,8 @@ import {
   IconMapPin,
   IconAlertTriangle,
   IconShieldCheck,
-  IconCrosshair,
   IconLayers,
   IconInfo,
-  IconCompass,
-  IconRadio,
 } from "../icons";
 
 interface WhereIsDangerMapProps {
@@ -22,27 +19,26 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
 
   // Active view target focus
   const [mapFocus, setMapFocus] = useState<"ALL" | "INCIDENT" | "USER" | "ROADBLOCK">("ALL");
+  const [showExplanation, setShowExplanation] = useState(false);
 
   // Geospatial anchors (West Kameng NH-13 Corridor)
-  const INCIDENT = { lat: 27.0842, lng: 92.5681, label: "TG-2048: NH-13 KM-42", status: "ACTIVE SLOPE FAILURE" };
-  const ROADBLOCK = { lat: 27.0610, lng: 92.5510, label: "KM-38 Checkpost Closure", status: "CLOSED BY SDRF/POLICE" };
-  const DETOUR = { lat: 27.1250, lng: 92.5120, label: "Rupa-Kalaktang Bypass", status: "OPEN (LIGHT VEHICLES ONLY)" };
+  const INCIDENT = { lat: 27.0842, lng: 92.5681, label: "TG-2048: NH-13 KM-42" };
+  const ROADBLOCK = { lat: 27.0610, lng: 92.5510, label: "KM-38 Checkpost" };
+  const DETOUR = { lat: 27.1250, lng: 92.5120, label: "Rupa-Kalaktang Bypass" };
 
   // Calculate distance from user to incident
   const dLat = (INCIDENT.lat - location.latitude) * 111;
   const dLng = (INCIDENT.lng - location.longitude) * 111 * Math.cos((INCIDENT.lat * Math.PI) / 180);
   const distanceKm = Math.round(Math.sqrt(dLat * dLat + dLng * dLng) * 10) / 10;
 
-  // Map coordinate transformation to 600x400 SVG canvas
-  // Center roughly at 27.080, 92.550
+  // Map coordinate transformation to 600x380 SVG canvas
   const centerLat = 27.080;
   const centerLng = 92.550;
-  const scale = 1400; // pixels per degree
+  const scale = 1400;
 
   const toSvgX = (lng: number) => 300 + (lng - centerLng) * scale;
-  const toSvgY = (lat: number) => 200 - (lat - centerLat) * scale;
+  const toSvgY = (lat: number) => 190 - (lat - centerLat) * scale;
 
-  // Scaled coordinates
   const incidentX = toSvgX(INCIDENT.lng);
   const incidentY = toSvgY(INCIDENT.lat);
   const roadblockX = toSvgX(ROADBLOCK.lng);
@@ -50,164 +46,138 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
   const detourX = toSvgX(DETOUR.lng);
   const detourY = toSvgY(DETOUR.lat);
 
-  // User position clamped to viewport for safe visualization
   const rawUserX = toSvgX(location.longitude);
   const rawUserY = toSvgY(location.latitude);
-  const userX = Math.max(30, Math.min(570, rawUserX));
-  const userY = Math.max(30, Math.min(370, rawUserY));
+  const userX = Math.max(35, Math.min(565, rawUserX));
+  const userY = Math.max(35, Math.min(345, rawUserY));
 
   return (
-    <div className="w-full bg-slate-900/90 backdrop-blur-xl border border-white/15 rounded-2xl p-4 sm:p-6 shadow-2xl text-white">
+    <div className="w-full bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-xl text-white">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-indigo-500/20 border border-indigo-400/30 text-indigo-300">
+            <span className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300">
               <IconLayers className="w-4 h-4" />
             </span>
-            <h3 className="text-lg sm:text-xl font-black tracking-tight text-white uppercase drop-shadow-sm">
-              {t("impact_corridor_title")}
+            <h3 className="text-base sm:text-lg font-bold tracking-tight text-white">
+              Where is the Danger?
             </h3>
           </div>
-          <p className="text-xs text-slate-300 mt-1">
-            {t("impact_corridor_subtitle")}
+          <p className="text-xs text-slate-300 mt-0.5">
+            Active incident area, affected corridor, and blocked road checkpoint
           </p>
         </div>
 
-        {/* Focus Filter Tabs */}
-        <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-white/10 text-xs font-mono">
-          <button
-            onClick={() => setMapFocus("ALL")}
-            className={`px-2.5 py-1 rounded transition-colors ${mapFocus === "ALL" ? "bg-indigo-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
-          >
-            Corridor
-          </button>
-          <button
-            onClick={() => setMapFocus("INCIDENT")}
-            className={`px-2.5 py-1 rounded transition-colors ${mapFocus === "INCIDENT" ? "bg-red-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
-          >
-            Danger Zone
-          </button>
-          <button
-            onClick={() => setMapFocus("ROADBLOCK")}
-            className={`px-2.5 py-1 rounded transition-colors ${mapFocus === "ROADBLOCK" ? "bg-amber-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
-          >
-            Roadblock
-          </button>
-          <button
-            onClick={() => {
-              setMapFocus("USER");
-              requestGps();
-            }}
-            className={`px-2.5 py-1 rounded transition-colors ${mapFocus === "USER" ? "bg-emerald-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
-          >
-            My Location
-          </button>
+        {/* Data Status Badge & Focus Controls */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 rounded">
+            STATUS: OPERATIONAL ASSESSMENT
+          </span>
+          <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg border border-white/10 text-[11px]">
+            <button
+              onClick={() => setMapFocus("ALL")}
+              className={`px-2 py-1 rounded transition-colors ${mapFocus === "ALL" ? "bg-indigo-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
+            >
+              Corridor
+            </button>
+            <button
+              onClick={() => {
+                setMapFocus("USER");
+                requestGps();
+              }}
+              className={`px-2 py-1 rounded transition-colors ${mapFocus === "USER" ? "bg-emerald-600 text-white font-bold" : "text-slate-400 hover:text-white"}`}
+            >
+              My Pin
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Interactive Tactical Schematic Map */}
-      <div className="mt-4 relative w-full h-[360px] sm:h-[420px] rounded-xl overflow-hidden bg-slate-950 border border-white/10 shadow-inner flex items-center justify-center">
-        {/* Topographic Background Grids & Contours */}
-        <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]" />
+      {/* SVG Citizen Map */}
+      <div className="mt-3 relative w-full h-[320px] sm:h-[360px] rounded-xl overflow-hidden bg-slate-950 border border-white/10 flex items-center justify-center select-none">
+        {/* Subtle grid */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:20px_20px]" />
 
-        {/* SVG Tactical Drawing */}
-        <svg
-          viewBox="0 0 600 400"
-          className="w-full h-full select-none"
-          preserveAspectRatio="xMidYMid meet"
-        >
+        <svg viewBox="0 0 600 380" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
           <defs>
-            {/* Danger Zone Radial Gradient */}
-            <radialGradient id="dangerGradient" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.45" />
-              <stop offset="70%" stopColor="#ef4444" stopOpacity="0.2" />
+            <radialGradient id="citDangerGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.4" />
               <stop offset="100%" stopColor="#ef4444" stopOpacity="0.0" />
             </radialGradient>
-
-            {/* Impact Buffer Radial Gradient */}
-            <radialGradient id="impactGradient" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.3" />
-              <stop offset="85%" stopColor="#f59e0b" stopOpacity="0.1" />
+            <radialGradient id="citImpactGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.25" />
               <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
-            </radialGradient>
-
-            {/* User GPS Halo */}
-            <radialGradient id="userHalo" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
             </radialGradient>
           </defs>
 
-          {/* 15 km District Monitored Envelope */}
+          {/* 15 km District Monitoring Area */}
           <circle
             cx={incidentX}
             cy={incidentY}
-            r="160"
+            r="150"
             fill="none"
             stroke="#eab308"
-            strokeWidth="1.5"
+            strokeWidth="1.2"
             strokeDasharray="4 4"
-            className="opacity-40 animate-[spin_60s_linear_infinite]"
+            className="opacity-40"
           />
           <text
-            x={incidentX - 150}
-            y={incidentY - 145}
+            x={incidentX - 140}
+            y={incidentY - 135}
             fill="#eab308"
-            fontSize="10"
-            fontFamily="monospace"
-            className="opacity-75 font-bold"
+            fontSize="9"
+            className="opacity-75 font-semibold"
           >
-            15 KM MONITORED DISASTER ENVELOPE (WEST KAMENG)
+            Monitoring area (15 km)
           </text>
 
-          {/* 5 km Potential Impact Buffer */}
+          {/* 5 km Potential Impact Area */}
           <circle
             cx={incidentX}
             cy={incidentY}
-            r="85"
-            fill="url(#impactGradient)"
+            r="80"
+            fill="url(#citImpactGrad)"
             stroke="#f59e0b"
             strokeWidth="1.5"
-            strokeDasharray="2 2"
+            strokeDasharray="3 3"
           />
           <text
-            x={incidentX + 65}
-            y={incidentY - 60}
+            x={incidentX + 60}
+            y={incidentY - 55}
             fill="#fbbf24"
             fontSize="9"
-            fontFamily="monospace"
-            className="font-bold"
+            fontWeight="bold"
           >
-            5.0 KM IMPACT BUFFER
+            Potential impact area
           </text>
 
-          {/* 2.5 km Immediate Hazard Runout Zone */}
+          {/* 2.5 km Affected Danger Zone */}
           <circle
             cx={incidentX}
             cy={incidentY}
-            r="45"
-            fill="url(#dangerGradient)"
+            r="42"
+            fill="url(#citDangerGrad)"
             stroke="#ef4444"
             strokeWidth="2"
           />
 
-          {/* Arterial Highway Network: NH-13 Trans-Arunachal Highway */}
+          {/* Arterial Highway Network: NH-13 */}
           <path
-            d={`M 80,360 Q 220,290 ${roadblockX},${roadblockY} T ${incidentX},${incidentY} T 520,70`}
+            d={`M 70,340 Q 210,270 ${roadblockX},${roadblockY} T ${incidentX},${incidentY} T 520,60`}
             fill="none"
             stroke="#64748b"
-            strokeWidth="7"
+            strokeWidth="6"
             strokeLinecap="round"
           />
           <path
-            d={`M 80,360 Q 220,290 ${roadblockX},${roadblockY} T ${incidentX},${incidentY} T 520,70`}
+            d={`M 70,340 Q 210,270 ${roadblockX},${roadblockY} T ${incidentX},${incidentY} T 520,60`}
             fill="none"
             stroke="#94a3b8"
-            strokeWidth="4"
+            strokeWidth="3.5"
             strokeLinecap="round"
           />
-          {/* Blocked corridor segment on NH-13 */}
+          {/* Blocked corridor section */}
           <path
             d={`M ${roadblockX},${roadblockY} T ${incidentX},${incidentY}`}
             fill="none"
@@ -215,51 +185,37 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             strokeWidth="4"
             strokeDasharray="6 3"
           />
-          <text
-            x="130"
-            y="330"
-            fill="#cbd5e1"
-            fontSize="10"
-            fontFamily="monospace"
-            fontWeight="bold"
-          >
+          <text x="110" y="315" fill="#cbd5e1" fontSize="9" fontWeight="bold">
             NH-13 TRANS-ARUNACHAL HIGHWAY
           </text>
 
-          {/* Designated Detour Route: Rupa-Kalaktang Bypass */}
+          {/* Authorized Bypass: Rupa-Kalaktang */}
           <path
-            d={`M 150,330 Q ${detourX},${detourY} 480,140`}
+            d={`M 140,310 Q ${detourX},${detourY} 480,130`}
             fill="none"
             stroke="#10b981"
-            strokeWidth="3"
+            strokeWidth="2.5"
             strokeDasharray="5 3"
           />
-          <text
-            x={detourX - 50}
-            y={detourY - 12}
-            fill="#34d399"
-            fontSize="9"
-            fontFamily="monospace"
-            fontWeight="bold"
-          >
-            RUPA-KALAKTANG BYPASS (OPEN)
+          <text x={detourX - 45} y={detourY - 10} fill="#34d399" fontSize="8.5" fontWeight="bold">
+            Authorized Detour: Rupa Bypass
           </text>
 
-          {/* Distance Vector from User Pin to Incident */}
+          {/* Distance Line from User to Incident */}
           <line
             x1={userX}
             y1={userY}
             x2={incidentX}
             y2={incidentY}
             stroke="#38bdf8"
-            strokeWidth="1.5"
+            strokeWidth="1.2"
             strokeDasharray="4 2"
           />
           <rect
-            x={(userX + incidentX) / 2 - 28}
-            y={(userY + incidentY) / 2 - 10}
-            width="56"
-            height="18"
+            x={(userX + incidentX) / 2 - 24}
+            y={(userY + incidentY) / 2 - 9}
+            width="48"
+            height="17"
             rx="4"
             fill="#0f172a"
             stroke="#38bdf8"
@@ -269,8 +225,7 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
             x={(userX + incidentX) / 2}
             y={(userY + incidentY) / 2 + 3}
             fill="#38bdf8"
-            fontSize="10"
-            fontFamily="monospace"
+            fontSize="9"
             fontWeight="bold"
             textAnchor="middle"
           >
@@ -279,88 +234,84 @@ export const WhereIsDangerMap: React.FC<WhereIsDangerMapProps> = ({ onOpenWhyAle
 
           {/* Roadblock Point: KM-38 Checkpost */}
           <g transform={`translate(${roadblockX}, ${roadblockY})`}>
-            <circle r="14" fill="#dc2626" opacity="0.3" className="animate-ping" />
-            <circle r="9" fill="#dc2626" stroke="#ffffff" strokeWidth="2" />
-            <line x1="-5" y1="0" x2="5" y2="0" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-            <rect x="-65" y="14" width="130" height="26" rx="4" fill="#1e293b" stroke="#dc2626" strokeWidth="1" />
-            <text x="0" y="26" fill="#f87171" fontSize="9" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
-              ROAD BLOCKED: KM-38
+            <circle r="12" fill="#dc2626" opacity="0.3" className="animate-ping" />
+            <circle r="8" fill="#dc2626" stroke="#ffffff" strokeWidth="1.8" />
+            <rect x="-55" y="12" width="110" height="22" rx="4" fill="#1e293b" stroke="#dc2626" strokeWidth="1" />
+            <text x="0" y="22" fill="#f87171" fontSize="8.5" fontWeight="bold" textAnchor="middle">
+              ROAD CLOSED: KM-38
             </text>
-            <text x="0" y="36" fill="#94a3b8" fontSize="8" fontFamily="monospace" textAnchor="middle">
+            <text x="0" y="31" fill="#94a3b8" fontSize="7.5" textAnchor="middle">
               SDRF Checkpost Alpha
             </text>
           </g>
 
-          {/* Active Incident Epicenter TG-2048 */}
+          {/* Incident Epicenter */}
           <g transform={`translate(${incidentX}, ${incidentY})`}>
-            <circle r="22" fill="#ef4444" opacity="0.4" className="animate-ping" />
-            <circle r="12" fill="#ef4444" stroke="#ffffff" strokeWidth="2.5" />
-            <polygon points="-4,-4 4,-4 0,5" fill="#ffffff" />
-            <rect x="-80" y="-36" width="160" height="28" rx="4" fill="#0f172a" stroke="#ef4444" strokeWidth="1.5" />
-            <text x="0" y="-24" fill="#fca5a5" fontSize="10" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
-              TG-2048: NH-13 KM-42
+            <circle r="18" fill="#ef4444" opacity="0.3" className="animate-ping" />
+            <circle r="10" fill="#ef4444" stroke="#ffffff" strokeWidth="2" />
+            <rect x="-65" y="-30" width="130" height="22" rx="4" fill="#0f172a" stroke="#ef4444" strokeWidth="1.2" />
+            <text x="0" y="-19" fill="#fca5a5" fontSize="9" fontWeight="bold" textAnchor="middle">
+              LANDSLIDE: NH-13 KM-42
             </text>
-            <text x="0" y="-12" fill="#e2e8f0" fontSize="8" fontFamily="monospace" textAnchor="middle">
-              ACTIVE LANDSLIDE & DEBRIS SLIP
+            <text x="0" y="-10" fill="#cbd5e1" fontSize="7.5" textAnchor="middle">
+              Active slope movement
             </text>
           </g>
 
-          {/* Citizen User Location Pin */}
+          {/* Citizen Pin */}
           <g transform={`translate(${userX}, ${userY})`}>
-            <circle r="24" fill="url(#userHalo)" className="animate-pulse" />
-            <circle r="8" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
-            <circle r="3" fill="#ffffff" />
-            <rect x="-60" y="-32" width="120" height="24" rx="4" fill="#064e3b" stroke="#34d399" strokeWidth="1" />
-            <text x="0" y="-21" fill="#a7f3d0" fontSize="9" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
+            <circle r="7" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+            <circle r="2.5" fill="#ffffff" />
+            <rect x="-45" y="-26" width="90" height="20" rx="4" fill="#064e3b" stroke="#34d399" strokeWidth="1" />
+            <text x="0" y="-17" fill="#a7f3d0" fontSize="8.5" fontWeight="bold" textAnchor="middle">
               YOU ARE HERE
             </text>
-            <text x="0" y="-11" fill="#6ee7b7" fontSize="8" fontFamily="monospace" textAnchor="middle">
-              {location.accuracyMeters ? `±${Math.round(location.accuracyMeters)}m accuracy` : "Corridor Preset"}
+            <text x="0" y="-8" fill="#6ee7b7" fontSize="7.5" textAnchor="middle">
+              {location.accuracyMeters ? `±${Math.round(location.accuracyMeters)}m` : "Current Location"}
             </text>
           </g>
         </svg>
 
-        {/* Real-time Map Compass Rose */}
-        <div className="absolute top-3 right-3 bg-slate-900/80 border border-white/10 rounded-lg p-2 flex flex-col items-center shadow-lg font-mono text-[10px] text-slate-300">
-          <span className="font-bold text-red-400">N ↑</span>
-          <span className="text-[8px] text-slate-500">W • E</span>
-          <span className="text-[8px] text-slate-500">S</span>
-        </div>
-
-        {/* Monitored Elevation & Slope Footnote */}
-        <div className="absolute bottom-2 left-3 bg-slate-900/85 border border-white/10 rounded px-2 py-1 text-[10px] font-mono text-slate-300 flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Catchment: Bhalukpong-Tenga Valley • Elevation: 1,480m MSL</span>
+        {/* Compass */}
+        <div className="absolute top-2.5 right-2.5 bg-slate-900/80 border border-white/10 rounded px-2 py-1 text-[9px] font-mono text-slate-300">
+          N ↑
         </div>
       </div>
 
-      {/* Map Legend */}
-      <div className="mt-3.5 p-3 bg-slate-950/70 border border-white/10 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
-        <div className="flex items-center gap-2">
+      {/* Compact Plain-Language Legend */}
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-full bg-red-500 shrink-0" />
-          <span className="text-slate-200">Danger Zone (2.5 km)</span>
+          <span className="text-slate-200">Incident Area</span>
         </div>
-
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-full bg-amber-500 shrink-0" />
-          <span className="text-slate-200">Impact Buffer (5.0 km)</span>
+          <span className="text-slate-200">Potential Impact</span>
         </div>
-
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded bg-red-600 shrink-0 flex items-center justify-center text-[8px] text-white font-bold">⛔</span>
-          <span className="text-slate-200">KM-38 Roadblock</span>
+        <div className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded bg-red-600 flex items-center justify-center text-[8px] font-bold text-white shrink-0">
+            ⛔
+          </span>
+          <span className="text-slate-200">Road Blocked</span>
         </div>
-
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-full bg-emerald-400 shrink-0" />
-          <span className="text-slate-200">Citizen Pin (You)</span>
+          <span className="text-slate-200">Your Position</span>
         </div>
       </div>
 
-      {/* Geotechnical Catchment Disclaimer per requirements */}
-      <div className="mt-2.5 flex items-start gap-2 text-[11px] text-slate-400 leading-tight">
-        <IconInfo className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
-        <p>{t("corridor_warning_note")}</p>
+      {/* Plain Language Explanations */}
+      <div className="mt-2.5 pt-2 border-t border-white/10 flex items-start justify-between gap-2 text-[11px] text-slate-300">
+        <div>
+          Prototype-derived operational awareness area. It does not predict an exact future landslide location.
+        </div>
+        <button
+          type="button"
+          onClick={onOpenWhyAlertModal}
+          className="text-cyan-400 hover:text-cyan-300 underline font-semibold shrink-0"
+        >
+          Why this alert?
+        </button>
       </div>
     </div>
   );

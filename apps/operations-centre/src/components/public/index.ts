@@ -15,3 +15,5 @@ export { SmsNotificationCard } from "./SmsNotificationCard";
 export { WhyThisAlertModal } from "./WhyThisAlertModal";
 export { ImSafeModal } from "./ImSafeModal";
 export { NeedHelpModal } from "./NeedHelpModal";
+export { CitizenReportModal } from "./CitizenReportModal";
+export { EmergencyCallDialog, EMERGENCY_HOTLINES } from "./EmergencyCallDialog";
