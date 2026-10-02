@@ -37,13 +37,14 @@ import {
   PreliminaryResultStep,
 } from "./components/public";
 
-type AppRoute = "/" | "/citizen" | "/operations";
+type AppRoute = "/" | "/citizen" | "/operations" | "/operations/dashboard";
 
 function parseInitialRoute(): AppRoute {
   if (typeof window !== "undefined") {
-    const path = window.location.pathname.toLowerCase();
-    if (path.startsWith("/citizen")) return "/citizen";
-    if (path.startsWith("/operations")) return "/operations";
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, "") || "/";
+    if (path === "/citizen" || path.startsWith("/citizen/")) return "/citizen";
+    if (path === "/operations/dashboard" || path.startsWith("/operations/dashboard/")) return "/operations/dashboard";
+    if (path === "/operations" || path.startsWith("/operations/")) return "/operations";
   }
   return "/";
 }
@@ -271,9 +272,16 @@ const AppCore: React.FC = () => {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  // Protect /operations/dashboard: Unauthenticated users MUST be routed to /operations login
+  useEffect(() => {
+    if (route === "/operations/dashboard" && !isAuthorityUser) {
+      navigate("/operations");
+    }
+  }, [route, isAuthorityUser]);
+
   const handleGoToEvidenceReconciliation = () => {
     if (isAuthorityUser) {
-      navigate("/operations");
+      navigate("/operations/dashboard");
       setStep(3); // Jump right into Step 3: Evidence Reconciliation to see the fused citizen report
     } else {
       setPendingStep(3);
@@ -318,12 +326,38 @@ const AppCore: React.FC = () => {
         </div>
       )}
 
-      {/* 3. OPERATIONS CENTRE: Authorized Government Gateway */}
+      {/* 3. OPERATIONS AUTHENTICATION: Official Sign-In Gateway */}
       {route === "/operations" && (
+        <LoginView
+          onSuccess={() => {
+            if (pendingStep) {
+              setStep(pendingStep as any);
+              setPendingStep(null);
+            }
+            navigate("/operations/dashboard");
+          }}
+          onCancel={() => {
+            setPendingStep(null);
+            navigate("/");
+          }}
+          onNavigateCitizen={() => {
+            setPendingStep(null);
+            navigate("/citizen");
+          }}
+        />
+      )}
+
+      {/* 4. OPERATIONS DASHBOARD: Authenticated Operations Centre */}
+      {route === "/operations/dashboard" && (
         isAuthorityUser ? (
           <OperatorWorkflow
             onSwitchToPublic={() => navigate("/citizen")}
-            onExitToPortal={() => navigate("/")}
+            onExitToPortal={() => {
+              if (typeof window !== "undefined") {
+                window.history.pushState({}, "", "/");
+              }
+              setRoute("/");
+            }}
           />
         ) : (
           <LoginView
@@ -332,6 +366,7 @@ const AppCore: React.FC = () => {
                 setStep(pendingStep as any);
                 setPendingStep(null);
               }
+              navigate("/operations/dashboard");
             }}
             onCancel={() => {
               setPendingStep(null);

@@ -218,12 +218,15 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
   const setActiveNavTab = (tab: PrimaryNavTab, updateHistory: boolean = true) => {
     setActiveNavTabState(tab);
     if (typeof window !== "undefined") {
-      const targetHash = TAB_TO_HASH[tab] || "#operations";
-      if (window.location.hash !== targetHash) {
-        if (updateHistory) {
-          window.location.hash = targetHash;
-        } else {
-          window.history.replaceState(null, "", targetHash);
+      const isOpsRoute = window.location.pathname.startsWith("/operations");
+      if (isOpsRoute) {
+        const targetHash = TAB_TO_HASH[tab] || "#operations";
+        if (window.location.hash !== targetHash) {
+          if (updateHistory) {
+            window.location.hash = targetHash;
+          } else {
+            window.history.replaceState(null, "", targetHash);
+          }
         }
       }
     }
@@ -233,6 +236,8 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
     if (typeof window === "undefined") return;
 
     const handleHash = () => {
+      const isOpsRoute = window.location.pathname.startsWith("/operations");
+      if (!isOpsRoute) return;
       const hash = window.location.hash.toLowerCase();
       const tab = HASH_TO_TAB[hash];
       if (tab) {
@@ -243,10 +248,8 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
       }
     };
 
-    if (window.location.hash) {
+    if (window.location.hash && window.location.pathname.startsWith("/operations")) {
       handleHash();
-    } else {
-      window.history.replaceState(null, "", "#operations");
     }
 
     window.addEventListener("hashchange", handleHash);

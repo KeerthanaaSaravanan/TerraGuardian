@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth, COMMAND_DEMO_ACCOUNTS } from "../../context/AuthContext";
-import { ThemeToggle } from "../common";
+import { ThemeToggle, LanguageSelector } from "../common";
+import { useCitizenI18n } from "../../hooks/useCitizenI18n";
 import {
   IconShieldCheck,
   IconRadio,
@@ -21,6 +22,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   onNavigateCitizen,
 }) => {
   const { login, isLoading, loginError } = useAuth();
+  const { t } = useCitizenI18n();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [selectedDemoUser, setSelectedDemoUser] = useState<string | null>(null);
@@ -72,33 +74,38 @@ export const LoginView: React.FC<LoginViewProps> = ({
     <div className="min-h-screen lg:h-screen w-full flex flex-col bg-slate-100 dark:bg-neutral-950 text-slate-900 dark:text-neutral-100 transition-colors overflow-y-auto lg:overflow-hidden font-sans">
       {/* Top Global Header Bar */}
       <header className="shrink-0 border-b border-slate-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-slate-200 p-1 shadow-sm overflow-hidden shrink-0">
+        <div
+          onClick={onCancel}
+          className={`flex items-center gap-3 ${onCancel ? "cursor-pointer group" : ""}`}
+          title={onCancel ? "Return to Portal" : undefined}
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-slate-200 p-1 shadow-sm overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
             <img src="/logo-shield.png" alt="TerraGuardian Logo" className="h-full w-full object-contain" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
-                TerraGuardian AI
+              <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
+                {t("app_title") || "TerraGuardian AI"}
               </span>
               <span className="rounded bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 font-mono border border-emerald-300 dark:border-emerald-700/50">
-                OPERATIONS COMMAND GATEWAY
+                {t("login_header_badge")}
               </span>
             </div>
             <div className="text-[11px] text-slate-500 dark:text-neutral-400 font-mono">
-              Govt. of India • North Eastern Region Disaster Operations Network
+              {t("login_header_sub")}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <LanguageSelector variant="standard" />
           <ThemeToggle />
           {onCancel && (
             <button
               onClick={onCancel}
-              className="text-xs text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white font-mono transition-colors cursor-pointer px-2.5 py-1 rounded border border-slate-200 dark:border-neutral-800 hover:bg-slate-100 dark:hover:bg-neutral-800"
+              className="text-xs text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white font-mono transition-colors cursor-pointer px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-800 hover:bg-slate-100 dark:hover:bg-neutral-800"
             >
-              Exit to Portal
+              {t("login_exit_btn")}
             </button>
           )}
         </div>
@@ -113,13 +120,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <div>
                 <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-[11px] font-mono font-bold uppercase tracking-wider mb-1">
                   <IconShieldCheck className="w-4 h-4" />
-                  <span>SERVER-VERIFIED RBAC AUTHENTICATION</span>
+                  <span>{t("login_card_badge")}</span>
                 </div>
                 <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                  Operations Command Sign-In
+                  {t("login_card_title")}
                 </h1>
                 <p className="text-xs text-slate-600 dark:text-neutral-400 mt-1 leading-relaxed">
-                  Enter authorized service credentials to access the NER command network, active incident twins, and governed queues.
+                  {t("login_card_desc")}
                 </p>
               </div>
 
@@ -153,7 +160,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     htmlFor="username"
                     className="block text-[11px] font-mono font-bold text-slate-700 dark:text-neutral-300 mb-1 uppercase"
                   >
-                    Service Username or Official Email
+                    {t("login_user_label")}
                   </label>
                   <input
                     id="username"
@@ -172,7 +179,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     htmlFor="password"
                     className="block text-[11px] font-mono font-bold text-slate-700 dark:text-neutral-300 mb-1 uppercase"
                   >
-                    Access Key / Password
+                    {t("login_pass_label")}
                   </label>
                   <input
                     id="password"
@@ -194,11 +201,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   {isLoading ? (
                     <>
                       <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span className="font-mono tracking-wider">AUTHENTICATING...</span>
+                      <span className="font-mono tracking-wider">{t("login_btn_authenticating")}</span>
                     </>
                   ) : (
                     <>
-                      <span>Authenticate & Access Workspace</span>
+                      <span>{t("login_btn_submit")}</span>
                       <IconArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}
@@ -218,65 +225,61 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
           {/* Right Column: Demo Role Presets (7 cols) */}
           <div className="lg:col-span-7 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
-            <div className="flex flex-col gap-3">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-mono text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <IconRadio className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    DEMO ROLE ACCESS
-                  </h2>
+                  <div className="flex items-center gap-1.5 text-slate-900 dark:text-white font-bold text-xs">
+                    <IconRadio className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>{t("login_demo_badge")}</span>
+                  </div>
                   <p className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
-                    One-click authentication for evaluation & authority boundary verification.
+                    {t("login_demo_sub")}
                   </p>
                 </div>
-                <span className="bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 text-[10px] font-mono px-2 py-0.5 rounded font-semibold border border-slate-200 dark:border-neutral-700">
+                <span className="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 border border-slate-200 dark:border-neutral-700">
                   DEMO / LOCAL ONLY PRESETS
                 </span>
               </div>
 
-              {/* 5 Compact Role Cards */}
-              <div className="flex flex-col gap-2 pt-1">
+              {/* Accounts List */}
+              <div className="space-y-2">
                 {COMMAND_DEMO_ACCOUNTS.map((acc) => {
                   const isSelected = selectedDemoUser === acc.username && isLoading;
                   return (
                     <div
                       key={acc.username}
-                      className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
-                        isSelected
-                          ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500"
-                          : "bg-slate-50/70 dark:bg-neutral-950/50 border-slate-200/80 dark:border-neutral-800/80 hover:border-slate-300 dark:hover:border-neutral-700"
-                      }`}
+                      className="group border border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700 rounded-xl p-2.5 transition-all flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-neutral-950/40 hover:bg-slate-50 dark:hover:bg-neutral-950/80"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-slate-900 dark:text-white tracking-tight">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-xs text-slate-900 dark:text-white">
                             {acc.roleLabel}
                           </span>
                           <span
-                            className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold border ${getRoleBadgeStyle(
+                            className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border ${getRoleBadgeStyle(
                               acc.role
                             )}`}
                           >
                             {acc.role}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-600 dark:text-neutral-400 font-mono mt-0.5 truncate">
+                        <div className="text-[11px] text-slate-600 dark:text-neutral-400 mt-0.5 truncate">
                           {acc.fullName} • {acc.agency}
                         </div>
-                        <div className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5 truncate">
-                          {acc.description}
+                        <div className="text-[10px] text-slate-400 dark:text-neutral-500 font-mono mt-0.5">
+                          {acc.description} ({acc.badgeNumber})
                         </div>
                       </div>
 
                       <button
                         type="button"
-                        disabled={isLoading}
                         onClick={() => handleSelectDemo(acc.username, acc.passwordHint)}
-                        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 text-slate-800 dark:text-neutral-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-white dark:hover:border-emerald-600 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+                        disabled={isLoading}
+                        className="shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-neutral-800 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white font-mono text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-xs"
                       >
                         {isSelected ? (
-                          <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                            <span className="w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             <span>Signing In...</span>
                           </span>
                         ) : (
@@ -292,7 +295,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             {/* Citizen Notice / Safe Link */}
             <div className="pt-3 mt-3 border-t border-slate-200 dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
               <span className="text-slate-500 dark:text-neutral-400 text-[11px]">
-                Looking for Public Citizen Hazard Reporting?
+                {t("login_citizen_prompt")}
               </span>
               <div className="flex items-center gap-3">
                 <button
@@ -300,7 +303,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   onClick={onNavigateCitizen || onCancel}
                   className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                 >
-                  <span>Open Citizen Safe Portal</span>
+                  <span>{t("login_citizen_link")}</span>
                   <IconArrowRight className="w-3 h-3" />
                 </button>
 
@@ -312,7 +315,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                       onClick={onCancel}
                       className="text-[11px] font-mono text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200 hover:underline cursor-pointer"
                     >
-                      Exit to Portal
+                      {t("login_exit_btn")}
                     </button>
                   </>
                 )}

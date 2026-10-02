@@ -1,8 +1,9 @@
 import React from "react";
 import { useDemoScenario } from "../context/DemoScenarioContext";
 import { useAuth } from "../context/AuthContext";
+import { useCitizenI18n } from "../hooks/useCitizenI18n";
 import { getApiBaseDisplayUrl } from "../services/apiClient";
-import { ThemeToggle } from "./common";
+import { ThemeToggle, LanguageSelector } from "./common";
 import { IconRotateCcw, IconShieldCheck, IconAlertTriangle, IconSparkles } from "./icons";
 
 interface CommandHeaderProps {
@@ -16,6 +17,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
   isCopilotOpen = false,
   onExitToPortal,
 }) => {
+  const { t } = useCitizenI18n();
   const {
     resetDemo,
     incidentCode,
@@ -195,13 +197,15 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
             <span className="hidden xl:inline">Reset</span>
           </button>
 
+          <LanguageSelector variant="standard" />
+
           {onExitToPortal && (
             <button
               onClick={onExitToPortal}
               title="Exit Operations Centre and Return to Main Portal"
               className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 text-xs font-mono font-semibold transition-colors border border-slate-300 dark:border-neutral-700 shrink-0 cursor-pointer"
             >
-              <span>Exit to Portal</span>
+              <span>{t("ops_btn_exit")}</span>
             </button>
           )}
 

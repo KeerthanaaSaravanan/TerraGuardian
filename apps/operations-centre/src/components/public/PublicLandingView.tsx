@@ -1,16 +1,14 @@
 import React from "react";
-import { ThemeToggle } from "../common";
+import { ThemeToggle, LanguageSelector } from "../common";
 import { usePublicReport } from "../../context/PublicReportContext";
+import { useCitizenI18n } from "../../hooks/useCitizenI18n";
 import {
   IconShieldCheck,
   IconRadio,
   IconArrowRight,
   IconMapPin,
-  IconActivity,
   IconRadar,
-  IconLayers,
   IconCamera,
-  IconPhoneCall,
 } from "../icons";
 
 interface PublicLandingViewProps {
@@ -25,6 +23,7 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
   onStartObservationReport,
 }) => {
   const { setPublicStep } = usePublicReport();
+  const { t } = useCitizenI18n();
 
   const handleStartReport = () => {
     if (onStartObservationReport) {
@@ -52,25 +51,26 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-base font-extrabold tracking-tight text-white">TERRAGUARDIAN AI</span>
+              <span className="text-base font-extrabold tracking-tight text-white">{t("app_title") || "TERRAGUARDIAN AI"}</span>
               <span className="hidden sm:inline-block rounded bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-bold text-emerald-300 font-mono tracking-wider">
-                DISASTER INTELLIGENCE PLATFORM
+                {t("landing_header_badge")}
               </span>
             </div>
             <div className="text-[11px] text-slate-300 font-mono">
-              Govt. of India • North Eastern Region Early Warning & Incident Network
+              {t("landing_header_sub")}
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSelector variant="glass" />
           <ThemeToggle />
           <button
             onClick={onSelectOperatorLogin}
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all cursor-pointer"
           >
             <IconShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Authorized Sign-In</span>
+            <span>{t("landing_header_signin")}</span>
           </button>
         </div>
       </header>
@@ -86,15 +86,15 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
               </span>
               <div className="text-xs min-w-0">
                 <div className="font-extrabold text-amber-200 uppercase tracking-wider font-mono text-[11px]">
-                  ACTIVE REGIONAL ADVISORY • ANTECEDENT MONSOON MONITORING
+                  {t("landing_advisory_badge")}
                 </div>
                 <div className="text-amber-100/90 text-xs mt-0.5 truncate">
-                  High pore pressure saturation across West Kameng (NH-13 KM-42). Arterial transit restricted at KM-38 checkpost.
+                  {t("landing_advisory_text")}
                 </div>
               </div>
             </div>
             <span className="hidden md:inline-block px-2.5 py-1 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-200 text-[10px] font-mono font-bold shrink-0">
-              LEVEL 2 ADVISORY
+              {t("landing_advisory_level")}
             </span>
           </div>
         </div>
@@ -103,18 +103,18 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
         <div className="text-center space-y-3.5 mb-8 sm:mb-10 max-w-3xl">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-md px-3.5 py-1 text-xs font-mono font-semibold text-slate-200">
             <IconMapPin className="w-3.5 h-3.5 text-emerald-400" />
-            <span>8 North Eastern States • Arunachal Pradesh • NH-13 Corridor Surveillance</span>
+            <span>{t("landing_scope_badge")}</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-lg">
-            Himalayan Landslide Intelligence & <br className="hidden sm:inline" />
+            {t("landing_hero_title")} {t("landing_hero_amp")} <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-              Citizen Early Warning
+              {t("landing_hero_highlight")}
             </span>
           </h1>
 
           <p className="text-xs sm:text-sm md:text-base text-slate-200 leading-relaxed max-w-2xl mx-auto drop-shadow-md">
-            Bridging on-ground citizen observations with multi-agency disaster command. Real-time geo-contextual danger maps, automated road bypass alerts, and predictive slope failure analysis.
+            {t("landing_hero_desc")}
           </p>
         </div>
 
@@ -129,39 +129,39 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
                   <IconShieldCheck className="w-6 h-6" />
                 </span>
                 <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 font-mono text-[10px] font-extrabold uppercase tracking-wider">
-                  PUBLIC ACCESS • NO LOGIN
+                  {t("landing_card1_badge")}
                 </span>
               </div>
 
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  Enter Citizen Safe
+                  {t("landing_card1_title")}
                 </h2>
                 <div className="text-xs text-emerald-400 font-mono font-semibold mt-0.5">
-                  Community Early Warning & Safety Companion
+                  {t("landing_card1_subtitle")}
                 </div>
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed">
-                Check whether your location is at risk, view the live interactive danger map, inspect road closures on NH-13, submit I'm Safe check-ins, or call emergency hotlines.
+                {t("landing_card1_desc")}
               </p>
 
               <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-200 font-medium pt-1">
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>Am I at Risk? Check</span>
+                  <span>{t("landing_card1_feat1")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>Interactive Danger Map</span>
+                  <span>{t("landing_card1_feat2")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>Highway Status & Detour</span>
+                  <span>{t("landing_card1_feat3")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>8 NER Languages</span>
+                  <span>{t("landing_card1_feat4")}</span>
                 </div>
               </div>
             </div>
@@ -172,7 +172,7 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
                 onClick={onEnterCitizenSafe}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-xl shadow-emerald-950/50 text-sm flex items-center justify-center gap-2 transition-all cursor-pointer border border-emerald-400/40"
               >
-                <span>ENTER CITIZEN SAFE</span>
+                <span>{t("landing_card1_cta")}</span>
                 <IconArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -186,39 +186,39 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
                   <IconRadar className="w-6 h-6" />
                 </span>
                 <span className="px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 font-mono text-[10px] font-extrabold uppercase tracking-wider">
-                  AUTHORIZED OFFICIALS
+                  {t("landing_card2_badge")}
                 </span>
               </div>
 
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  Operations Centre
+                  {t("landing_card2_title")}
                 </h2>
                 <div className="text-xs text-indigo-400 font-mono font-semibold mt-0.5">
-                  Multi-Agency Command & Incident Twin
+                  {t("landing_card2_subtitle")}
                 </div>
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed">
-                Dedicated workspace for District Disaster Authorities (DDMA), SDRF commanders, BRO highway engineers, and state emergency executives.
+                {t("landing_card2_desc")}
               </p>
 
               <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-200 font-medium pt-1">
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                  <span>Real-Time Incident Twin</span>
+                  <span>{t("landing_card2_feat1")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                  <span>Evidence Reconciliation</span>
+                  <span>{t("landing_card2_feat2")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                  <span>SDRF Field Verification</span>
+                  <span>{t("landing_card2_feat3")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                  <span>Authority Action Tracking</span>
+                  <span>{t("landing_card2_feat4")}</span>
                 </div>
               </div>
             </div>
@@ -229,7 +229,7 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
                 onClick={onSelectOperatorLogin}
                 className="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-xl shadow-indigo-950/50 text-sm flex items-center justify-center gap-2 transition-all cursor-pointer border border-indigo-400/40"
               >
-                <span>OPERATIONS COMMAND GATEWAY</span>
+                <span>{t("landing_card2_cta")}</span>
                 <IconArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -244,11 +244,14 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
               <IconCamera className="w-5 h-5" />
             </span>
             <div>
+              <div className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider mb-0.5">
+                {t("landing_guided_flow_badge")}
+              </div>
               <h3 className="text-sm sm:text-base font-bold text-white">
-                See Something on the Slope? Submit Guided Evidence
+                {t("landing_guided_flow_title")}
               </h3>
               <p className="text-xs text-slate-300 mt-0.5">
-                Our 6-stage edge computer vision scans photos for tension cracks, soil displacement, and carriageway breaches in 30 seconds.
+                {t("landing_guided_flow_desc")}
               </p>
             </div>
           </div>
@@ -258,7 +261,7 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
             onClick={handleStartReport}
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 shrink-0 transition-colors cursor-pointer border border-amber-400/40 shadow-md shadow-amber-950/30"
           >
-            <span>Start Guided Observation Report</span>
+            <span>{t("landing_guided_flow_cta")}</span>
             <IconArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -294,7 +297,7 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
       {/* Government Footer */}
       <footer className="relative z-30 border-t border-white/10 bg-slate-950/90 backdrop-blur-md px-4 sm:px-8 py-3.5 text-center text-xs text-slate-400 font-sans flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="text-[11px]">
-          TerraGuardian AI • Smart India Hackathon 2026 • Geotechnical & Disaster Intelligence
+          {t("landing_footer_text")}
         </div>
         <div className="text-[10px] font-mono text-slate-400">
           Statutory Invariant: Prediction ≠ Ground Truth • Human Authorization Required
