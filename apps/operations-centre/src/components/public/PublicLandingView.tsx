@@ -21,13 +21,14 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
 }) => {
   const { setPublicStep } = usePublicReport();
 
-  const handleStartReport = () => {
-    if (onStartObservationReport) {
-      onStartObservationReport();
-    } else if (onEnterCitizenSafe) {
+  const handleEnterCitizenPortal = () => {
+    setPublicStep("LANDING");
+    if (onEnterCitizenSafe) {
       onEnterCitizenSafe();
+    } else if (onStartObservationReport) {
+      onStartObservationReport();
     } else {
-      setPublicStep("CAPTURE_PHOTO");
+      window.location.href = "/citizen";
     }
   };
 
@@ -115,10 +116,10 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
         <div className="w-full max-w-md flex flex-col gap-3 mb-8">
           <button
             type="button"
-            onClick={handleStartReport}
+            onClick={handleEnterCitizenPortal}
             className="w-full bg-[#059669] hover:bg-[#10b981] active:scale-[0.99] text-white font-bold py-3.5 px-6 rounded-xl shadow-xl shadow-emerald-950/60 text-sm sm:text-base flex items-center justify-center gap-2 transition-all cursor-pointer border border-emerald-400/40"
           >
-            <span>Start Hazard Observation Report</span>
+            <span>Enter Citizen Safe Portal</span>
             <IconArrowRight className="w-4 h-4" />
           </button>
 

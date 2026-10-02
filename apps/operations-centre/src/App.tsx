@@ -294,10 +294,13 @@ const AppCore: React.FC = () => {
       {/* 1. ROOT PATHWAY: Translucent Government-Grade Landing Portal */}
       {route === "/" && (
         <PublicLandingView
-          onEnterCitizenSafe={() => navigate("/citizen")}
+          onEnterCitizenSafe={() => {
+            setPublicStep("LANDING");
+            navigate("/citizen");
+          }}
           onSelectOperatorLogin={() => navigate("/operations")}
           onStartObservationReport={() => {
-            setPublicStep("CAPTURE_PHOTO");
+            setPublicStep("LANDING");
             navigate("/citizen");
           }}
         />
