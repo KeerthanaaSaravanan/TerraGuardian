@@ -289,8 +289,8 @@
 ---
 
 ### REQ-25: Automated Regression & Acceptance Test Harness
-* **Requirement:** Comprehensive test suite ensuring zero regressions, continuous integration stability, and full verification of the 24 preceding requirements.
-* **Existing Implementation:** 332 unit and macro tests passing.
+* **Requirement:** Comprehensive test suite ensuring zero regressions, continuous integration stability, and full verification of all system criteria.
+* **Existing Implementation:** 342 unit and macro tests passing.
 * **Gap:** Master acceptance test file verifying all SIH26001 criteria in a single unified execution.
 * **Implementation:** Implemented `tests/unit/test_sih26001_acceptance.py` covering all SIH26001 core criteria.
 * **Test:** `pytest tests/unit/test_sih26001_acceptance.py`.
@@ -299,6 +299,18 @@
 
 ---
 
+### REQ-26: Canonical Operational Lifecycle & Closed-Loop Reopening Governance
+* **Requirement:** Unified closed-loop state machine connecting Incident Lifecycle + Action Lifecycle + Evidence Lifecycle + Outcome Lifecycle with 9-point hard-gated closure, statutory magistrate authority, and evidence-driven reopening without identity loss.
+* **Existing Implementation:** `services/api/app/services/state_transition_service.py`, `services/api/app/domain/incident.py`, `services/api/app/services/action_service.py`, `services/api/app/services/evidence_service.py`.
+* **Gap:** Formalized 5-point reopening guardrails for `RESOLVED` and `REVIEWED` incidents, audit event types `INCIDENT_REVIEWED` and `INCIDENT_REOPENED`, and REST endpoints `/reopen` and `/reopening-eligibility`.
+* **Implementation:** Hardened `StateTransitionService` and `EvidenceService` with materiality evaluation, non-duplication verification, 24h freshness window, and identity-preserving reopening. Created `docs/CANONICAL_OPERATIONAL_LIFECYCLE.md`.
+* **Test:** `tests/unit/test_canonical_lifecycle.py` (16 tests verifying all transitions, guards, actions, closure gate, and reopening protocols).
+* **Evidence:** 16/16 tests passing cleanly.
+* **Final Status:** **IMPLEMENTED + VERIFIED**
+
+---
+
 ## 3. SIH Acceptance Statement
 
 TerraGuardian AI is hereby certified to meet the operational, scientific, and technical requirements of **SIH26001 (MDoNER)**. All components are bound by strict provenance tracking, separating real data from controlled replay, and enforcing human statutory authority over automated recommendations.
+

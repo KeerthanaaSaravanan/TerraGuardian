@@ -22,6 +22,7 @@ from app.domain.enums import (
 from app.domain.incident import is_valid_transition
 from app.services.audit_service import AuditService
 from app.services.exceptions import (
+    DomainError,
     InvalidTransitionError,
     PreconditionFailedError,
     UnauthorizedAuthorityError,
@@ -30,6 +31,92 @@ from app.services.incident_service import IncidentService
 
 
 CLOSURE_EVIDENCE_MAX_FRESHNESS_SECONDS: int = 21600  # 6.0 hours (Mandatory Project Policy)
+REOPENING_MAX_EVIDENCE_AGE_SECONDS: int = 86400  # 24 hours (Mandatory Reopening Freshness Policy)
+
+
+def is_material_evidence_change(
+    source: str,
+    raw_data: Optional[dict[str, Any]] = None,
+    details: Optional[str] = None,
+) -> tuple[bool, str]:
+    """Authoritative evaluator determining whether incoming evidence represents a material physical hazard change."""
+    data = raw_data or {}
+    text = (details or "").lower()
+
+    # Explicit flag
+    if data.get("is_material") is True or data.get("reopening_trigger") is True:
+        return True, "Explicit materiality trigger flag in evidence payload."
+
+    # 1. Rainfall / Precipitation surge (>= 35.0 mm)
+    rainfall_keys = ["rainfall_mm", "precipitation_mm", "rainfall_24h_mm", "accumulated_rain_mm"]
+    if str(source).upper() in ("WEATHER", "IMD_RADAR", "RAIN_GAUGE"):
+        rainfall_keys.append("value")
+    for k in rainfall_keys:
+        val = data.get(k)
+        if val is not None:
+            try:
+                num = float(val)
+                if num >= 35.0:
+                    return True, f"Significant rainfall surge detected: {num:.1f} mm (threshold: 35.0 mm)."
+            except (ValueError, TypeError):
+                pass
+
+    # 2. Soil moisture / saturation (>= 0.65 or >= 65%)
+    sm_keys = ["soil_moisture", "saturation_ratio", "soil_saturation"]
+    if "SOIL" in str(source).upper():
+        sm_keys.append("value")
+    for k in sm_keys:
+        val = data.get(k)
+        if val is not None:
+            try:
+                num = float(val)
+                if num > 1.0:
+                    num = num / 100.0
+                if num >= 0.65:
+                    return True, f"Critical soil moisture saturation detected: {num * 100.0:.1f}% (threshold: 65.0%)."
+            except (ValueError, TypeError):
+                pass
+
+    # 3. Satellite InSAR / ground deformation rate (>= 15.0 mm/yr or displacement >= 10.0 mm)
+    insar_keys = [
+        "deformation_velocity_mm_yr",
+        "displacement_rate_mm_yr",
+        "los_velocity_mm_yr",
+        "velocity_mm_yr",
+        "displacement_mm",
+    ]
+    for k in insar_keys:
+        val = data.get(k)
+        if val is not None:
+            try:
+                num = abs(float(val))
+                if num >= 15.0 or (k == "displacement_mm" and num >= 10.0):
+                    return True, f"Critical satellite InSAR deformation rate: {num:.1f} mm (threshold: 15.0 mm/yr / 10.0 mm)."
+            except (ValueError, TypeError):
+                pass
+
+    # 4. Sensor tiltmeter / inclinometer rate (>= 5.0 mm/day)
+    tilt_keys = ["tilt_rate_mm_day", "tilt_rate_deg_day"]
+    for k in tilt_keys:
+        val = data.get(k)
+        if val is not None:
+            try:
+                num = abs(float(val))
+                if num >= 5.0:
+                    return True, f"Sensor tilt rate exceeded safety envelope: {num:.1f} (threshold: 5.0)."
+            except (ValueError, TypeError):
+                pass
+
+    # 5. Field observation physical destabilization keywords
+    hazard_keywords = [
+        "tension crack", "crack", "scarp", "slump", "subsidence", "debris",
+        "rockfall", "toe bulge", "heave", "fissure", "slope breach", "rupture"
+    ]
+    matched_kw = [kw for kw in hazard_keywords if kw in text]
+    if matched_kw:
+        return True, f"Field report identified physical destabilization markers: {', '.join(matched_kw)}."
+
+    return False, "Evidence parameters do not exceed physical materiality thresholds for hazard reopening."
 
 
 class StateTransitionService:
@@ -56,17 +143,24 @@ class StateTransitionService:
 
         # 1. State Machine Validity Check
         if not is_valid_transition(current_status, target_status):
-            reason = "Direct state jump is not permitted by the canonical state machine."
+            reason_text = "Direct state jump is not permitted by the canonical state machine."
             if target_status == IncidentStatus.RESOLVED:
-                reason = "Closure blocked: " + reason
+                reason_text = "Closure blocked: " + reason_text
             raise InvalidTransitionError(
                 current_state=current_status.value,
                 target_state=target_status.value,
-                reason=reason,
+                reason=reason_text,
             )
 
-        # 2. Authority Boundary Guards
+        # 2. Authority Boundary & Transition Precondition Guards
         from app.domain.permissions import OperationalPermission, has_permission
+
+        if target_status == IncidentStatus.VERIFIED:
+            if actor_role in (ActorRole.SYSTEM_AI, "SYSTEM_AI"):
+                raise UnauthorizedAuthorityError(
+                    "AI/System actors cannot verify incident ground reality. "
+                    "Verification requires a human domain specialist (e.g. GEOTECHNICAL_ENGINEER, OPERATOR)."
+                )
 
         if target_status == IncidentStatus.AUTHORIZED:
             if actor_role in (ActorRole.SYSTEM_AI, "SYSTEM_AI"):
@@ -89,6 +183,17 @@ class StateTransitionService:
                 raise UnauthorizedAuthorityError(
                     "Transition to REVIEWED requires REVIEW permission. "
                     f"Actor role '{actor_role.value if hasattr(actor_role, 'value') else actor_role}' is unauthorized."
+                )
+
+        if target_status == IncidentStatus.REOPENED:
+            if actor_role in (ActorRole.SYSTEM_AI, "SYSTEM_AI"):
+                raise UnauthorizedAuthorityError(
+                    "AI/System actors cannot authorize reopening a reviewed incident. "
+                    "Reopening requires human official or authoritative verification."
+                )
+            if not reason:
+                raise PreconditionFailedError(
+                    "Reopening an incident requires a documented justification or reason."
                 )
 
         # 3. Evidentiary Closure Gate (RESOLVED preconditions)
@@ -247,9 +352,17 @@ class StateTransitionService:
         await self.session.flush()
 
         # 5. Append Audit Event
+        event_type = AuditEventType.STATE_CHANGED
+        if target_status == IncidentStatus.REVIEWED:
+            event_type = AuditEventType.INCIDENT_REVIEWED
+        elif target_status == IncidentStatus.REOPENED:
+            event_type = AuditEventType.INCIDENT_REOPENED
+        elif target_status == IncidentStatus.RESOLVED:
+            event_type = AuditEventType.RESOLUTION_RECORDED
+
         await self.audit_service.record_event(
             incident_id=incident.id,
-            event_type=AuditEventType.STATE_CHANGED,
+            event_type=event_type,
             actor_role=actor_role,
             actor_name=actor_name,
             previous_state=previous_status_val,
@@ -437,5 +550,208 @@ class StateTransitionService:
             },
         }
 
+    async def evaluate_reopening_eligibility(
+        self,
+        incident_id: uuid.UUID,
+        source: EvidenceSource | str,
+        interpretation: EvidenceInterpretation | str = EvidenceInterpretation.UNVERIFIED,
+        freshness_seconds: Optional[int] = None,
+        observed_at: Optional[datetime] = None,
+        raw_data: Optional[dict[str, Any]] = None,
+        details: Optional[str] = None,
+        original_reference: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Evaluate whether incoming evidence meets the strict criteria for reopening a closed/reviewed incident.
+
+        Mandatory 5-point Reopening Guardrails:
+        1. Linkage: Associated directly with the closed/reviewed incident twin.
+        2. Freshness: Evidence age <= 86,400s (24 hours) or observed after incident resolution.
+        3. Credibility: Authoritative source (FIELD, SATELLITE, WEATHER, SENSOR, AUTHORITATIVE, or verified CITIZEN).
+        4. Materiality: Demonstrable physical hazard change (rainfall >= 35mm, soil >= 0.65, InSAR >= 15mm/yr, crack/slump).
+        5. Non-duplication: Not a duplicate of existing telemetry or field evidence.
+        """
+        incident = await self.incident_service.get_by_id(incident_id)
+        current_status = IncidentStatus(incident.status)
+
+        rejection_reasons: list[str] = []
+
+        # 1. State check: Must be in RESOLVED or REVIEWED
+        if current_status not in (IncidentStatus.RESOLVED, IncidentStatus.REVIEWED):
+            rejection_reasons.append(
+                f"Incident is in state '{current_status.value}'. Reopening evaluation only applies to RESOLVED or REVIEWED incidents."
+            )
+
+        # 2. Source Credibility check
+        source_val = source.value if hasattr(source, "value") else str(source).upper()
+        interp_val = interpretation.value if hasattr(interpretation, "value") else str(interpretation).upper()
+
+        credible_sources = {
+            EvidenceSource.FIELD.value,
+            EvidenceSource.SATELLITE.value,
+            EvidenceSource.WEATHER.value,
+            EvidenceSource.SENSOR.value,
+            "FIELD", "SATELLITE", "WEATHER", "SENSOR", "AUTHORITATIVE",
+        }
+
+        is_credible = False
+        if source_val in credible_sources:
+            is_credible = True
+        elif source_val in (EvidenceSource.CITIZEN.value, "CITIZEN"):
+            if interp_val in (EvidenceInterpretation.VERIFIED.value, "VERIFIED"):
+                is_credible = True
+            else:
+                rejection_reasons.append(
+                    "Unverified citizen evidence cannot reopen a closed or reviewed incident. Field or authoritative verification is mandatory."
+                )
+        else:
+            rejection_reasons.append(
+                f"Evidence source '{source_val}' is not recognized as a credible authoritative source for incident reopening."
+            )
+
+        # 3. Freshness check (<= 86,400s / 24h)
+        now_utc = datetime.utcnow()
+        calculated_age = freshness_seconds
+        if calculated_age is None and observed_at is not None:
+            obs_cmp = observed_at.replace(tzinfo=None) if observed_at.tzinfo else observed_at
+            calculated_age = max(0, int((now_utc - obs_cmp).total_seconds()))
+
+        is_fresh = False
+        if calculated_age is not None:
+            if 0 <= calculated_age <= REOPENING_MAX_EVIDENCE_AGE_SECONDS:
+                is_fresh = True
+            else:
+                rejection_reasons.append(
+                    f"Stale evidence rejected: Evidence age {calculated_age}s exceeds maximum allowable reopening threshold of {REOPENING_MAX_EVIDENCE_AGE_SECONDS}s (24h)."
+                )
+        else:
+            rejection_reasons.append("Evidence lacks timestamp or freshness information for temporal validation.")
+
+        # 4. Non-duplication check
+        evidence_result = await self.session.execute(
+            select(EvidenceModel).where(EvidenceModel.incident_id == incident_id)
+        )
+        existing_evidence = evidence_result.scalars().all()
+
+        is_duplicate = False
+        if original_reference:
+            if any(e.original_reference == original_reference for e in existing_evidence):
+                is_duplicate = True
+                rejection_reasons.append(f"Duplicate evidence: original_reference '{original_reference}' already recorded for this incident.")
+
+        if not is_duplicate and observed_at is not None:
+            obs_cmp = observed_at.replace(tzinfo=None) if observed_at.tzinfo else observed_at
+            for e in existing_evidence:
+                e_obs = e.observed_at.replace(tzinfo=None) if (e.observed_at and e.observed_at.tzinfo) else e.observed_at
+                if e.source == source_val and e_obs and abs((e_obs - obs_cmp).total_seconds()) < 1.0 and e.details == details:
+                    is_duplicate = True
+                    rejection_reasons.append("Duplicate evidence: identical observation already exists for this incident.")
+                    break
+
+        # 5. Materiality check
+        is_material, mat_reason = is_material_evidence_change(source_val, raw_data, details)
+        if not is_material:
+            rejection_reasons.append(f"Materiality threshold not met: {mat_reason}")
+
+        eligible = (
+            len(rejection_reasons) == 0
+            and is_credible
+            and is_fresh
+            and not is_duplicate
+            and is_material
+        )
+
+        return {
+            "eligible": eligible,
+            "incident_id": incident_id,
+            "current_status": current_status.value,
+            "source_credible": is_credible,
+            "fresh": is_fresh,
+            "freshness_seconds": calculated_age,
+            "non_duplicate": not is_duplicate,
+            "material": is_material,
+            "materiality_reason": mat_reason,
+            "rejection_reasons": rejection_reasons,
+        }
+
+    async def reopen_incident(
+        self,
+        incident_id: uuid.UUID,
+        triggering_evidence_id: Optional[uuid.UUID],
+        actor_role: ActorRole,
+        actor_name: str,
+        reason: str,
+        context_payload: Optional[dict[str, Any]] = None,
+    ) -> IncidentModel:
+        """Reopen a RESOLVED or REVIEWED incident twin upon receipt of fresh credible material evidence.
+
+        PRESERVES INCIDENT TWIN IDENTITY:
+        The incident retains its unique ID, incident code (e.g. TG-2048), history,
+        and associated physical context. It does not spawn a disconnected duplicate.
+        """
+        incident = await self.incident_service.get_by_id(incident_id)
+        current_status = IncidentStatus(incident.status)
+
+        if current_status not in (IncidentStatus.RESOLVED, IncidentStatus.REVIEWED):
+            raise DomainError(
+                f"Incident {incident.code} cannot be reopened from state '{current_status.value}'. "
+                "Only RESOLVED or REVIEWED incidents are eligible for reopening."
+            )
+
+        if actor_role in (ActorRole.SYSTEM_AI, "SYSTEM_AI"):
+            raise UnauthorizedAuthorityError(
+                "System AI cannot independently authorize reopening an incident. Human official or verified operational authority required."
+            )
+
+        # Update metadata to track reopening provenance
+        meta = dict(incident.metadata_json or {})
+        reopening_history = list(meta.get("reopening_history", []))
+        reopening_entry = {
+            "reopened_at": datetime.utcnow().isoformat(),
+            "reopened_by": actor_name,
+            "reopened_role": actor_role.value if hasattr(actor_role, "value") else str(actor_role),
+            "previous_status": current_status.value,
+            "reason": reason,
+            "triggering_evidence_id": str(triggering_evidence_id) if triggering_evidence_id else None,
+        }
+        reopening_history.append(reopening_entry)
+        meta["reopening_history"] = reopening_history
+        meta["is_reopened"] = True
+        meta["last_reopened_at"] = reopening_entry["reopened_at"]
+        incident.metadata_json = meta
+        await self.session.flush()
+
+        if current_status == IncidentStatus.REVIEWED:
+            # Transition: REVIEWED -> REOPENED
+            incident = await self.transition(
+                incident_id=incident_id,
+                target_status=IncidentStatus.REOPENED,
+                actor_role=actor_role,
+                actor_name=actor_name,
+                reason=reason,
+                context_payload={"reopening_entry": reopening_entry, **(context_payload or {})},
+            )
+            # Transition: REOPENED -> REASSESSING
+            incident = await self.transition(
+                incident_id=incident_id,
+                target_status=IncidentStatus.REASSESSING,
+                actor_role=actor_role,
+                actor_name=actor_name,
+                reason="Progression to REASSESSING for fresh geotechnical hazard evaluation.",
+                context_payload={"reopening_entry": reopening_entry, **(context_payload or {})},
+            )
+        elif current_status == IncidentStatus.RESOLVED:
+            # Transition: RESOLVED -> REASSESSING directly
+            incident = await self.transition(
+                incident_id=incident_id,
+                target_status=IncidentStatus.REASSESSING,
+                actor_role=actor_role,
+                actor_name=actor_name,
+                reason=reason,
+                context_payload={"reopening_entry": reopening_entry, **(context_payload or {})},
+            )
+
+        return incident
+
     # Backward compatibility alias
     transition_incident = transition
+

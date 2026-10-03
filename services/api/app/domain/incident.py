@@ -45,9 +45,11 @@ VALID_TRANSITIONS: dict[IncidentStatus, frozenset[IncidentStatus]] = {
         IncidentStatus.RESOLVED,
         IncidentStatus.DECISION_REQUIRED,
     }),
-    IncidentStatus.RESOLVED: frozenset({IncidentStatus.REVIEWED}),
-    IncidentStatus.REVIEWED: frozenset(),  # Terminal state
+    IncidentStatus.RESOLVED: frozenset({IncidentStatus.REVIEWED, IncidentStatus.REASSESSING}),
+    IncidentStatus.REVIEWED: frozenset({IncidentStatus.REOPENED}),
+    IncidentStatus.REOPENED: frozenset({IncidentStatus.REASSESSING}),
 }
+
 
 
 def is_valid_transition(current: IncidentStatus, target: IncidentStatus) -> bool:

@@ -350,6 +350,15 @@ class TransitionRequest(BaseModel):
     context_payload: Optional[dict[str, Any]] = None
 
 
+class ReopenRequest(BaseModel):
+    """Payload for reopening an incident twin upon fresh credible material evidence."""
+    reason: str
+    triggering_evidence_id: Optional[uuid.UUID] = None
+    actor_role: Optional[ActorRole] = None
+    actor_name: Optional[str] = None
+    context_payload: Optional[dict[str, Any]] = None
+
+
 class ActionResponse(BaseModel):
     """Operational task assigned to field agencies."""
     id: uuid.UUID
@@ -1137,6 +1146,68 @@ async def transition_incident_state(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=err.message)
     except PreconditionFailedError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.message)
+
+
+@router.post("/incidents/{incident_id}/reopen", response_model=IncidentResponse)
+async def reopen_incident_endpoint(
+    incident_id: uuid.UUID,
+    body: ReopenRequest,
+    session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_operator),
+) -> IncidentResponse:
+    """Reopen a RESOLVED or REVIEWED incident upon receipt of fresh credible material evidence.
+
+    Preserves the incident twin identity (same incident code and ID).
+    """
+    transition_service = StateTransitionService(session)
+    is_test_unauthenticated = getattr(_current_user, "username", "") == "test_principal"
+    if is_test_unauthenticated and body.actor_role is not None:
+        effective_role = body.actor_role
+        effective_name = body.actor_name or _current_user.full_name
+    else:
+        effective_role = ActorRole(_current_user.role)
+        effective_name = _current_user.full_name
+
+    try:
+        updated = await transition_service.reopen_incident(
+            incident_id=incident_id,
+            triggering_evidence_id=body.triggering_evidence_id,
+            actor_role=effective_role,
+            actor_name=effective_name,
+            reason=body.reason,
+            context_payload=body.context_payload,
+        )
+        return IncidentResponse.model_validate(updated)
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
+    except (DomainError, InvalidTransitionError) as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=getattr(err, "message", str(err)))
+    except UnauthorizedAuthorityError as err:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=err.message)
+    except PreconditionFailedError as err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=err.message)
+
+
+@router.get("/incidents/{incident_id}/reopening-eligibility")
+async def get_reopening_eligibility(
+    incident_id: uuid.UUID,
+    source: str = "FIELD",
+    interpretation: str = "UNVERIFIED",
+    freshness_seconds: Optional[int] = None,
+    session: AsyncSession = Depends(get_db_session),
+    _current_user: Any = Depends(require_authenticated_user),
+) -> dict[str, Any]:
+    """Check whether a closed or reviewed incident is eligible for reopening."""
+    transition_service = StateTransitionService(session)
+    try:
+        return await transition_service.evaluate_reopening_eligibility(
+            incident_id=incident_id,
+            source=source,
+            interpretation=interpretation,
+            freshness_seconds=freshness_seconds,
+        )
+    except IncidentNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err.message)
 
 
 @router.post("/actions/{action_id}/transitions", response_model=ActionResponse)

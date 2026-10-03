@@ -86,13 +86,30 @@ class EvidenceService:
         """Add a discrete piece of evidence to an incident with safety boundary enforcement and audit tracking."""
         incident = await self.incident_service.get_by_id(incident_id)
 
-        # ── TERMINAL STATE IMMUTABILITY ──
-        # Closed / reviewed incidents cannot accept new operational evidence.
-        if incident.status in (IncidentStatus.RESOLVED.value, IncidentStatus.REVIEWED.value):
-            raise DomainError(
-                f"Incident {incident.code} is in terminal state '{incident.status}'. "
-                "Evidence cannot be attached to a closed or archived incident twin."
+        # ── RESOLVED / REVIEWED INCIDENT REOPENING POLICY ──
+        # Closed / reviewed incidents can only accept fresh, credible, non-duplicate, material evidence that triggers reopening.
+        # Stale, duplicate, unverified, or non-material evidence is strictly rejected.
+        is_in_closure_state = incident.status in (IncidentStatus.RESOLVED.value, IncidentStatus.REVIEWED.value)
+        reopening_eligibility = None
+        if is_in_closure_state:
+            from app.services.state_transition_service import StateTransitionService
+            sts = StateTransitionService(self.session)
+            reopening_eligibility = await sts.evaluate_reopening_eligibility(
+                incident_id=incident_id,
+                source=source,
+                interpretation=interpretation,
+                freshness_seconds=freshness_seconds,
+                observed_at=observed_at,
+                raw_data=raw_data,
+                details=details,
+                original_reference=original_reference,
             )
+            if not reopening_eligibility["eligible"]:
+                reasons = "; ".join(reopening_eligibility["rejection_reasons"])
+                raise DomainError(
+                    f"Evidence cannot be attached to incident {incident.code} in state '{incident.status}': "
+                    f"Evidence fails reopening criteria ({reasons})."
+                )
 
         # ── COORDINATE RANGE VALIDATION ──
         if latitude is not None and not (-90.0 <= latitude <= 90.0):
@@ -185,6 +202,20 @@ class EvidenceService:
                 "conflict_status": conflict_status_val,
             },
         )
+
+        # Trigger incident reopening if evidence was attached to a closed or reviewed incident
+        if is_in_closure_state and reopening_eligibility and reopening_eligibility["eligible"]:
+            from app.services.state_transition_service import StateTransitionService
+            sts = StateTransitionService(self.session)
+            reopen_actor_role = ActorRole.FIELD_VERIFIER if source_val == EvidenceSource.FIELD.value else ActorRole.OPERATOR
+            await sts.reopen_incident(
+                incident_id=incident.id,
+                triggering_evidence_id=evidence.id,
+                actor_role=reopen_actor_role,
+                actor_name=source_name or "Automated Telemetry Ingestion",
+                reason=f"Incident reopened due to fresh material {source_val} evidence: {reopening_eligibility.get('materiality_reason')}",
+                context_payload={"triggering_evidence_id": str(evidence.id)},
+            )
 
         return evidence
 
