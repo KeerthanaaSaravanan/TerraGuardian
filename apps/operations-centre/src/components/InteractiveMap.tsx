@@ -1023,34 +1023,34 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
           {/* Geographic Extent Selector */}
           <div className="flex items-center gap-1">
-            <span className="text-slate-500 dark:text-neutral-400 text-[10px] uppercase font-bold">SCOPE:</span>
+            <span className="text-slate-500 dark:text-neutral-400 text-[10px] uppercase font-bold">{t("scope_label", undefined, "SCOPE:")}</span>
             <button
               onClick={() => flyToExtent("NER")}
               className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 border border-slate-300 dark:border-slate-700 text-[10px] font-bold cursor-pointer transition-colors"
               title="Frame Entire North Eastern Region of India (8 States)"
             >
-              NER (8 States)
+              {t("scope_ner", undefined, "NER (8 States)")}
             </button>
             <button
               onClick={() => flyToExtent("ARUNACHAL")}
               className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 border border-slate-300 dark:border-slate-700 text-[10px] font-bold cursor-pointer transition-colors"
               title="Zoom into Arunachal Pradesh"
             >
-              Arunachal
+              {t("scope_arunachal", undefined, "Arunachal")}
             </button>
             <button
               onClick={() => flyToExtent("DISTRICT")}
               className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 border border-slate-300 dark:border-slate-700 text-[10px] font-bold cursor-pointer transition-colors"
               title="Zoom into West Kameng District"
             >
-              West Kameng
+              {t("scope_district", undefined, "West Kameng")}
             </button>
             <button
               onClick={() => flyToExtent("CORRIDOR")}
               className="px-1.5 py-0.5 rounded bg-emerald-600 text-white border border-emerald-500 text-[10px] font-bold cursor-pointer transition-colors shadow-2xs"
               title="Zoom into NH-13 KM-42 Corridor & Incident TG-2048"
             >
-              KM-42 Site
+              {t("scope_site", undefined, "KM-42 Site")}
             </button>
           </div>
 

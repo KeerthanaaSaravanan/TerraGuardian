@@ -186,4 +186,11 @@ export const hi: Record<string, string> = {
   login_demo_sub: "मूल्यांकन के लिए एक-क्लिक प्रमाणीकरण।",
   login_citizen_prompt: "नागरिक आपदा रिपोर्टिंग की तलाश है?",
   login_citizen_link: "नागरिक सुरक्षा पोर्टल खोलें →",
+
+  // Map scope selector
+  scope_label: "क्षेत्र:",
+  scope_ner: "पूर्वोत्तर (8 राज्य)",
+  scope_arunachal: "अरुणाचल",
+  scope_district: "पश्चिम कामेंग",
+  scope_site: "KM-42 स्थल",
 };

@@ -186,4 +186,11 @@ export const en: Record<string, string> = {
   login_demo_sub: "One-click authentication for evaluation & authority boundary verification.",
   login_citizen_prompt: "Looking for Public Citizen Hazard Reporting?",
   login_citizen_link: "Open Citizen Safe Portal →",
+
+  // Map scope selector
+  scope_label: "SCOPE:",
+  scope_ner: "NER (8 States)",
+  scope_arunachal: "Arunachal",
+  scope_district: "West Kameng",
+  scope_site: "KM-42 Site",
 };
