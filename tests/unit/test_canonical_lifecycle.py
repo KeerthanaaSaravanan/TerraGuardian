@@ -675,3 +675,104 @@ async def test_16_duplicate_evidence_rejected_on_closed_incident(async_client: A
     assert ev2.status_code == 400
     assert "duplicate" in ev2.json().get("detail", "").lower()
 
+
+# ── TEST 17: Spatial Linkage Validation (10km Max Reopening Scope) ──
+@pytest.mark.asyncio
+async def test_17_spatial_linkage_reopening_validation(db_session: AsyncSession):
+    """Evidence exceeding 10 km spatial scope is rejected from reopening and recommended for NEW_INCIDENT_REVIEW."""
+    incident = _make_test_incident(IncidentStatus.RESOLVED)
+    # Incident is at lat=27.35, lon=92.25 (West Kameng)
+    incident.latitude = 27.3500
+    incident.longitude = 92.2500
+    db_session.add(incident)
+    await db_session.flush()
+
+    sts = StateTransitionService(db_session)
+
+    # Within 10km (e.g. 2km away): lat=27.36, lon=92.25 -> ~1.1km
+    r_close = await sts.evaluate_reopening_eligibility(
+        incident_id=incident.id,
+        source=EvidenceSource.WEATHER,
+        freshness_seconds=600,
+        latitude=27.3600,
+        longitude=92.2500,
+        raw_data={"rainfall_mm": 50.0},
+    )
+    assert r_close["eligible"] is True
+    assert r_close["spatially_linked"] is True
+    assert r_close["recommended_disposition"] == "REOPEN_INCIDENT_TWIN"
+
+    # Beyond 10km (e.g. 25km away): lat=27.58, lon=92.25 -> ~25.5km
+    r_far = await sts.evaluate_reopening_eligibility(
+        incident_id=incident.id,
+        source=EvidenceSource.WEATHER,
+        freshness_seconds=600,
+        latitude=27.5800,
+        longitude=92.2500,
+        raw_data={"rainfall_mm": 50.0},
+    )
+    assert r_far["eligible"] is False
+    assert r_far["spatially_linked"] is False
+    assert r_far["recommended_disposition"] == "NEW_INCIDENT_REVIEW"
+    assert any("spatially divergent" in r for r in r_far["rejection_reasons"])
+
+
+# ── TEST 18: Materiality Rule: Generic Single-Word Tokens Rejected ──
+@pytest.mark.asyncio
+async def test_18_materiality_single_word_tokens_rejected(db_session: AsyncSession):
+    """Generic single-word words ('crack', 'rock', 'rain') are rejected unless qualified with physical indicators."""
+    incident = _make_test_incident(IncidentStatus.RESOLVED)
+    db_session.add(incident)
+    await db_session.flush()
+
+    sts = StateTransitionService(db_session)
+
+    # Generic single word "crack" alone without quantitative data or qualification
+    r_generic = await sts.evaluate_reopening_eligibility(
+        incident_id=incident.id,
+        source=EvidenceSource.FIELD,
+        freshness_seconds=600,
+        details="I saw a crack on the road.",
+    )
+    assert r_generic["eligible"] is False
+    assert any("Materiality threshold not met" in r for r in r_generic["rejection_reasons"])
+
+    # Qualified field physical indicator "new tension crack" -> Eligible
+    r_qualified = await sts.evaluate_reopening_eligibility(
+        incident_id=incident.id,
+        source=EvidenceSource.FIELD,
+        freshness_seconds=600,
+        details="Field inspection confirmed a new tension crack opening across the road.",
+    )
+    assert r_qualified["eligible"] is True
+    assert "tension crack" in r_qualified["materiality_reason"].lower()
+
+
+# ── TEST 19: Freshness Post-Closure Semantics ──
+@pytest.mark.asyncio
+async def test_19_freshness_post_closure_semantics(db_session: AsyncSession):
+    """Evidence observed after the incident closure timestamp is fresh even if age is not provided."""
+    incident = _make_test_incident(IncidentStatus.RESOLVED)
+    closure_time = datetime.utcnow() - timedelta(hours=2)
+    incident.metadata_json = {
+        "closure_assessment": {
+            "closed_at": closure_time.isoformat(),
+        }
+    }
+    db_session.add(incident)
+    await db_session.flush()
+
+    sts = StateTransitionService(db_session)
+
+    # Observed 30 minutes after closure
+    obs_time = closure_time + timedelta(minutes=30)
+    r_fresh = await sts.evaluate_reopening_eligibility(
+        incident_id=incident.id,
+        source=EvidenceSource.WEATHER,
+        observed_at=obs_time,
+        raw_data={"rainfall_mm": 42.0},
+    )
+    assert r_fresh["eligible"] is True
+    assert r_fresh["fresh"] is True
+
+

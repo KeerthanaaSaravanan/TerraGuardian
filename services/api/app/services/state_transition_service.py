@@ -27,11 +27,13 @@ from app.services.exceptions import (
     PreconditionFailedError,
     UnauthorizedAuthorityError,
 )
+from app.domain.outcome import haversine_distance_meters
 from app.services.incident_service import IncidentService
 
 
 CLOSURE_EVIDENCE_MAX_FRESHNESS_SECONDS: int = 21600  # 6.0 hours (Mandatory Project Policy)
 REOPENING_MAX_EVIDENCE_AGE_SECONDS: int = 86400  # 24 hours (Mandatory Reopening Freshness Policy)
+REOPENING_SPATIAL_SCOPE_METERS: float = 10000.0  # 10.0 km (Mandatory Reopening Spatial Scope)
 
 
 def is_material_evidence_change(
@@ -39,13 +41,21 @@ def is_material_evidence_change(
     raw_data: Optional[dict[str, Any]] = None,
     details: Optional[str] = None,
 ) -> tuple[bool, str]:
-    """Authoritative evaluator determining whether incoming evidence represents a material physical hazard change."""
-    data = raw_data or {}
-    text = (details or "").lower()
+    """Authoritative evaluator determining whether incoming evidence represents a material physical hazard change.
 
-    # Explicit flag
+    CRITICAL SEMANTIC PRINCIPLE:
+    Weak, generic tokens like 'crack', 'rock', 'rain', 'movement' alone do NOT qualify for incident reopening.
+    Requires structured quantitative telemetry or verified strong physical destabilization indicators.
+    """
+    data = raw_data or {}
+    text = (details or "").lower().strip()
+
+    # Explicit flag or structured destabilization type
     if data.get("is_material") is True or data.get("reopening_trigger") is True:
         return True, "Explicit materiality trigger flag in evidence payload."
+
+    if data.get("destabilization_type"):
+        return True, f"Structured destabilization type recorded: {data['destabilization_type']}."
 
     # 1. Rainfall / Precipitation surge (>= 35.0 mm)
     rainfall_keys = ["rainfall_mm", "precipitation_mm", "rainfall_24h_mm", "accumulated_rain_mm"]
@@ -107,14 +117,43 @@ def is_material_evidence_change(
             except (ValueError, TypeError):
                 pass
 
-    # 5. Field observation physical destabilization keywords
-    hazard_keywords = [
-        "tension crack", "crack", "scarp", "slump", "subsidence", "debris",
-        "rockfall", "toe bulge", "heave", "fissure", "slope breach", "rupture"
+    # 5. Field observation strong physical destabilization indicators (multi-word / qualified)
+    strong_hazard_indicators = [
+        "new tension crack",
+        "tension crack widening",
+        "tension crack",
+        "fresh scarp movement",
+        "scarp movement",
+        "scarp slumping",
+        "scarp enlargement",
+        "fresh slope slumping",
+        "slope slumping",
+        "new debris accumulation",
+        "debris accumulation",
+        "active rockfall",
+        "rockfall accumulation",
+        "new toe bulging",
+        "toe bulging",
+        "toe bulge",
+        "new ground rupture",
+        "ground rupture",
+        "new subsidence",
+        "fresh subsidence",
+        "new slope breach",
+        "slope breach",
+        "crown crack",
+        "crown scarp",
+        "fresh scarp",
     ]
-    matched_kw = [kw for kw in hazard_keywords if kw in text]
-    if matched_kw:
-        return True, f"Field report identified physical destabilization markers: {', '.join(matched_kw)}."
+    matched_strong = [ind for ind in strong_hazard_indicators if ind in text]
+    if matched_strong:
+        return True, f"Field report identified verified physical destabilization markers: {', '.join(matched_strong)}."
+
+    # Explicit check: If text is just weak generic words like 'crack', 'rock', 'rain', 'movement'
+    weak_tokens = {"crack", "rock", "rain", "movement", "wet", "drizzle", "small stone"}
+    words = set(text.split())
+    if words.intersection(weak_tokens) and not matched_strong:
+        return False, "Generic/weak observation token (e.g. 'crack' or 'movement') alone without structured physical metrics or qualified indicator does not meet reopening materiality."
 
     return False, "Evidence parameters do not exceed physical materiality thresholds for hazard reopening."
 
@@ -557,6 +596,8 @@ class StateTransitionService:
         interpretation: EvidenceInterpretation | str = EvidenceInterpretation.UNVERIFIED,
         freshness_seconds: Optional[int] = None,
         observed_at: Optional[datetime] = None,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
         raw_data: Optional[dict[str, Any]] = None,
         details: Optional[str] = None,
         original_reference: Optional[str] = None,
@@ -564,10 +605,10 @@ class StateTransitionService:
         """Evaluate whether incoming evidence meets the strict criteria for reopening a closed/reviewed incident.
 
         Mandatory 5-point Reopening Guardrails:
-        1. Linkage: Associated directly with the closed/reviewed incident twin.
-        2. Freshness: Evidence age <= 86,400s (24 hours) or observed after incident resolution.
+        1. Linkage: Associated directly with the closed/reviewed incident twin within 10 km spatial scope.
+        2. Freshness: Evidence age <= 86,400s (24 hours) OR observed after incident operational resolution.
         3. Credibility: Authoritative source (FIELD, SATELLITE, WEATHER, SENSOR, AUTHORITATIVE, or verified CITIZEN).
-        4. Materiality: Demonstrable physical hazard change (rainfall >= 35mm, soil >= 0.65, InSAR >= 15mm/yr, crack/slump).
+        4. Materiality: Demonstrable physical hazard change (rainfall >= 35mm, soil >= 0.65, InSAR >= 15mm/yr, crack widening/scarp).
         5. Non-duplication: Not a duplicate of existing telemetry or field evidence.
         """
         incident = await self.incident_service.get_by_id(incident_id)
@@ -581,7 +622,26 @@ class StateTransitionService:
                 f"Incident is in state '{current_status.value}'. Reopening evaluation only applies to RESOLVED or REVIEWED incidents."
             )
 
-        # 2. Source Credibility check
+        # 2. Spatial Linkage check (<= 10.0 km scope)
+        dist_m: Optional[float] = None
+        spatially_linked = True
+        recommended_disposition = "REOPEN_INCIDENT_TWIN"
+        if (
+            latitude is not None
+            and longitude is not None
+            and incident.latitude is not None
+            and incident.longitude is not None
+        ):
+            dist_m = haversine_distance_meters(incident.latitude, incident.longitude, latitude, longitude)
+            if dist_m > REOPENING_SPATIAL_SCOPE_METERS:
+                spatially_linked = False
+                recommended_disposition = "NEW_INCIDENT_REVIEW"
+                rejection_reasons.append(
+                    f"Evidence is spatially divergent from the incident ({dist_m / 1000.0:.1f}km exceeds maximum supported scope of {REOPENING_SPATIAL_SCOPE_METERS / 1000.0:.1f}km) "
+                    "and requires separate incident assessment (Recommendation: NEW_INCIDENT_REVIEW)."
+                )
+
+        # 3. Source Credibility check
         source_val = source.value if hasattr(source, "value") else str(source).upper()
         interp_val = interpretation.value if hasattr(interpretation, "value") else str(interpretation).upper()
 
@@ -608,25 +668,49 @@ class StateTransitionService:
                 f"Evidence source '{source_val}' is not recognized as a credible authoritative source for incident reopening."
             )
 
-        # 3. Freshness check (<= 86,400s / 24h)
+        # 4. Freshness check:
+        # Eligible if:
+        # A. fresh within REOPENING_MAX_EVIDENCE_AGE_SECONDS (24h)
+        # OR
+        # B. observed AFTER the incident's operational resolution timestamp (closure_assessment.closed_at)
         now_utc = datetime.utcnow()
         calculated_age = freshness_seconds
-        if calculated_age is None and observed_at is not None:
+        obs_cmp = None
+        if observed_at is not None:
             obs_cmp = observed_at.replace(tzinfo=None) if observed_at.tzinfo else observed_at
-            calculated_age = max(0, int((now_utc - obs_cmp).total_seconds()))
+            if calculated_age is None:
+                calculated_age = max(0, int((now_utc - obs_cmp).total_seconds()))
 
-        is_fresh = False
-        if calculated_age is not None:
-            if 0 <= calculated_age <= REOPENING_MAX_EVIDENCE_AGE_SECONDS:
-                is_fresh = True
-            else:
+        # Check resolution / closure timestamp
+        closure_time: Optional[datetime] = None
+        meta = incident.metadata_json or {}
+        closed_at_str = meta.get("closure_assessment", {}).get("closed_at")
+        if closed_at_str:
+            try:
+                closure_time = datetime.fromisoformat(closed_at_str).replace(tzinfo=None)
+            except Exception:
+                closure_time = None
+
+        is_within_window = (
+            calculated_age is not None
+            and 0 <= calculated_age <= REOPENING_MAX_EVIDENCE_AGE_SECONDS
+        )
+        is_after_closure = (
+            obs_cmp is not None
+            and closure_time is not None
+            and obs_cmp >= closure_time
+        )
+
+        is_fresh = is_within_window or is_after_closure
+        if not is_fresh:
+            if calculated_age is not None and calculated_age > REOPENING_MAX_EVIDENCE_AGE_SECONDS:
                 rejection_reasons.append(
-                    f"Stale evidence rejected: Evidence age {calculated_age}s exceeds maximum allowable reopening threshold of {REOPENING_MAX_EVIDENCE_AGE_SECONDS}s (24h)."
+                    f"Stale evidence rejected: Evidence age {calculated_age}s exceeds maximum allowable reopening threshold of {REOPENING_MAX_EVIDENCE_AGE_SECONDS}s (24h) and was not observed post-closure."
                 )
-        else:
-            rejection_reasons.append("Evidence lacks timestamp or freshness information for temporal validation.")
+            else:
+                rejection_reasons.append("Evidence lacks timestamp or freshness information for temporal validation.")
 
-        # 4. Non-duplication check
+        # 5. Non-duplication check
         evidence_result = await self.session.execute(
             select(EvidenceModel).where(EvidenceModel.incident_id == incident_id)
         )
@@ -647,13 +731,14 @@ class StateTransitionService:
                     rejection_reasons.append("Duplicate evidence: identical observation already exists for this incident.")
                     break
 
-        # 5. Materiality check
+        # 6. Materiality check
         is_material, mat_reason = is_material_evidence_change(source_val, raw_data, details)
         if not is_material:
             rejection_reasons.append(f"Materiality threshold not met: {mat_reason}")
 
         eligible = (
             len(rejection_reasons) == 0
+            and spatially_linked
             and is_credible
             and is_fresh
             and not is_duplicate
@@ -667,6 +752,9 @@ class StateTransitionService:
             "source_credible": is_credible,
             "fresh": is_fresh,
             "freshness_seconds": calculated_age,
+            "spatially_linked": spatially_linked,
+            "distance_meters": dist_m,
+            "recommended_disposition": recommended_disposition,
             "non_duplicate": not is_duplicate,
             "material": is_material,
             "materiality_reason": mat_reason,
@@ -748,6 +836,17 @@ class StateTransitionService:
                 actor_name=actor_name,
                 reason=reason,
                 context_payload={"reopening_entry": reopening_entry, **(context_payload or {})},
+            )
+            # Record explicit INCIDENT_REOPENED audit event (Part B4)
+            await self.audit_service.record_event(
+                incident_id=incident.id,
+                event_type=AuditEventType.INCIDENT_REOPENED,
+                actor_role=actor_role,
+                actor_name=actor_name,
+                previous_state=current_status.value,
+                new_state=IncidentStatus.REASSESSING.value,
+                reason=f"Incident Twin reactivated from RESOLVED: {reason}",
+                payload=reopening_entry,
             )
 
         return incident

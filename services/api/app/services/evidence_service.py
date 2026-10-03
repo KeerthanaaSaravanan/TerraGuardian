@@ -100,6 +100,8 @@ class EvidenceService:
                 interpretation=interpretation,
                 freshness_seconds=freshness_seconds,
                 observed_at=observed_at,
+                latitude=latitude,
+                longitude=longitude,
                 raw_data=raw_data,
                 details=details,
                 original_reference=original_reference,
