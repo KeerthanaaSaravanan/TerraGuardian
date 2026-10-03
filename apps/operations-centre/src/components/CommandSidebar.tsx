@@ -157,7 +157,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
       </div>
 
       {/* Semantic Navigation Groups */}
-      <nav aria-label="Operations Navigation" className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
+      <nav aria-label={t("nav_operations_shortcuts", undefined, "Operations Shortcuts")} className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
         {sections.map((sec) => (
           <div key={sec.title} className="space-y-1">
             {!isCollapsed && (

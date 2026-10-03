@@ -1,6 +1,6 @@
 import React from "react";
 import { useCitizenI18n } from "../../hooks/useCitizenI18n";
-import { ThemeToggle, LanguageSelector } from "../common";
+import { ThemeToggle, CitizenLanguageSelector } from "../common";
 import {
   IconPhoneCall,
   IconAlertTriangle,
@@ -51,7 +51,7 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
       {/* Header Controls: Language Selector, Alerts Bell, SOS */}
       <div className="flex items-center gap-1.5 sm:gap-2">
         {/* Multilingual Selector */}
-        <LanguageSelector variant="standard" />
+        <CitizenLanguageSelector variant="standard" />
 
         {/* Alerts Bell */}
         {unreadAlertCount > 0 && onOpenAlertsModal && (

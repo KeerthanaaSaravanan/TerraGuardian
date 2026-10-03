@@ -115,6 +115,28 @@ export const lus: Record<string, string> = {
   hazard_moderate: "CHING",
   hazard_low: "HNIAM",
 
+  // Incident & Drawer Details
+  drawer_location: "Hmun",
+  drawer_district_state: "District leh State",
+  drawer_corridor: "Kawngpui / Axis",
+  drawer_hazard_score: "HLAUHAWM CHIKNA",
+  drawer_confidence: "RINNA CHIKNA",
+  drawer_op_priority: "THAWHTUR HMALAM",
+  drawer_exposure: "Chhiatrup Tuarthei",
+  drawer_lifeline: "Kawngpui Pawimawh",
+  drawer_population: "Mipui Hlauhawn Huam",
+  drawer_detour: "Helna Kawng Hun",
+  drawer_provenance: "A Lo Chhuahna Chanchin",
+  drawer_source_agency: "Hnarna Agency",
+  drawer_dataset: "Data / Kalhmang",
+  drawer_record_id: "Record ID",
+  drawer_event_date: "A Thlen Ni",
+  drawer_directive: "DANZAH THUPEK",
+  btn_open_incident: "CHHIATNA HAWNG RAWH",
+  btn_view_evidence: "FINFIAHNA EN RAWH",
+  btn_zoom_site: "A HMUNAH EN RAWH",
+  btn_view_timeline: "HUN ENLETTUR EN RAWH",
+
   // Action Dispatch & Governance
   action_authorize: "Thupekin Phalsak Rawh",
   action_execute: "Tir Chhuak Rawh",
@@ -148,4 +170,27 @@ export const lus: Record<string, string> = {
   status_error: "Dik Lo A Awm",
   empty_state_no_data: "Hriat tur a la awm lo",
   governance_audit_verified: "Disaster Management Act 2005 hnuaia finfiah a ni",
+
+  // Authentication Gateway
+  login_header_badge: "OPERATIONS COMMAND LUHNA",
+  login_header_sub: "Govt. of India • North Eastern Region Chhiatrup Enkawlna Network",
+  login_exit_btn: "Portal-ah Let Leh Rawh",
+  login_card_badge: "SERVER-FINFIAH RBAC AUTHENTICATION",
+  login_card_title: "Operations Command Sign-In",
+  login_card_desc: "NER command network leh chhiatrup thleng mek en nan thuneitu hming leh password chhu rawh.",
+  login_user_label: "OFFICIAL USERNAME EMAW EMAIL",
+  login_pass_label: "PASSWORD / ACCESS KEY",
+  login_btn_submit: "Lut Rawh",
+  login_btn_authenticating: "Enfiah mek a ni...",
+  login_demo_badge: "DEMO BIK TAN",
+  login_demo_sub: "Enfiah nana awlsam taka luh theihna.",
+  login_citizen_prompt: "Mipui hriattirna zawn i duh em?",
+  login_citizen_link: "Citizen Safe Hawng Rawh →",
+
+  // Map scope selector
+  scope_label: "BIAL:",
+  scope_ner: "NER (State 8)",
+  scope_arunachal: "Arunachal",
+  scope_district: "West Kameng",
+  scope_site: "KM-42 Hmun",
 };

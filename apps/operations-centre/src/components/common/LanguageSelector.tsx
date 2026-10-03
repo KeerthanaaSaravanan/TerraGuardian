@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useI18n } from "../../context/I18nContext";
+import { useCitizenI18n } from "../../hooks/useCitizenI18n";
 import { IconGlobe } from "../icons";
 
 interface LanguageSelectorProps {
@@ -7,11 +8,30 @@ interface LanguageSelectorProps {
   variant?: "glass" | "standard" | "compact";
 }
 
-export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
+interface LanguageOption {
+  code: string;
+  name: string;
+  nativeName: string;
+  region: string;
+}
+
+interface LanguageSelectorViewProps extends LanguageSelectorProps {
+  lang: string;
+  languages: LanguageOption[];
+  setLanguage: (code: any) => void;
+  title: string;
+  subtitle: string;
+}
+
+const LanguageSelectorView: React.FC<LanguageSelectorViewProps> = ({
   className = "",
   variant = "standard",
+  lang,
+  languages,
+  setLanguage,
+  title,
+  subtitle,
 }) => {
-  const { lang, setLanguage, languages, t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +62,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label="Select Language"
+        aria-label={title}
         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${buttonStyle}`}
       >
         <IconGlobe className={`w-3.5 h-3.5 shrink-0 ${variant === "glass" ? "text-cyan-300" : "text-cyan-600 dark:text-cyan-400"}`} />
@@ -58,12 +78,12 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
           />
           <div
             role="listbox"
-            aria-label="Available Languages"
+            aria-label={title}
             className="absolute right-0 mt-1.5 w-56 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-1.5 z-50 text-slate-800 dark:text-slate-200 text-xs backdrop-blur-xl animate-in fade-in duration-100"
           >
             <div className="px-2.5 py-1 text-[10px] text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800 mb-1 flex justify-between">
-              <span>{t("select_language")}</span>
-              <span className="text-emerald-600 dark:text-emerald-400">{t("lang_ner_regions")}</span>
+              <span>{title}</span>
+              <span className="text-emerald-600 dark:text-emerald-400">{subtitle}</span>
             </div>
             <div className="max-h-64 overflow-y-auto space-y-0.5">
               {languages.map((l) => {
@@ -98,5 +118,35 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         </>
       )}
     </div>
+  );
+};
+
+/** Operations Centre selector — drives the global ops I18nContext (`tg_ops_language`). */
+export const LanguageSelector: React.FC<LanguageSelectorProps> = (props) => {
+  const { lang, setLanguage, languages, t } = useI18n();
+  return (
+    <LanguageSelectorView
+      {...props}
+      lang={lang}
+      languages={languages}
+      setLanguage={setLanguage}
+      title={t("select_language", undefined, "Select Language")}
+      subtitle={t("lang_ner_regions", undefined, "NER Regional Dialects")}
+    />
+  );
+};
+
+/** Citizen portal selector — drives the independent citizen i18n (`tg_safe_lang`). */
+export const CitizenLanguageSelector: React.FC<LanguageSelectorProps> = (props) => {
+  const { lang, setLanguage, languages, t } = useCitizenI18n();
+  return (
+    <LanguageSelectorView
+      {...props}
+      lang={lang}
+      languages={languages}
+      setLanguage={setLanguage}
+      title={t("select_language")}
+      subtitle={t("lang_ner_regions")}
+    />
   );
 };

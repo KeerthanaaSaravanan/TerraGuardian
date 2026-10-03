@@ -273,6 +273,13 @@ const AppCore: React.FC = () => {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  // Keep authenticated operators on the operations dashboard when they are already signed in.
+  useEffect(() => {
+    if (isAuthorityUser && (route === "/" || route === "/operations")) {
+      navigate("/operations/dashboard");
+    }
+  }, [isAuthorityUser, route]);
+
   // Protect /operations/dashboard: Unauthenticated users MUST be routed to /operations login
   useEffect(() => {
     if (route === "/operations/dashboard" && !isAuthorityUser) {

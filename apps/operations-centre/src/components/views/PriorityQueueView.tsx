@@ -226,12 +226,15 @@ export const PriorityQueueView: React.FC = () => {
             <IconShieldAlert className="w-6 h-6 animate-pulse" />
           </span>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white font-mono uppercase tracking-tight">
                 Operational Priority Queue
               </h1>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 font-bold">
                 RANKED BY OPERATIONAL URGENCY
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-600 text-white border border-red-700 shadow-sm font-bold">
+                P1 CRITICAL
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-neutral-400 font-mono mt-0.5">
@@ -247,7 +250,7 @@ export const PriorityQueueView: React.FC = () => {
             <strong className="text-slate-900 dark:text-white">{allItems.length}</strong>
           </div>
           <div className="bg-red-100 dark:bg-red-950/60 px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300">
-            <span className="opacity-75 mr-1.5">P1 CRITICAL:</span>
+            <span className="opacity-75 mr-1.5">P1:</span>
             <strong>{allItems.filter((x) => x.priorityLevel === "P1_CRITICAL").length}</strong>
           </div>
           <div className="bg-amber-100 dark:bg-amber-950/60 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300">
@@ -274,6 +277,10 @@ export const PriorityQueueView: React.FC = () => {
         </div>
       </div>
 
+      <div className="rounded-xl border border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-950/80 px-3 py-2 text-[10px] font-mono uppercase text-slate-500 dark:text-neutral-400">
+        Physical Hazard Index
+      </div>
+
       {/* Control Bar: Filters & Search */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-neutral-950/60 border border-slate-200 dark:border-neutral-800 p-3 rounded-xl">
         <div className="flex items-center gap-2">
@@ -284,7 +291,7 @@ export const PriorityQueueView: React.FC = () => {
           <div className="flex items-center bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg p-0.5 text-xs font-mono">
             {[
               { id: "ALL", label: "ALL" },
-              { id: "P1_CRITICAL", label: "P1 CRITICAL" },
+              { id: "P1_CRITICAL", label: "P1" },
               { id: "P2_HIGH", label: "P2 HIGH" },
               { id: "P4_LOW", label: "P4 LOW" },
             ].map((f) => (
@@ -336,7 +343,7 @@ export const PriorityQueueView: React.FC = () => {
                       item.priorityLevel
                     )}`}
                   >
-                    {item.priorityLevel.replace("_", " ")}
+                    {item.priorityLevel === "P1_CRITICAL" ? "P1" : item.priorityLevel.replace("_", " ")}
                   </span>
                   <span className="font-mono text-xs font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-neutral-800 px-2 py-0.5 rounded border border-slate-200 dark:border-neutral-700">
                     {item.code}
@@ -375,7 +382,7 @@ export const PriorityQueueView: React.FC = () => {
             {/* Metrics Ribbon: Decoupled Hazard vs Confidence vs Priority */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-3.5 text-xs font-mono">
               <div className="bg-slate-50 dark:bg-neutral-950 p-2.5 rounded-xl border border-slate-200/80 dark:border-neutral-800/80">
-                <div className="text-[10px] text-slate-400 uppercase font-bold">Physical Hazard Index</div>
+                <div className="text-[10px] text-slate-400 uppercase font-bold">Hazard Index</div>
                 <div className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
                   {item.hazardScore.toFixed(1)} / 100
                   <span className="text-[10px] ml-1.5 text-red-600 dark:text-red-400 font-semibold">

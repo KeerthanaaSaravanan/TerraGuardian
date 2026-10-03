@@ -115,6 +115,28 @@ export const brx: Record<string, string> = {
   hazard_moderate: "गेजेरारि",
   hazard_low: "गाहाय",
 
+  // Incident & Drawer Details
+  drawer_location: "जायगा",
+  drawer_district_state: "जिल्ला आरो राज्य",
+  drawer_corridor: "लामा / अक्ष",
+  drawer_hazard_score: "हा खैफोद बिबां",
+  drawer_confidence: "फोथायथाव महर",
+  drawer_op_priority: "थाब मावथाव बिथोन",
+  drawer_exposure: "गिख्रोंथाव आरो खहा",
+  drawer_lifeline: "गोनांथार लामा",
+  drawer_population: "खैफोद गोनां सुबुं",
+  drawer_detour: "गुबुन लामा सम",
+  drawer_provenance: "गुदि आरो जারिमिन",
+  drawer_source_agency: "गुदि मिरु",
+  drawer_dataset: "दाता / रोखोम",
+  drawer_record_id: "रेकर्ड आईडी",
+  drawer_event_date: "जाथाइनि सान",
+  drawer_directive: "बिथोन होनाय",
+  btn_open_incident: "जाथाइ खेव",
+  btn_view_evidence: "फोरमान नाय",
+  btn_zoom_site: "जायगायाव नाय",
+  btn_view_timeline: "समफारि नाय",
+
   // Action Dispatch & Governance
   action_authorize: "गनायथि हो",
   action_execute: "दोल थिसन",
@@ -148,4 +170,27 @@ export const brx: Record<string, string> = {
   status_error: "गोरोन्थि",
   empty_state_no_data: "जेबो दाता गैया",
   governance_audit_verified: "खैफाद सालायनाय आइन २००५ नि सिङाव आनजाद जाबाय",
+
+  // Authentication Gateway
+  login_header_badge: "सालायनाय बिथोन गेटवे",
+  login_header_sub: "भारत सरकार • सा-सानजा ओनसोल खैफाद सालायनाय नेटवर्क",
+  login_exit_btn: "पर्टेलआव थांफिन",
+  login_card_badge: "सार्भार-आनजाद जाबाय आरबीएसी हाबनाय",
+  login_card_title: "सालायनाय बिथोन हाबनाय",
+  login_card_desc: "सा-सानजा बिथोन नेटवर्क आरो सोलिगासिनो गोनां जाथाइफोर नायनो गनायथि मोननाय मुं हो।",
+  login_user_label: "गनायथि गोनां बाहायग्रा मुं एबा ईमेल",
+  login_pass_label: "पासवार्ड एबा साबि",
+  login_btn_submit: "हाब",
+  login_btn_authenticating: "आनजाद खालामगासिनो...",
+  login_demo_badge: "डेम' बिफां हाबनाय",
+  login_demo_sub: "नायबिजिरनायनि थाखाय गोरलै हाबनाय।",
+  login_citizen_prompt: "सुबुंफोरनि खैफाद फोरमायथि नागिरदों ना?",
+  login_citizen_link: "नागोरिक रैखा पर्टेल खेव →",
+
+  // Map scope selector
+  scope_label: "ओनसोल:",
+  scope_ner: "सा-सानजा (८ राज्य)",
+  scope_arunachal: "अरुणाचल",
+  scope_district: "पश्चिम कामेंग",
+  scope_site: "KM-42 जायगा",
 };

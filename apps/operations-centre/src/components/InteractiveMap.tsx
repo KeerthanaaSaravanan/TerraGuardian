@@ -1586,15 +1586,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             {/* Section 1: Location & Corridor */}
             <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1 text-[11px]">
               <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-neutral-400">Location:</span>
+                <span className="text-slate-500 dark:text-neutral-400">{t("drawer_location", undefined, "Location:")}</span>
                 <span className="font-semibold text-slate-900 dark:text-neutral-200 text-right">{selectedEvent.location_name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-neutral-400">District & State:</span>
+                <span className="text-slate-500 dark:text-neutral-400">{t("drawer_district_state", undefined, "District & State:")}</span>
                 <span className="font-semibold text-slate-900 dark:text-neutral-200">{selectedEvent.district}, {selectedEvent.state}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-neutral-400">Corridor / Axis:</span>
+                <span className="text-slate-500 dark:text-neutral-400">{t("drawer_corridor", undefined, "Corridor / Axis:")}</span>
                 <span className="font-bold text-amber-600 dark:text-amber-400">{selectedEvent.corridor_code || "Regional Transport Corridor"}</span>
               </div>
             </div>
@@ -1602,17 +1602,17 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             {/* Section 2: Core Three-Pillar Metrics */}
             <div className="grid grid-cols-3 gap-1.5 text-center">
               <div className="p-2 rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60">
-                <div className="text-[9px] text-red-600 dark:text-red-400 font-bold">PHYSICAL HAZARD</div>
+                <div className="text-[9px] text-red-600 dark:text-red-400 font-bold">{t("drawer_hazard_score", undefined, "PHYSICAL HAZARD")}</div>
                 <div className="text-sm font-bold text-red-700 dark:text-red-300 mt-0.5">86 / 100</div>
                 <div className="text-[8px] text-red-500">HIGH DANGER</div>
               </div>
               <div className="p-2 rounded bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60">
-                <div className="text-[9px] text-blue-600 dark:text-blue-400 font-bold">CONFIDENCE</div>
+                <div className="text-[9px] text-blue-600 dark:text-blue-400 font-bold">{t("drawer_confidence", undefined, "CONFIDENCE")}</div>
                 <div className="text-sm font-bold text-blue-700 dark:text-blue-300 mt-0.5">78%</div>
                 <div className="text-[8px] text-blue-500">ROBUST DATA</div>
               </div>
               <div className="p-2 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60">
-                <div className="text-[9px] text-amber-600 dark:text-amber-400 font-bold">OP PRIORITY</div>
+                <div className="text-[9px] text-amber-600 dark:text-amber-400 font-bold">{t("drawer_op_priority", undefined, "OP PRIORITY")}</div>
                 <div className="text-sm font-bold text-amber-700 dark:text-amber-300 mt-0.5">CRITICAL</div>
                 <div className="text-[8px] text-amber-500">P1 STATUTORY</div>
               </div>
@@ -1620,38 +1620,38 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
             {/* Section 3: Exposure Profile */}
             <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1 text-[11px]">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Exposure & Vulnerability</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{t("drawer_exposure", undefined, "Exposure & Vulnerability")}</div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Lifeline Impact:</span>
+                <span className="text-slate-500">{t("drawer_lifeline", undefined, "Lifeline Impact:")}</span>
                 <span className="font-bold text-red-600 dark:text-red-400">Sole Arterial NH-13</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Population at Risk:</span>
+                <span className="text-slate-500">{t("drawer_population", undefined, "Population at Risk:")}</span>
                 <span>~60,000 in Tawang</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Detour Penalty:</span>
+                <span className="text-slate-500">{t("drawer_detour", undefined, "Detour Penalty:")}</span>
                 <span className="text-amber-600 dark:text-amber-400">48h via Assam Valley</span>
               </div>
             </div>
 
             {/* Section 4: Provenance & Evidentiary Lineage */}
             <div className="space-y-1 bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px]">
-              <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Provenance & Lineage</div>
+              <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">{t("drawer_provenance", undefined, "Provenance & Lineage")}</div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Source Agency:</span>
+                <span className="text-slate-500">{t("drawer_source_agency", undefined, "Source Agency:")}</span>
                 <span className="font-semibold truncate max-w-[170px]" title={selectedEvent.source_agency}>{selectedEvent.source_agency}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Dataset / Method:</span>
+                <span className="text-slate-500">{t("drawer_dataset", undefined, "Dataset / Method:")}</span>
                 <span className="font-medium truncate max-w-[170px]">{selectedEvent.source_dataset || "National Landslide Susceptibility Mapping"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Record ID:</span>
+                <span className="text-slate-500">{t("drawer_record_id", undefined, "Record ID:")}</span>
                 <span className="font-mono font-bold text-slate-900 dark:text-white truncate max-w-[170px]" title={selectedEvent.source_record_id}>{selectedEvent.source_record_id}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Event Date:</span>
+                <span className="text-slate-500">{t("drawer_event_date", undefined, "Event Date:")}</span>
                 <span className="font-mono">{selectedEvent.event_date.split("T")[0]}</span>
               </div>
               {selectedEvent.source_reference && (
@@ -1664,7 +1664,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
             {/* Section 5: Recommended Statutory Directive */}
             <div className="p-2.5 rounded-lg bg-red-50/80 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 text-[10px]">
-              <div className="text-[9px] font-bold text-red-600 dark:text-red-400 uppercase">RECOMMENDED STATUTORY DIRECTIVE</div>
+              <div className="text-[9px] font-bold text-red-600 dark:text-red-400 uppercase">{t("drawer_directive", undefined, "RECOMMENDED STATUTORY DIRECTIVE")}</div>
               <div className="text-slate-800 dark:text-neutral-200 font-semibold mt-0.5">
                 Issue Precautionary Section 34 / 30 DM Act Notification & Deploy BRO Route Escort
               </div>
@@ -1683,7 +1683,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               }}
               className="py-2 px-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-mono font-bold text-[11px] flex items-center justify-center gap-1 shadow transition-colors cursor-pointer"
             >
-              <span>OPEN INCIDENT</span>
+              <span>{t("btn_open_incident", undefined, "OPEN INCIDENT")}</span>
               <IconArrowRight className="w-3 h-3" />
             </button>
 
@@ -1691,7 +1691,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               onClick={() => setActiveNavTab("EVIDENCE")}
               className="py-2 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-[11px] flex items-center justify-center gap-1 shadow transition-colors cursor-pointer"
             >
-              <span>VIEW EVIDENCE</span>
+              <span>{t("btn_view_evidence", undefined, "VIEW EVIDENCE")}</span>
               <IconShieldCheck className="w-3 h-3" />
             </button>
 
@@ -1703,7 +1703,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               }}
               className="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 font-mono text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
             >
-              <span>ZOOM TO SITE</span>
+              <span>{t("btn_zoom_site", undefined, "ZOOM TO SITE")}</span>
               <IconMapPin className="w-3 h-3" />
             </button>
 
@@ -1711,7 +1711,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               onClick={() => setActiveNavTab("OUTCOMES")}
               className="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 font-mono text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
             >
-              <span>VIEW TIMELINE</span>
+              <span>{t("btn_view_timeline", undefined, "VIEW TIMELINE")}</span>
               <IconActivity className="w-3 h-3" />
             </button>
           </div>

@@ -115,6 +115,28 @@ export const as: Record<string, string> = {
   hazard_moderate: "মধ্যম",
   hazard_low: "নিম্ন",
 
+  // Incident & Drawer Details
+  drawer_location: "স্থান",
+  drawer_district_state: "জিলা আৰু ৰাজ্য",
+  drawer_corridor: "কৰিডৰ / অক্ষ",
+  drawer_hazard_score: "প্ৰাকৃতিক বিপদ",
+  drawer_confidence: "বিশ্বাসযোগ্যতা",
+  drawer_op_priority: "অপাৰেচন অগ্ৰাধিকাৰ",
+  drawer_exposure: "বিপদ আৰু প্ৰভাৱ",
+  drawer_lifeline: "জীৱনৰেখা প্ৰভাৱ",
+  drawer_population: "বিপদাপন্ন জনসংখ্যা",
+  drawer_detour: "অতিৰিক্ত যাত্ৰাকাল",
+  drawer_provenance: "উৎস আৰু বুৰঞ্জী",
+  drawer_source_agency: "মূল সংস্থা",
+  drawer_dataset: "তথ্যসূত্ৰ / পদ্ধতি",
+  drawer_record_id: "নথি নম্বৰ",
+  drawer_event_date: "ঘটনাৰ তাৰিখ",
+  drawer_directive: "পৰামৰ্শমূলক নিৰ্দেশনা",
+  btn_open_incident: "ঘটনা খোলক",
+  btn_view_evidence: "প্ৰমাণ চাওক",
+  btn_zoom_site: "স্থানলৈ যাওক",
+  btn_view_timeline: "সময়ৰেখা চাওক",
+
   // Action Dispatch & Governance
   action_authorize: "অনুমোদন জনাওক",
   action_execute: "দল প্ৰেৰণ কৰক",
@@ -148,4 +170,27 @@ export const as: Record<string, string> = {
   status_error: "ত্ৰুটি",
   empty_state_no_data: "কোনো তথ্য উপলব্ধ নহয়",
   governance_audit_verified: "দূৰ্যোগ ব্যৱস্থাপনা আইন ২০০৫ অধীনত প্ৰমাণিত",
+
+  // Authentication Gateway
+  login_header_badge: "অভিযান কমাণ্ড গেটৱে",
+  login_header_sub: "ভাৰত চৰকাৰ • উত্তৰ-পূব অঞ্চল দুৰ্যোগ ব্যৱস্থাপনা নেটৱৰ্ক",
+  login_exit_btn: "পৰ্টেললৈ উভতি যাওক",
+  login_card_badge: "ছাৰ্ভাৰ-প্ৰমাণিত আৰবিএচি প্ৰৱেশ",
+  login_card_title: "অভিযান কমাণ্ড প্ৰৱেশ",
+  login_card_desc: "উত্তৰ-পূব কমাণ্ড নেটৱৰ্ক আৰু সক্ৰিয় ঘটনাসমূহ চাবলৈ কৰ্তৃত্বপ্ৰাপ্ত তথ্য লিখক।",
+  login_user_label: "কৰ্তৃত্বপ্ৰাপ্ত ইউজাৰনেম বা ইমেইল",
+  login_pass_label: "পাছৱৰ্ড বা এক্সেছ কি",
+  login_btn_submit: "প্ৰৱেশ কৰক",
+  login_btn_authenticating: "প্ৰমাণীকৰণ চলিছে...",
+  login_demo_badge: "ডেমো ভূমিকা প্ৰৱেশ",
+  login_demo_sub: "মূল্যায়ন আৰু পৰীক্ষাৰ বাবে সহজ প্ৰৱেশ।",
+  login_citizen_prompt: "ৰাইজৰ দুৰ্যোগ তথ্য প্ৰেৰণ বিচাৰিছে নেকি?",
+  login_citizen_link: "চিটিজেন ছেফ পৰ্টেল খোলক →",
+
+  // Map scope selector
+  scope_label: "অঞ্চল:",
+  scope_ner: "উত্তৰ-পূব (৮খন ৰাজ্য)",
+  scope_arunachal: "অৰুণাচল",
+  scope_district: "পশ্চিম কামেং",
+  scope_site: "KM-42 স্থান",
 };

@@ -115,6 +115,28 @@ export const bn: Record<string, string> = {
   hazard_moderate: "মাঝারি",
   hazard_low: "কম",
 
+  // Incident & Drawer Details
+  drawer_location: "অবস্থান",
+  drawer_district_state: "জেলা ও রাজ্য",
+  drawer_corridor: "করিডোর / অক্ষ",
+  drawer_hazard_score: "ভৌত বিপদ",
+  drawer_confidence: "বিশ্বাসযোগ্যতা",
+  drawer_op_priority: "অপারেশন অগ্রাধিকার",
+  drawer_exposure: "ঝুঁকি ও দুর্বলতা",
+  drawer_lifeline: "লাইফলাইন প্রভাব",
+  drawer_population: "ঝুঁকিপূর্ণ জনসংখ্যা",
+  drawer_detour: "অতিরিক্ত সময়",
+  drawer_provenance: "উৎস ও ইতিহাস",
+  drawer_source_agency: "উৎস সংস্থা",
+  drawer_dataset: "উপাত্ত / পদ্ধতি",
+  drawer_record_id: "রেকর্ড আইডি",
+  drawer_event_date: "ঘটনার তারিখ",
+  drawer_directive: "আইনগত নির্দেশনা",
+  btn_open_incident: "ঘটনা দেখুন",
+  btn_view_evidence: "প্রমাণ দেখুন",
+  btn_zoom_site: "সাইটে যান",
+  btn_view_timeline: "টাইমলাইন দেখুন",
+
   // Action Dispatch & Governance
   action_authorize: "অনুমোদন করুন",
   action_execute: "দল প্রেরণ করুন",
@@ -148,4 +170,27 @@ export const bn: Record<string, string> = {
   status_error: "ত্রুটি",
   empty_state_no_data: "বর্তমান দৃশ্যে কোন তথ্য নেই",
   governance_audit_verified: "দুর্যোগ ব্যবস্থাপনা আইন ২০০৫ অনুযায়ী যাচাইকৃত",
+
+  // Authentication Gateway
+  login_header_badge: "অপারেশনস কমান্ড গেটওয়ে",
+  login_header_sub: "ভারত সরকার • উত্তর-পূর্ব অঞ্চল দুর্যোগ ব্যবস্থাপনা নেটওয়ার্ক",
+  login_exit_btn: "পোর্টাল ফিরে যান",
+  login_card_badge: "সার্ভার-যাচাইকৃত আরবিএসি প্রমাণীকরণ",
+  login_card_title: "অপারেশনস কমান্ড সাইন-ইন",
+  login_card_desc: "উত্তর-পূর্ব কমান্ড নেটওয়ার্ক এবং সক্রিয় ঘটনাবলী দেখতে অনুমোদিত শংসাপত্র লিখুন।",
+  login_user_label: "অফিসিয়াল ব্যবহারকারীর নাম বা ইমেল",
+  login_pass_label: "পাসওয়ার্ড বা অ্যাক্সেস কী",
+  login_btn_submit: "প্রবেশ করুন",
+  login_btn_authenticating: "যাচাইকরণ চলছে...",
+  login_demo_badge: "ডেমো ভূমিকা প্রবেশ",
+  login_demo_sub: "মূল্যায়ন এবং পরীক্ষার জন্য সহজ প্রবেশ।",
+  login_citizen_prompt: "নাগরিক দুর্যোগ রিপোর্টিং খুঁজছেন?",
+  login_citizen_link: "সিটিজেন সেফ পোর্টাল খুলুন →",
+
+  // Map scope selector
+  scope_label: "অঞ্চল:",
+  scope_ner: "উত্তর-পূর্ব (৮টি রাজ্য)",
+  scope_arunachal: "অরুণাচল",
+  scope_district: "পশ্চিম কামেং",
+  scope_site: "KM-42 স্থান",
 };

@@ -115,6 +115,28 @@ export const ne: Record<string, string> = {
   hazard_moderate: "मध्यम",
   hazard_low: "न्यून",
 
+  // Incident & Drawer Details
+  drawer_location: "स्थान",
+  drawer_district_state: "जिल्ला र राज्य",
+  drawer_corridor: "करिडोर / अक्ष",
+  drawer_hazard_score: "भौतिक खतरा",
+  drawer_confidence: "विश्वास स्तर",
+  drawer_op_priority: "सञ्चालन प्राथमिकता",
+  drawer_exposure: "जोखिम र संवेदनशीलता",
+  drawer_lifeline: "जीवनरेखा प्रभाव",
+  drawer_population: "जोखिममा रहेको जनसंख्या",
+  drawer_detour: "घुमाउरो समय",
+  drawer_provenance: "स्रोत र इतिहास",
+  drawer_source_agency: "स्रोत निकाय",
+  drawer_dataset: "तथ्याङ्क / विधि",
+  drawer_record_id: "रेकर्ड आईडी",
+  drawer_event_date: "घटना मिति",
+  drawer_directive: "सिफारिस गरिएको कानुनी निर्देशन",
+  btn_open_incident: "घटना खोल्नुहोस्",
+  btn_view_evidence: "प्रमाण हेर्नुहोस्",
+  btn_zoom_site: "साइटमा जुम गर्नुहोस्",
+  btn_view_timeline: "समयरेखा हेर्नुहोस्",
+
   // Action Dispatch & Governance
   action_authorize: "कार्य स्वीकृत गर्नुहोस्",
   action_execute: "टोली परिचालन गर्नुहोस्",
@@ -148,4 +170,27 @@ export const ne: Record<string, string> = {
   status_error: "त्रुटि",
   empty_state_no_data: "हाल कुनै तथ्याङ्क उपलब्ध छैन",
   governance_audit_verified: "विपद् व्यवस्थापन ऐन २००५ अन्तर्गत प्रमाणित",
+
+  // Authentication Gateway
+  login_header_badge: "सञ्चालन कमान्ड गेटवे",
+  login_header_sub: "भारत सरकार • उत्तर-पूर्वी क्षेत्र विपद् सञ्चालन सञ्जाल",
+  login_exit_btn: "पोर्टलमा फर्कनुहोस्",
+  login_card_badge: "सर्भर-प्रमाणित आरबीएसी प्रमाणीकरण",
+  login_card_title: "सञ्चालन कमान्ड साइन-इन",
+  login_card_desc: "उत्तर-पूर्वी कमान्ड सञ्जाल र सक्रिय घटनाहरू हेर्न आधिकारिक विवरण प्रविष्ट गर्नुहोस्।",
+  login_user_label: "आधिकारिक प्रयोगकर्ता नाम वा इमेल",
+  login_pass_label: "पासवर्ड वा पहुँच कुञ्जी",
+  login_btn_submit: "प्रवेश गर्नुहोस्",
+  login_btn_authenticating: "प्रमाणीकरण हुँदैछ...",
+  login_demo_badge: "डेमो भूमिका पहुँच",
+  login_demo_sub: "मूल्याङ्कन र परीक्षणको लागि सजिलो पहुँच।",
+  login_citizen_prompt: "नागरिक विपद् रिपोर्टिङ खोज्दै हुनुहुन्छ?",
+  login_citizen_link: "नागरिक सुरक्षा पोर्टल खोल्नुहोस् →",
+
+  // Map scope selector
+  scope_label: "क्षेत्र:",
+  scope_ner: "उत्तर-पूर्व (८ राज्य)",
+  scope_arunachal: "अरुणाचल",
+  scope_district: "पश्चिम कामेंग",
+  scope_site: "KM-42 स्थल",
 };

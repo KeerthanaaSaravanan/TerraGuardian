@@ -115,6 +115,28 @@ export const mni: Record<string, string> = {
   hazard_moderate: "ময়ায় ওইবা",
   hazard_low: "নেম্বা",
 
+  // Incident & Drawer Details
+  drawer_location: "মফম",
+  drawer_district_state: "জিলা অমসুং রাজ্য",
+  drawer_corridor: "করিদোর / লম্বী",
+  drawer_hazard_score: "ফিজিকল হেজার্দ",
+  drawer_confidence: "থাজবগী চাং",
+  drawer_op_priority: "অপরেসন্স প্রাইয়োরিতি",
+  drawer_exposure: "খুদোংথিবা অমসুং শোত্থবা",
+  drawer_lifeline: "লাইফলাইনদা চৈথেং",
+  drawer_population: "খুদোংথিবদা লৈবা মীয়াম",
+  drawer_detour: "লম্বী হোংবগী মতম",
+  drawer_provenance: "হৌরকফম অমসুং লাইনিয়েজ",
+  drawer_source_agency: "সোর্স এজেন্সী",
+  drawer_dataset: "দেটাসেট / মেথদ",
+  drawer_record_id: "রেকোর্দ আইডি",
+  drawer_event_date: "থৌদোক্কী তারিখ",
+  drawer_directive: "পীরিবা কম্মান্দ দাইরেক্তিব",
+  btn_open_incident: "থৌদোক হাংদোকউ",
+  btn_view_evidence: "খুদম য়েংউ",
+  btn_zoom_site: "মফমদা জুম তৌ",
+  btn_view_timeline: "তাইমলাইন য়েংউ",
+
   // Action Dispatch & Governance
   action_authorize: "অয়াবা পীবীয়ু",
   action_execute: "দল থাবীয়ু",
@@ -148,4 +170,27 @@ export const mni: Record<string, string> = {
   status_error: "অশোইবা",
   empty_state_no_data: "হৌজিক লৈরিবা অসিদা পাও লৈতে",
   governance_audit_verified: "দিজাস্টর মেনেজমেন্ট এক্ট ২০০৫ গী মখাদা চেক তৌরবা",
+
+  // Authentication Gateway
+  login_header_badge: "অপরেসন্স কমান্ড গেটৱে",
+  login_header_sub: "ভারত সরকার • নোংপোক-অৱাং লমদম অৱাবা থৌরম লৈঙাক",
+  login_exit_btn: "পোর্তালদা হল্লু",
+  login_card_badge: "সর্ভর-চেক তৌরবা আরনাক অথোরিটি",
+  login_card_title: "অপরেসন্স কমান্ড চংবা",
+  login_card_desc: "নোংপোক-অৱাং কমান্ড নেটৱর্ক অমসুং হৌজিক থোক্লিবা থৌদোকশিং য়েংনবগীদমক পাও চংবীয়ু।",
+  login_user_label: "অথোরিটি য়ুজরনেম নত্রগা ইমেইল",
+  login_pass_label: "পাসৱর্দ নত্রগা এক্সেস কি",
+  login_btn_submit: "চংবীয়ু",
+  login_btn_authenticating: "চেক তৌরি...",
+  login_demo_badge: "দেমো রোল এক্সেস",
+  login_demo_sub: "নৈনবগীদমক লাইনা চংবা য়াগনি।",
+  login_citizen_prompt: "মীয়ামগী অৱাবা পাও থাবগীদমক থিরিব্রা?",
+  login_citizen_link: "সিটিজেন সেফ পোর্তাল হাংদোকউ →",
+
+  // Map scope selector
+  scope_label: "মফম:",
+  scope_ner: "নোংপোক-অৱাং (রাজ্য ৮)",
+  scope_arunachal: "অরুনাচল",
+  scope_district: "ৱেস্ট কামেং",
+  scope_site: "KM-42 মফম",
 };

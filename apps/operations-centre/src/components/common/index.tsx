@@ -5,7 +5,7 @@ import { IconCheckCircle2, IconAlertTriangle, IconShieldCheck, IconClock, IconAc
 export { TruthBadge, MaturityBadge } from "../../design-system/components/TruthMaturityBadge";
 export { OperationalStateBadge, AlertLifecycleBadge } from "../../design-system/components/OperationalStateBadge";
 export { WhatChangedPanel } from "./WhatChangedPanel";
-export { LanguageSelector } from "./LanguageSelector";
+export { LanguageSelector, CitizenLanguageSelector } from "./LanguageSelector";
 
 // ── StatusBadge Component ──
 interface StatusBadgeProps {

@@ -218,15 +218,12 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
   const setActiveNavTab = (tab: PrimaryNavTab, updateHistory: boolean = true) => {
     setActiveNavTabState(tab);
     if (typeof window !== "undefined") {
-      const isOpsRoute = window.location.pathname.startsWith("/operations");
-      if (isOpsRoute) {
-        const targetHash = TAB_TO_HASH[tab] || "#operations";
-        if (window.location.hash !== targetHash) {
-          if (updateHistory) {
-            window.location.hash = targetHash;
-          } else {
-            window.history.replaceState(null, "", targetHash);
-          }
+      const targetHash = TAB_TO_HASH[tab] || "#operations";
+      if (window.location.hash !== targetHash) {
+        if (updateHistory) {
+          window.location.hash = targetHash;
+        } else {
+          window.history.replaceState(null, "", targetHash);
         }
       }
     }
