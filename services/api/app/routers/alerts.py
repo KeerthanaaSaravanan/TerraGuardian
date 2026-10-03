@@ -340,3 +340,32 @@ async def get_data_sources_health() -> dict[str, Any]:
             },
         ],
     }
+
+
+@router.get(
+    "/alerts/{alert_id}/multilingual",
+    status_code=status.HTTP_200_OK,
+    summary="Retrieve multilingual alert dissemination packages in English, Hindi, Assamese, Bengali, and Bodo",
+)
+async def get_multilingual_alert(
+    alert_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    """Provide standardized multilingual translations of warning broadcast for North Eastern Region."""
+    alert_service = AlertService(session)
+    alert = await alert_service.get_alert_by_id(alert_id)
+    translations = AlertService.generate_multilingual_payload(
+        headline=alert.headline,
+        message=alert.message or "Landslide risk warning issued for transport corridor.",
+        warning_level=alert.warning_level.value if hasattr(alert, "warning_level") and alert.warning_level else "WARNING",
+        corridor=alert.target_area or "NH-13 Bhalukpong-Tenga",
+    )
+    return {
+        "alert_id": str(alert.id),
+        "alert_code": alert.alert_code,
+        "warning_level": alert.warning_level.value if hasattr(alert, "warning_level") and alert.warning_level else "WARNING",
+        "target_area": alert.target_area,
+        "available_languages": list(translations.keys()),
+        "translations": translations,
+    }
+

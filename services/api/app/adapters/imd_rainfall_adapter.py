@@ -124,6 +124,13 @@ class IMDRainfallAdapter(ExternalDataAdapter[CanonicalPrecipitationObservation])
         if freshness_sec > 86400:  # Older than 24 hours
             quality = "STALE"
 
+        rain_3h = float(raw_payload["rainfall_3h_mm"]) if "rainfall_3h_mm" in raw_payload and raw_payload["rainfall_3h_mm"] is not None else None
+        rain_6h = float(raw_payload["rainfall_6h_mm"]) if "rainfall_6h_mm" in raw_payload and raw_payload["rainfall_6h_mm"] is not None else None
+        rain_72h = float(raw_payload["rainfall_72h_mm"]) if "rainfall_72h_mm" in raw_payload and raw_payload["rainfall_72h_mm"] is not None else None
+        rain_7d = float(raw_payload["rainfall_7d_mm"]) if "rainfall_7d_mm" in raw_payload and raw_payload["rainfall_7d_mm"] is not None else None
+        ari_7 = float(raw_payload["antecedent_rainfall_index_7d"]) if "antecedent_rainfall_index_7d" in raw_payload and raw_payload["antecedent_rainfall_index_7d"] is not None else None
+        anomaly = float(raw_payload["anomaly_pct_vs_normal"]) if "anomaly_pct_vs_normal" in raw_payload and raw_payload["anomaly_pct_vs_normal"] is not None else None
+
         return CanonicalPrecipitationObservation(
             source_id=f"IMD-AWS-{station_id}",
             source_name=raw_payload.get("station_name", f"IMD Station {station_id}"),
@@ -147,8 +154,14 @@ class IMDRainfallAdapter(ExternalDataAdapter[CanonicalPrecipitationObservation])
             station_id=station_id,
             station_name=raw_payload.get("station_name"),
             rainfall_1h_mm=rain_1h,
+            rainfall_3h_mm=rain_3h,
+            rainfall_6h_mm=rain_6h,
             rainfall_24h_mm=rain_24h,
+            rainfall_72h_mm=rain_72h,
+            rainfall_7d_mm=rain_7d,
+            antecedent_rainfall_index_7d=ari_7,
             rainfall_intensity_rate_mm_hr=intensity,
+            anomaly_pct_vs_normal=anomaly,
             temperature_c=float(raw_payload["temperature_c"]) if "temperature_c" in raw_payload else None,
             relative_humidity_pct=float(raw_payload["relative_humidity_pct"]) if "relative_humidity_pct" in raw_payload else None,
             wind_speed_mps=float(raw_payload["wind_speed_mps"]) if "wind_speed_mps" in raw_payload else None,

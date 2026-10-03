@@ -1256,6 +1256,158 @@ async def get_point_susceptibility(
 
 
 @router.get(
+    "/models",
+    status_code=status.HTTP_200_OK,
+    summary="List all registered AI/ML landslide susceptibility models and their scientific status",
+)
+async def list_registered_models() -> dict[str, Any]:
+    """Return Model Registry catalog including Model v1 (Baseline) and Model v2 (Ensemble)."""
+    from app.services.model_registry_service import ModelRegistryService
+
+    svc = ModelRegistryService()
+    models = svc.get_registered_models()
+    return {
+        "total_models": len(models),
+        "registry_version": "v1.0",
+        "governing_standard": "SIH26001 Scientific Provenance Baseline",
+        "models": models,
+    }
+
+
+@router.get(
+    "/models/compare",
+    status_code=status.HTTP_200_OK,
+    summary="Compare predictions of Model v1 (Logistic Baseline) vs Model v2 (Multi-Modal Ensemble)",
+)
+async def compare_registered_models(
+    latitude: float = Query(..., ge=26.0, le=29.0),
+    longitude: float = Query(..., ge=91.0, le=94.0),
+    target_date: Optional[str] = Query("2024-06-25"),
+) -> dict[str, Any]:
+    """Execute dual model inference for identical coordinates and explain divergence."""
+    from app.services.model_registry_service import ModelRegistryService
+
+    svc = ModelRegistryService()
+    return svc.compare_models(latitude=latitude, longitude=longitude, target_date=target_date)
+
+
+@router.get(
+    "/models/{model_version}",
+    status_code=status.HTTP_200_OK,
+    summary="Get details, features, and parameters for a specific model version",
+)
+async def get_model_details(model_version: str) -> dict[str, Any]:
+    """Retrieve detailed architecture and parameters for a specific model version."""
+    from app.services.model_registry_service import ModelRegistryService
+
+    svc = ModelRegistryService()
+    model = svc.get_model_by_version(model_version)
+    if not model:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Model version '{model_version}' not found in registry",
+        )
+    return model
+
+
+@router.get(
+    "/critical-zones",
+    status_code=status.HTTP_200_OK,
+    summary="Retrieve GeoJSON FeatureCollection of critical landslide hazard zones along NH-13 corridor",
+)
+async def get_critical_risk_zones() -> dict[str, Any]:
+    """Expose high-risk spatial hazard zones with exposure attributes as RFC-7946 GeoJSON."""
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "id": "ZONE-WK-SESSA-KM42",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                        [92.5640, 27.0810],
+                        [92.5720, 27.0810],
+                        [92.5740, 27.0875],
+                        [92.5655, 27.0880],
+                        [92.5640, 27.0810],
+                    ]],
+                },
+                "properties": {
+                    "zone_id": "ZONE-WK-SESSA-KM42",
+                    "name": "KM-42 Sessa Hairpin Turn Scarp Zone",
+                    "corridor": "NH-13 Trans-Arunachal Highway",
+                    "chainage_km": 42.0,
+                    "hazard_classification": "CRITICAL_HAZARD",
+                    "predicted_critical_area": True,
+                    "slope_deg": 25.65,
+                    "elevation_msl_m": 618.4,
+                    "primary_lifeline": "NH-13 (Sole Bhalukpong-Tenga Route)",
+                    "critical_asset_exposed": "Sessa Double-Span RCC Bridge (KM-42.6)",
+                    "failure_mechanism": "Colluvial debris slide over fractured shale bedrock",
+                    "associated_incident_id": "TG-2048",
+                },
+            },
+            {
+                "type": "Feature",
+                "id": "ZONE-WK-PINJOLI-KM48",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                        [92.5280, 27.1210],
+                        [92.5360, 27.1210],
+                        [92.5375, 27.1270],
+                        [92.5290, 27.1275],
+                        [92.5280, 27.1210],
+                    ]],
+                },
+                "properties": {
+                    "zone_id": "ZONE-WK-PINJOLI-KM48",
+                    "name": "KM-48 Pinjoli Nallah Debris Fan",
+                    "corridor": "NH-13 Trans-Arunachal Highway",
+                    "chainage_km": 48.0,
+                    "hazard_classification": "HIGH_HAZARD",
+                    "predicted_critical_area": True,
+                    "slope_deg": 31.4,
+                    "elevation_msl_m": 820.0,
+                    "primary_lifeline": "NH-13",
+                    "critical_asset_exposed": "Pinjoli Box Culvert & Water Intake",
+                    "failure_mechanism": "Torrential debris torrent following cloudburst",
+                },
+            },
+            {
+                "type": "Feature",
+                "id": "ZONE-WK-DEDZA-KM52",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                        [92.4910, 27.1450],
+                        [92.4990, 27.1450],
+                        [92.5005, 27.1510],
+                        [92.4920, 27.1515],
+                        [92.4910, 27.1450],
+                    ]],
+                },
+                "properties": {
+                    "zone_id": "ZONE-WK-DEDZA-KM52",
+                    "name": "KM-52 Dedza Rockfall Chute",
+                    "corridor": "NH-13 Trans-Arunachal Highway",
+                    "chainage_km": 52.0,
+                    "hazard_classification": "HIGH_HAZARD",
+                    "predicted_critical_area": True,
+                    "slope_deg": 41.2,
+                    "elevation_msl_m": 1050.0,
+                    "primary_lifeline": "NH-13",
+                    "critical_asset_exposed": "Overhead 33kV Power Transmission Line",
+                    "failure_mechanism": "Jointed quartzite planar rockslide & wedge failure",
+                },
+            },
+        ],
+    }
+
+
+
+@router.get(
     "/ner/hierarchy",
     status_code=status.HTTP_200_OK,
     summary="Retrieve canonical North Eastern Region administrative and operational hierarchy",

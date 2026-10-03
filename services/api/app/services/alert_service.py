@@ -677,8 +677,55 @@ class AlertService:
             version=r.version if hasattr(r, "version") and r.version else 1,
             generated_at=r.generated_at,
             sent_at=r.sent_at,
-            delivered_at=r.delivered_at,
-            acknowledged_at=r.acknowledged_at,
-            escalated_at=r.escalated_at,
         )
+
+    @classmethod
+    def generate_multilingual_payload(
+        cls,
+        headline: str,
+        message: str,
+        warning_level: str = "WARNING",
+        corridor: str = "NH-13 Bhalukpong-Tenga",
+    ) -> dict[str, dict[str, str]]:
+        """Generate standardized multilingual alert dissemination packages for North Eastern Region."""
+        # Regional template matrix
+        templates = {
+            "en": {
+                "language": "English",
+                "headline": headline,
+                "message": message,
+                "protective_action": "Avoid non-essential travel along the corridor. Adhere to BRO and District Police checkpoints.",
+                "disclaimer": "Official Early Warning broadcast under Disaster Management Act, 2005.",
+            },
+            "hi": {
+                "language": "Hindi (हिंदी)",
+                "headline": f"भूस्खलन पूर्व चेतावनी: {corridor} गलियारा — {warning_level}",
+                "message": f"मौसम विभाग एवं सेंसर द्वारा भारी वर्षा एवं ढलान अस्थिरता दर्ज की गई है। {message}",
+                "protective_action": "गलियारे में अनावश्यक यात्रा से बचें। बीआरओ और जिला पुलिस के निर्देशों का पालन करें।",
+                "disclaimer": "आपदा प्रबंधन अधिनियम, 2005 के अंतर्गत अधिकृत आधिकारिक पूर्व चेतावनी।",
+            },
+            "as": {
+                "language": "Assamese (অসমীয়া)",
+                "headline": f"ভূমিস্খলনৰ পূৰ্ব সতৰ্কবাণী: {corridor} কৰিডৰ — {warning_level}",
+                "message": f"পাহাৰীয়া অঞ্চলত প্ৰচণ্ড বৰষুণৰ ফলত ভূমিস্খলনৰ আশংকা তীব্ৰ হৈ পৰিছে। {message}",
+                "protective_action": "অনাৱশ্যক ভ্ৰমণৰ পৰা বিৰত থাকক। বিআৰঅ' আৰু জিলা প্ৰশাসনৰ নিৰ্দেশ মানি চলক।",
+                "disclaimer": "দুৰ্যোগ ব্যৱস্থাপনা আইন, ২০০৫ ৰ অধীনত অনুমোদিত সতৰ্কবাণী।",
+            },
+            "bn": {
+                "language": "Bengali (বাংলা)",
+                "headline": f"ভূমিধসের প্রাক-সতর্কবার্তা: {corridor} করিডোর — {warning_level}",
+                "message": f"ভারী বর্ষণ এবং পাহাড়ি ঢাল বিচ্যুতির কারণে ভূমিধসের প্রবল আশঙ্কা। {message}",
+                "protective_action": "জরুরি প্রয়োজন ছাড়া এই পথে চলাচল বন্ধ রাখুন। জেলা প্রশাসনের নির্দেশ মেনে চলুন।",
+                "disclaimer": "বিপর্যয় ব্যবস্থাপনা আইন, ২০০৫ অনুযায়ী জারি করা সরকারি সতর্কতা।",
+            },
+            "bdo": {
+                "language": "Bodo (बड़ो)",
+                "headline": f"हाब्रु बानायनाय सिगां सांग्रांथि: {corridor} लामा — {warning_level}",
+                "message": f"अखा बारहाबानाय आरो हाजो ख्लाबनायनि जाउनाव गिथाव हाब्रु बानायनाय जानो हागौ। {message}",
+                "protective_action": "गोनांथार नङाब्ला लामायाव दाथां। पुलिस आरो बि.आर.अ' नि बाथ्रा मानिनानै था।",
+                "disclaimer": "डिजास्टार मेनेजमेन्ट एक्ट, 2005 नि सिङाव फोसावनाय सांग्रांथि।",
+            },
+        }
+        return templates
+
 

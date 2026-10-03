@@ -195,11 +195,14 @@ class FeaturePipeline:
                     contributed_for_ev.append("rainfall_intensity_mmh")
                     feature_to_evidence_map["rainfall_intensity_mmh"].append(ev.id)
 
-            # Match Terrain Evidence
-            elif ev.source == EvidenceSource.TERRAIN.value:
+            # Match Terrain or Sensor Evidence (In-situ probes, soil moisture, inclinometer)
+            elif ev.source in (EvidenceSource.TERRAIN.value, EvidenceSource.SENSOR.value):
                 raw_slope = raw.get("slope_gradient_deg") or raw.get("slope_deg") or raw.get("slope_angle_deg")
                 raw_geo = raw.get("geological_susceptibility") or raw.get("susceptibility_score")
                 raw_sat = raw.get("soil_saturation_index") or raw.get("soil_saturation")
+                raw_vwc = raw.get("volumetric_water_content_m3_m3")
+                if raw_sat is None and raw_vwc is not None:
+                    raw_sat = min(1.0, float(raw_vwc) / 0.50)
 
                 if raw_slope is not None:
                     slope_deg = float(raw_slope)
@@ -208,11 +211,11 @@ class FeaturePipeline:
                 if raw_sat is not None:
                     saturation = float(raw_sat)
 
-                if slope_deg is None:
+                if slope_deg is None and ev.source == EvidenceSource.TERRAIN.value:
                     val = extract_first_float(ev.metric) or extract_first_float(ev.observation)
                     if val is not None and 0.0 <= val <= 90.0:
                         slope_deg = val
-                if geo_susc is None:
+                if geo_susc is None and ev.source == EvidenceSource.TERRAIN.value:
                     obs_full = (ev.observation + " " + (ev.details or "")).lower()
                     if "high" in obs_full or "mica-schist" in obs_full or "fractured" in obs_full:
                         geo_susc = 0.88
@@ -221,9 +224,12 @@ class FeaturePipeline:
                     elif "low" in obs_full or "stable" in obs_full:
                         geo_susc = 0.25
 
-                contributed_for_ev.extend(["slope_gradient_deg", "geological_susceptibility"])
-                feature_to_evidence_map["slope_gradient_deg"].append(ev.id)
-                feature_to_evidence_map["geological_susceptibility"].append(ev.id)
+                if slope_deg is not None:
+                    contributed_for_ev.append("slope_gradient_deg")
+                    feature_to_evidence_map["slope_gradient_deg"].append(ev.id)
+                if geo_susc is not None:
+                    contributed_for_ev.append("geological_susceptibility")
+                    feature_to_evidence_map["geological_susceptibility"].append(ev.id)
                 if saturation is not None:
                     contributed_for_ev.append("soil_saturation_index")
                     feature_to_evidence_map["soil_saturation_index"].append(ev.id)
@@ -232,11 +238,17 @@ class FeaturePipeline:
             elif ev.source == EvidenceSource.SATELLITE.value:
                 raw_opt = raw.get("optical_obscuration_pct") or raw.get("cloud_cover_pct")
                 raw_rad = raw.get("radar_coherence_anomaly") or raw.get("phase_anomaly")
+                raw_vel = raw.get("line_of_sight_velocity_mm_yr") or raw.get("los_surface_velocity_mm_yr")
+                raw_coh = raw.get("coherence")
 
                 if raw_opt is not None:
                     optical_obscuration = float(raw_opt)
                 if raw_rad is not None:
                     radar_anomaly = float(raw_rad)
+                elif raw_vel is not None and abs(float(raw_vel)) > 15.0:
+                    radar_anomaly = min(1.0, abs(float(raw_vel)) / 50.0)
+                elif raw_coh is not None and float(raw_coh) < 0.4:
+                    radar_anomaly = 0.85
 
                 if optical_obscuration is None:
                     val = extract_first_float(ev.metric) or extract_first_float(ev.observation)
@@ -244,7 +256,7 @@ class FeaturePipeline:
                         optical_obscuration = val
                 if radar_anomaly is None:
                     obs_full = (ev.observation + " " + (ev.details or "")).lower()
-                    if "radar" in obs_full or "sar" in obs_full or "anomaly" in obs_full:
+                    if "radar" in obs_full or "sar" in obs_full or "anomaly" in obs_full or "insar" in obs_full:
                         radar_anomaly = 0.72
 
                 if optical_obscuration is not None:
