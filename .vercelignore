@@ -9,6 +9,5 @@ __pycache__
 tests
 .pytest_cache
 *.log
-ml
 /services/api/data
 *.png
