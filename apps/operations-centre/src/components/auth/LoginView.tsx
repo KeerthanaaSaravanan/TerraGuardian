@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAuth, COMMAND_DEMO_ACCOUNTS } from "../../context/AuthContext";
 import { ThemeToggle, LanguageSelector } from "../common";
-import { useCitizenI18n } from "../../hooks/useCitizenI18n";
+import { useI18n } from "../../context/I18nContext";
 import {
   IconShieldCheck,
   IconRadio,
@@ -22,7 +22,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   onNavigateCitizen,
 }) => {
   const { login, isLoading, loginError } = useAuth();
-  const { t } = useCitizenI18n();
+  const { t } = useI18n();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [selectedDemoUser, setSelectedDemoUser] = useState<string | null>(null);

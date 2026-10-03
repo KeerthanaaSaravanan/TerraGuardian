@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useDemoScenario, PrimaryNavTab } from "../context/DemoScenarioContext";
+import { useI18n } from "../context/I18nContext";
 import {
   IconRadar,
   IconMapPin,
@@ -37,6 +38,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
   onOpenReportModal,
   onExitToPortal,
 }) => {
+  const { t } = useI18n();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const {
     activeNavTab,
@@ -49,83 +51,83 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
 
   const sections: NavSection[] = [
     {
-      title: "COMMAND",
+      title: t("nav_group_command", undefined, "COMMAND"),
       items: [
         {
           id: "OPERATIONS",
-          label: "Situational Overview",
+          label: t("nav_situational_overview", undefined, "Situational Overview"),
           icon: IconRadar,
         },
         {
           id: "QUEUE",
-          label: "Priority Queue",
+          label: t("nav_priority_queue", undefined, "Priority Queue"),
           icon: IconShieldAlert,
           badge: "4",
         },
       ],
     },
     {
-      title: "INTELLIGENCE",
+      title: t("nav_group_intelligence", undefined, "INTELLIGENCE"),
       items: [
         {
           id: "MAP",
-          label: "NER Tactical Map",
+          label: t("nav_tactical_map", undefined, "NER Tactical Map"),
           icon: IconLayers,
         },
         {
           id: "INCIDENTS",
-          label: "Incident Twin",
+          label: t("nav_incident_twin", undefined, "Incident Twin"),
           icon: IconMapPin,
         },
         {
           id: "EVIDENCE",
-          label: "Evidence Lineage",
+          label: t("nav_evidence_lineage", undefined, "Evidence Lineage"),
           icon: IconShieldCheck,
         },
       ],
     },
     {
-      title: "RESPONSE",
+      title: t("nav_group_response", undefined, "RESPONSE"),
       items: [
         {
           id: "ALERTS",
-          label: "Alerts Pipeline",
+          label: t("nav_alerts_pipeline", undefined, "Alerts Pipeline"),
           icon: IconAlertTriangle,
           badge: "4",
         },
         {
           id: "FIELD",
-          label: "Field Operations",
+          label: t("nav_field_operations", undefined, "Field Operations"),
           icon: IconActivity,
         },
       ],
     },
     {
-      title: "OUTCOMES",
+      title: t("nav_group_outcomes", undefined, "OUTCOMES"),
       items: [
         {
           id: "OUTCOMES",
-          label: "Hypotheses & NBI",
+          label: t("nav_hypotheses_nbi", undefined, "Hypotheses & NBI"),
           icon: IconRadio,
         },
         {
           id: "REVIEW",
-          label: "Forensic Review",
+          label: t("nav_forensic_review", undefined, "Forensic Review"),
           icon: IconClock,
         },
       ],
     },
     {
-      title: "SYSTEM",
+      title: t("nav_group_system", undefined, "SYSTEM"),
       items: [
         {
           id: "ADMIN",
-          label: "Data & Admin",
+          label: t("nav_data_admin", undefined, "Data & Admin"),
           icon: IconFileText,
         },
         {
           id: "REPLAY",
-          label: "Replay Showcase",
+          label: t("nav_replay_showcase", undefined, "Replay Showcase"),
           icon: IconClock,
         },
       ],
@@ -223,8 +225,8 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
         <div className="mx-2 mb-2 p-2.5 rounded-xl bg-slate-900/90 dark:bg-black/60 border border-slate-800 dark:border-neutral-800 text-white font-mono text-xs shadow-md">
           <div className="flex items-center justify-between mb-1.5">
             <div>
-              <span className="font-bold text-cyan-400 text-xs">NER Region</span>
-              <span className="text-[10px] text-slate-400 ml-1.5">7 States • 122 Districts</span>
+              <span className="font-bold text-cyan-400 text-xs">{t("ner_region_title", undefined, "NER Region")}</span>
+              <span className="text-[10px] text-slate-400 ml-1.5">{t("ner_region_sub", undefined, "7 States • 122 Districts")}</span>
             </div>
             {/* Small India Map Silhouette with NER highlighted */}
             <div className="w-6 h-6 shrink-0 relative" title="North Eastern Region, India">
@@ -249,24 +251,24 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
           <div className="grid grid-cols-2 gap-2 text-[10px] border-b border-slate-800/80 pb-1.5 mb-1.5">
             <div>
               <div className="font-bold text-white text-xs">298</div>
-              <div className="text-[9px] text-slate-400">Monitoring Sites</div>
+              <div className="text-[9px] text-slate-400">{t("ner_stat_sites", undefined, "Monitoring Sites")}</div>
             </div>
             <div>
               <div className="font-bold text-white text-xs">84</div>
-              <div className="text-[9px] text-slate-400">Weather Stations</div>
+              <div className="text-[9px] text-slate-400">{t("ner_stat_stations", undefined, "Weather Stations")}</div>
             </div>
             <div>
               <div className="font-bold text-white text-xs">12</div>
-              <div className="text-[9px] text-slate-400">Active Incidents</div>
+              <div className="text-[9px] text-slate-400">{t("ner_stat_active", undefined, "Active Incidents")}</div>
             </div>
             <div>
               <div className="font-bold text-red-500 text-xs">3</div>
-              <div className="text-[9px] text-slate-400">Critical</div>
+              <div className="text-[9px] text-slate-400">{t("ner_stat_critical", undefined, "Critical")}</div>
             </div>
           </div>
 
           <div className="text-[9px] text-slate-400 italic text-center">
-            Resilient Mountains, Safer Communities
+            {t("ner_motto", undefined, "Resilient Mountains, Safer Communities")}
           </div>
         </div>
       )}
@@ -282,7 +284,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
           }`}
         >
           <IconRadio className="w-4 h-4 text-emerald-600 shrink-0" />
-          {!isCollapsed && <span className="font-bold truncate">Citizen Safe</span>}
+          {!isCollapsed && <span className="font-bold truncate">{t("nav_citizen_safe", undefined, "Citizen Safe")}</span>}
         </button>
 
         {/* Exit to Main Portal */}
@@ -295,7 +297,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
             }`}
           >
             <IconShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
-            {!isCollapsed && <span className="font-semibold truncate">Exit to Portal</span>}
+            {!isCollapsed && <span className="font-semibold truncate">{t("ops_btn_exit", undefined, "Exit to Portal")}</span>}
           </button>
         )}
 
@@ -308,7 +310,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
           }`}
         >
           <IconFileText className="w-4 h-4 shrink-0" />
-          {!isCollapsed && <span className="truncate">Briefing Doc</span>}
+          {!isCollapsed && <span className="truncate">{t("nav_briefing_doc", undefined, "Briefing Doc")}</span>}
         </button>
 
         {/* Live Status indicator */}
@@ -337,12 +339,12 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
           {!isCollapsed && (
             <span className="font-bold truncate">
               {backendStatus === "CONNECTED"
-                ? "ONLINE"
+                ? t("status_online", undefined, "ONLINE")
                 : backendStatus === "DEGRADED"
-                ? "DEGRADED"
+                ? t("backend_degraded", undefined, "DEGRADED")
                 : backendStatus === "CONNECTING"
-                ? "CONNECTING..."
-                : "DISCONNECTED"}
+                ? t("backend_connecting", undefined, "CONNECTING...")
+                : t("backend_disconnected", undefined, "DISCONNECTED")}
             </span>
           )}
         </div>

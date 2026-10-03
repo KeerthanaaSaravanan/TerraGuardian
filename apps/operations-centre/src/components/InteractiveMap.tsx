@@ -29,6 +29,7 @@ import type {
 import type { EvidenceItem } from "../types/incident";
 import { useDemoScenario } from "../context/DemoScenarioContext";
 import { useTheme } from "../context/ThemeContext";
+import { useI18n } from "../context/I18nContext";
 import {
   IconLayers,
   IconAlertTriangle,
@@ -74,6 +75,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const { t } = useI18n();
   const { selectedIncidentCode, selectIncident, openIncident, backendIncidentId, setActiveNavTab } = useDemoScenario();
 
   // Basemap Selector: Default to Esri World Topo for Himalayan elevation relief & contours
@@ -1292,7 +1294,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
           <div className="flex items-center gap-1.5 font-bold text-xs">
             <IconLayers className="w-3.5 h-3.5 text-blue-400" />
-            <span>MAP LAYERS</span>
+            <span>{t("map_layers_title", undefined, "MAP LAYERS")}</span>
           </div>
           <button
             onClick={() => setShowMapLayersPanel(!showMapLayersPanel)}
@@ -1307,7 +1309,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             {/* Basemap Switcher Pills */}
             <div className="grid grid-cols-3 gap-1">
               {(["TOPO", "OSM", "SATELLITE"] as const).map((bt) => {
-                const label = bt === "TOPO" ? "Base" : bt === "OSM" ? "Terrain" : "Hybrid";
+                const label = bt === "TOPO" ? t("basemap_base", undefined, "Base") : bt === "OSM" ? t("basemap_terrain", undefined, "Terrain") : t("basemap_hybrid", undefined, "Hybrid");
                 const isSelected = basemapType === bt;
                 return (
                   <button
@@ -1328,17 +1330,17 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             {/* Checkboxes List */}
             <div className="space-y-1 pt-1 text-[11px]">
               {[
-                { key: "riskZones", label: "Risk Zones" },
-                { key: "activeIncidents", label: "Active Incidents" },
-                { key: "susceptibility", label: "Landslide Susceptibility" },
-                { key: "rainfall", label: "Rainfall (IMD)" },
-                { key: "satellite", label: "Satellite (Copernicus)" },
-                { key: "roads", label: "Road Network" },
-                { key: "settlements", label: "Villages & Settlements" },
-                { key: "hospitals", label: "Hospitals & Health Facilities" },
-                { key: "infrastructure", label: "Critical Infrastructure" },
-                { key: "alternateRoutes", label: "Alternate Routes" },
-                { key: "historicalLandslides", label: "Historical Landslides" },
+                { key: "riskZones", label: t("layer_risk_zones", undefined, "Risk Zones") },
+                { key: "activeIncidents", label: t("layer_active_incidents", undefined, "Active Incidents") },
+                { key: "susceptibility", label: t("layer_susceptibility", undefined, "Landslide Susceptibility") },
+                { key: "rainfall", label: t("layer_rainfall", undefined, "Rainfall (IMD)") },
+                { key: "satellite", label: t("layer_satellite", undefined, "Satellite (Copernicus)") },
+                { key: "roads", label: t("layer_roads", undefined, "Road Network") },
+                { key: "settlements", label: t("layer_settlements", undefined, "Villages & Settlements") },
+                { key: "hospitals", label: t("layer_hospitals", undefined, "Hospitals & Health Facilities") },
+                { key: "infrastructure", label: t("layer_infrastructure", undefined, "Critical Infrastructure") },
+                { key: "alternateRoutes", label: t("layer_alternate_routes", undefined, "Alternate Routes") },
+                { key: "historicalLandslides", label: t("layer_historical_landslides", undefined, "Historical Landslides") },
               ].map((item) => (
                 <label
                   key={item.key}
@@ -1361,7 +1363,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       {/* ── Floating LIVE LAYERS Legend Panel (Matching Reference Screenshot) ── */}
       <div className="absolute top-32 right-3 z-[995] bg-slate-900/90 dark:bg-slate-950/90 backdrop-blur-md rounded-xl border border-slate-700/80 shadow-2xl p-2.5 text-white font-mono text-xs w-52 pointer-events-auto">
         <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-          <div className="font-bold text-xs tracking-wider">LIVE LAYERS</div>
+          <div className="font-bold text-xs tracking-wider">{t("live_layers_title", undefined, "LIVE LAYERS")}</div>
           <button
             onClick={() => setShowLiveLayersPanel(!showLiveLayersPanel)}
             className="text-slate-400 hover:text-white p-0.5 cursor-pointer font-bold text-xs"
@@ -1374,51 +1376,51 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <div className="mt-2 space-y-1.5 text-[10px]">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-red-600 shrink-0" />
-              <span>Critical Risk</span>
+              <span>{t("legend_critical_risk", undefined, "Critical Risk")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0" />
-              <span>High Risk</span>
+              <span>{t("legend_high_risk", undefined, "High Risk")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
-              <span>Watch</span>
+              <span>{t("legend_watch", undefined, "Watch")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-red-500 text-xs">▲</span>
-              <span>Incident</span>
+              <span>{t("legend_incident", undefined, "Incident")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-0.5 bg-cyan-400 shrink-0" />
-              <span>Road (Open)</span>
+              <span>{t("legend_road_open", undefined, "Road (Open)")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-0.5 bg-red-500 shrink-0" />
-              <span>Road (Blocked)</span>
+              <span>{t("legend_road_blocked", undefined, "Road (Blocked)")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-0.5 border-b border-dashed border-white shrink-0" />
-              <span>Alternate Route</span>
+              <span>{t("legend_alternate_route", undefined, "Alternate Route")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-              <span>Village</span>
+              <span>{t("legend_village", undefined, "Village")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3.5 h-3.5 rounded bg-red-600 text-white font-bold text-[8px] flex items-center justify-center shrink-0">H</span>
-              <span>Hospital</span>
+              <span>{t("legend_hospital", undefined, "Hospital")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-amber-400">🏛</span>
-              <span>School</span>
+              <span>{t("legend_school", undefined, "School")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-purple-400">📡</span>
-              <span>Sensor</span>
+              <span>{t("legend_sensor", undefined, "Sensor")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-blue-400">🌧</span>
-              <span>Rain Gauge</span>
+              <span>{t("legend_rain_gauge", undefined, "Rain Gauge")}</span>
             </div>
           </div>
         )}

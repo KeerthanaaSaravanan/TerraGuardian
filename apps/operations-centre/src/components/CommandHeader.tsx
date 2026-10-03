@@ -1,7 +1,7 @@
 import React from "react";
 import { useDemoScenario } from "../context/DemoScenarioContext";
 import { useAuth } from "../context/AuthContext";
-import { useCitizenI18n } from "../hooks/useCitizenI18n";
+import { useI18n } from "../context/I18nContext";
 import { getApiBaseDisplayUrl } from "../services/apiClient";
 import { ThemeToggle, LanguageSelector } from "./common";
 import { IconRotateCcw, IconShieldCheck, IconAlertTriangle, IconSparkles } from "./icons";
@@ -17,7 +17,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
   isCopilotOpen = false,
   onExitToPortal,
 }) => {
-  const { t } = useCitizenI18n();
+  const { t } = useI18n();
   const {
     resetDemo,
     incidentCode,
@@ -70,10 +70,10 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
           </div>
           <div className="flex flex-col justify-center">
             <span className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white leading-tight font-sans">
-              TERRAGUARDIAN AI
+              {t("brand_title", undefined, "TERRAGUARDIAN AI")}
             </span>
             <span className="text-[9px] sm:text-[10px] uppercase font-mono font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">
-              DISASTER INTELLIGENCE PLATFORM
+              {t("brand_subtitle", undefined, "DISASTER INTELLIGENCE PLATFORM")}
             </span>
           </div>
         </div>
@@ -102,7 +102,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
                 : backendStatus === "DEGRADED"
                 ? `DEGRADED (${hazardState || "ACTIVE"})`
                 : backendStatus === "CONNECTING"
-                ? "CONNECTING..."
+                ? t("backend_connecting", undefined, "CONNECTING...")
                 : `CONTROLLED DEMO (${hazardState || "ACTIVE"})`}
             </span>
           </div>
@@ -126,29 +126,29 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
                   ? "bg-amber-500"
                   : "bg-slate-400"
               }`} />
-              {backendStatus === "CONNECTED" ? "OPERATIONAL" : backendStatus === "DEGRADED" ? "DEGRADED" : "OFFLINE DEMO"}
+              {backendStatus === "CONNECTED" ? t("backend_operational", undefined, "OPERATIONAL") : backendStatus === "DEGRADED" ? t("backend_degraded", undefined, "DEGRADED") : t("backend_offline_demo", undefined, "OFFLINE DEMO")}
             </span>
 
             {/* Dynamic Real Backend Connection Badge */}
             {backendStatus === "CONNECTED" ? (
               <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 font-semibold flex items-center gap-1.5 text-[11px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                API CONNECTED
+                {t("backend_connected", undefined, "API CONNECTED")}
               </span>
             ) : backendStatus === "CONNECTING" ? (
               <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1.5 text-[11px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                CONNECTING...
+                {t("backend_connecting", undefined, "CONNECTING...")}
               </span>
             ) : backendStatus === "DEGRADED" ? (
               <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 border border-amber-400 text-amber-800 dark:text-amber-300 font-bold flex items-center gap-1.5 text-[11px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                DATABASE DEGRADED
+                {t("backend_degraded", undefined, "DATABASE DEGRADED")}
               </span>
             ) : (
               <span className="px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-950 border border-red-400 text-red-800 dark:text-red-300 font-bold flex items-center gap-1.5 text-[11px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping shrink-0" />
-                DISCONNECTED
+                {t("backend_disconnected", undefined, "DISCONNECTED")}
               </span>
             )}
           </div>
@@ -183,7 +183,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
               }`}
             >
               <IconSparkles className="w-3.5 h-3.5 animate-pulse" />
-              <span>Copilot</span>
+              <span>{t("ops_btn_copilot", undefined, "Copilot")}</span>
             </button>
           )}
 
@@ -194,7 +194,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
             className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 text-xs font-mono transition-colors border border-slate-300 dark:border-neutral-700 shrink-0 cursor-pointer"
           >
             <IconRotateCcw className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden xl:inline">Reset</span>
+            <span className="hidden xl:inline">{t("ops_btn_reset", undefined, "Reset")}</span>
           </button>
 
           <LanguageSelector variant="standard" />
@@ -205,7 +205,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
               title="Exit Operations Centre and Return to Main Portal"
               className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 text-xs font-mono font-semibold transition-colors border border-slate-300 dark:border-neutral-700 shrink-0 cursor-pointer"
             >
-              <span>{t("ops_btn_exit")}</span>
+              <span>{t("ops_btn_exit", undefined, "Exit to Portal")}</span>
             </button>
           )}
 
@@ -218,7 +218,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
               title="Sign out of Operations Session"
               className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 text-xs font-mono font-bold border border-red-300 dark:border-red-800 transition-colors shrink-0 cursor-pointer flex items-center gap-1"
             >
-              <span>Sign Out</span>
+              <span>{t("ops_btn_signout", undefined, "Sign Out")}</span>
             </button>
           )}
         </div>

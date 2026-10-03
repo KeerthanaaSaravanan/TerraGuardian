@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
+import { I18nProvider } from "./context/I18nContext";
 import { DemoScenarioProvider, useDemoScenario } from "./context/DemoScenarioContext";
 import { PublicReportProvider, usePublicReport } from "./context/PublicReportContext";
 import { CommandHeader } from "./components/CommandHeader";
@@ -389,13 +390,15 @@ const AppCore: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <DemoScenarioProvider>
-          <PublicReportProvider>
-            <AppCore />
-          </PublicReportProvider>
-        </DemoScenarioProvider>
-      </AuthProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <DemoScenarioProvider>
+            <PublicReportProvider>
+              <AppCore />
+            </PublicReportProvider>
+          </DemoScenarioProvider>
+        </AuthProvider>
+      </I18nProvider>
     </ThemeProvider>
   );
 };

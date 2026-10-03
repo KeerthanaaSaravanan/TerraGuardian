@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useCitizenI18n } from "../../hooks/useCitizenI18n";
+import { useI18n } from "../../context/I18nContext";
 import { IconGlobe } from "../icons";
 
 interface LanguageSelectorProps {
@@ -11,7 +11,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   className = "",
   variant = "standard",
 }) => {
-  const { lang, setLanguage, languages, t } = useCitizenI18n();
+  const { lang, setLanguage, languages, t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
