@@ -475,6 +475,16 @@ export const apiClient = {
     return handleResponse<AuthTokenResponse>(res);
   },
 
+  /** Authenticate one of the fixed server-side demonstration presets. */
+  async demoLogin(account: string): Promise<AuthTokenResponse> {
+    const res = await fetch(`${API_BASE_URL}/auth/demo-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ account }),
+    });
+    return handleResponse<AuthTokenResponse>(res);
+  },
+
   /** Fetch current authenticated user's server-derived profile */
   async getCurrentUser(): Promise<UserProfile> {
     const res = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -901,6 +911,5 @@ export const apiClient = {
     return handleResponse<CitizenReportItem>(res);
   },
 };
-
 
 

@@ -73,60 +73,6 @@ export const COMMAND_DEMO_ACCOUNTS: DemoAccount[] = [
 // Re-export as DEMO_ACCOUNTS for backward compatibility
 export const DEMO_ACCOUNTS: DemoAccount[] = COMMAND_DEMO_ACCOUNTS;
 
-const isLocalDemoMode = () => {
-  return import.meta.env.DEV;
-};
-
-const isHostedDemoMode = () => import.meta.env.VITE_DEMO_AUTH_ENABLED === "true";
-
-export const isDemoAuthEnabled = () => isLocalDemoMode() || isHostedDemoMode();
-
-const LOCAL_DEMO_PASSWORDS: Record<string, string> = import.meta.env.DEV
-  ? {
-      operator: "Terra#Op2026",
-      assessment: "Terra#Assess2026",
-      patrol: "Patrol#2026",
-      magistrate: "Terra#Admin2026",
-      reviewer: "Terra#Review2026",
-      admin: "Terra#SuperAdmin2026",
-      citizen: "Citizen#2026",
-    }
-  : import.meta.env.VITE_DEMO_AUTH_ENABLED === "true"
-    ? {
-        operator: "Terra#Op2026",
-        assessment: "Terra#Assess2026",
-        patrol: "Patrol#2026",
-        magistrate: "Terra#Admin2026",
-        reviewer: "Terra#Review2026",
-      }
-    : {};
-
-const ALL_SUPPORTED_ACCOUNTS: DemoAccount[] = import.meta.env.DEV
-  ? [
-      ...COMMAND_DEMO_ACCOUNTS,
-      {
-        username: "admin",
-        role: "ADMINISTRATOR",
-        roleLabel: "System & Governance Administrator",
-        fullName: "System & Model Governance Administrator",
-        agency: "State IT & Disaster Systems Hub",
-        badgeNumber: "SYS-ADM-01",
-        description: "Infrastructure & model registry administration",
-      },
-      {
-        username: "citizen",
-        role: "CITIZEN",
-        roleLabel: "Public Citizen Observer",
-        fullName: "Citizen Observer (West Kameng)",
-        agency: "Citizen Community Watch",
-        badgeNumber: "CIT-WK-09",
-        description: "Public tier: localized hazard reporting via TerraGuardian Safe",
-      },
-    ]
-  : import.meta.env.VITE_DEMO_AUTH_ENABLED === "true"
-    ? COMMAND_DEMO_ACCOUNTS
-    : [];
-
 interface AuthContextType {
   currentUser: UserProfile | null;
   user: UserProfile | null;
@@ -223,47 +169,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(false);
       return true;
     } catch (err: unknown) {
-      // Check if backend unreachable or error
       if (err instanceof ApiError && (err.status === 401 || err.status === 400 || err.status === 403)) {
         setLoginError(err.detail || "Invalid credentials provided.");
         setIsLoading(false);
         return false;
       }
-
-      // Offline demo identities are allowed only for local, non-production contexts.
-      const match = isLocalDemoMode()
-        ? ALL_SUPPORTED_ACCOUNTS.find(
-            (account) =>
-              (account.username.toLowerCase() === safeUsername.toLowerCase() ||
-                `${account.username}@terraguardian.gov.in`.toLowerCase() === safeUsername.toLowerCase()) &&
-              safePassword === LOCAL_DEMO_PASSWORDS[account.username]
-          )
-        : undefined;
-
-      if (match) {
-        const grantedPerms = (PERMISSION_MATRIX[match.role] || []).map((p) => p.toString());
-        const syntheticProfile: UserProfile = {
-          id: `demo-${match.username}-uuid`,
-          username: match.username,
-          email: `${match.username}@terraguardian.gov.in`,
-          full_name: match.fullName,
-          role: match.role,
-          agency: match.agency,
-          badge_number: match.badgeNumber,
-          is_active: true,
-          permissions: grantedPerms,
-        };
-        const syntheticToken = `demo_bearer_token_${match.username}`;
-        setAuthToken(syntheticToken);
-        setTokenState(syntheticToken);
-        setCurrentUser(syntheticProfile);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("tg_current_user", JSON.stringify(syntheticProfile));
-        }
-        setIsLoading(false);
-        return true;
-      }
-
       setLoginError("Invalid credentials or server unavailable.");
       setIsLoading(false);
       return false;
@@ -271,12 +181,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const quickLoginAs = async (username: string): Promise<boolean> => {
-    if (!isDemoAuthEnabled()) return false;
-    const acc = ALL_SUPPORTED_ACCOUNTS.find((a) => a.username.toLowerCase() === username.toLowerCase());
-    if (!acc) return false;
-    const password = LOCAL_DEMO_PASSWORDS[acc.username];
-    if (!password) return false;
-    return login({ username: acc.username, password });
+    const account = COMMAND_DEMO_ACCOUNTS.find(
+      (candidate) => candidate.username.toLowerCase() === username.toLowerCase()
+    );
+    if (!account) return false;
+
+    setIsLoading(true);
+    setLoginError(null);
+    try {
+      const response = await apiClient.demoLogin(account.username);
+      setAuthToken(response.access_token);
+      setTokenState(response.access_token);
+      setCurrentUser(response.user);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("tg_current_user", JSON.stringify(response.user));
+      }
+      return true;
+    } catch (err: unknown) {
+      setLoginError(err instanceof ApiError ? err.detail : "Demo authentication is unavailable.");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {

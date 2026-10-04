@@ -74,7 +74,7 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
               <span className={[
-                "text-base sm:text-lg lg:text-xl font-semibold truncate",
+                "text-base sm:text-lg lg:text-xl font-bold tracking-tight truncate",
                 isLight ? "text-slate-900" : "text-slate-900 dark:text-white",
               ].join(" ")}>
                 TerraGuardian AI
@@ -85,7 +85,7 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
             </div>
             <div className={[
               "text-[10px] sm:text-[11px] font-mono mt-0.5 truncate",
-              isLight ? "text-slate-600" : "text-slate-600 dark:text-slate-400",
+              isLight ? "text-slate-700" : "text-slate-600 dark:text-slate-300",
             ].join(" ")}>
               From Warning to Verified Response • NER Disaster Intelligence Network
             </div>
@@ -154,19 +154,23 @@ export const PublicLandingView: React.FC<PublicLandingViewProps> = ({
 
         <h1
           className={[
-            "text-3xl sm:text-4xl md:text-[44px] font-black tracking-tight leading-tight mb-4 drop-shadow-lg",
-            isLight ? "text-slate-900 [text-shadow:0_1px_2px_rgba(255,255,255,0.9)]" : "text-white",
+            "text-3xl sm:text-4xl md:text-[44px] font-black tracking-[-0.03em] leading-[1.08] mb-4 drop-shadow-lg",
+            isLight
+              ? "text-slate-950 [text-shadow:0_1px_2px_rgba(255,255,255,0.95)]"
+              : "text-white [text-shadow:0_2px_10px_rgba(2,6,23,0.85)]",
           ].join(" ")}
         >
           See a Landslide or Slope Hazard?
           <br />
-          <span className="text-[#10b981]">Report in 30 Seconds.</span>
+          <span className="text-[#10b981] [text-shadow:0_1px_5px_rgba(2,6,23,0.55)]">Report in 30 Seconds.</span>
         </h1>
 
         <p
           className={[
             "text-xs sm:text-sm md:text-[15px] leading-relaxed max-w-xl mx-auto mb-8 drop-shadow",
-            isLight ? "text-slate-900 font-medium [text-shadow:0_1px_2px_rgba(255,255,255,0.95)]" : "text-slate-300",
+            isLight
+              ? "text-slate-950 font-medium [text-shadow:0_1px_2px_rgba(255,255,255,0.98)]"
+              : "text-slate-100 [text-shadow:0_1px_6px_rgba(2,6,23,0.85)]",
           ].join(" ")}
         >
           Your live camera and device GPS observation provides immediate field evidence to district emergency operations, SDRF response teams, and arterial corridor authorities.

@@ -2,6 +2,7 @@ import os
 from typing import Optional, Union
 from urllib.parse import urlsplit
 from pydantic import AliasChoices, Field, field_validator, model_validator
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
 
@@ -64,6 +65,12 @@ class Settings(BaseSettings):
     secret_key: str = "changeme-generate-a-real-key"
     jwt_algorithm: str = "HS256"
     jwt_expiry_minutes: int = 60
+    demo_auth_enabled: bool = False
+    demo_operator_password: Optional[SecretStr] = None
+    demo_assessment_password: Optional[SecretStr] = None
+    demo_patrol_password: Optional[SecretStr] = None
+    demo_magistrate_password: Optional[SecretStr] = None
+    demo_reviewer_password: Optional[SecretStr] = None
 
     # Object Storage (S3 / R2 / GCS / Supabase)
     storage_provider: str = "local"
@@ -99,6 +106,18 @@ class Settings(BaseSettings):
             raise RuntimeError("Production requires a durable S3-compatible STORAGE_PROVIDER.")
         if not self.s3_bucket_name or not self.s3_access_key_id or not self.s3_secret_access_key:
             raise RuntimeError("Production object storage requires S3_BUCKET_NAME and S3 credentials.")
+
+        if self.demo_auth_enabled and any(
+            password is None
+            for password in (
+                self.demo_operator_password,
+                self.demo_assessment_password,
+                self.demo_patrol_password,
+                self.demo_magistrate_password,
+                self.demo_reviewer_password,
+            )
+        ):
+            raise RuntimeError("Enabled production demo authentication requires all five server-side demo credentials.")
 
         return self
 

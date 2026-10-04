@@ -25,23 +25,23 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
   const { t } = useCitizenI18n();
 
   return (
-    <header className="relative z-30 border-b border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl px-3 sm:px-5 py-2.5 flex items-center justify-between text-slate-900 dark:text-white shadow-sm transition-colors">
+    <header className="relative z-30 border-b border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-y-2 text-slate-900 dark:text-white shadow-sm transition-colors">
       {/* Brand: Logo + Title */}
       <div
         onClick={onGoHome}
-        className={`flex items-center gap-2.5 ${onGoHome ? "cursor-pointer group" : ""}`}
+        className={`flex min-w-0 items-center gap-1.5 sm:gap-2.5 ${onGoHome ? "cursor-pointer group" : ""}`}
         title={onGoHome ? "Return to TerraGuardian Portal Home" : undefined}
       >
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-slate-200 dark:border-white/20 p-1 shadow-sm overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
           <img src="/logo-shield.png" alt="TerraGuardian Safe Logo" className="h-full w-full object-contain" />
         </div>
-        <div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="whitespace-nowrap text-xs sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
               {t("app_title")}
             </span>
           </div>
-          <div className="text-[10px] text-slate-500 dark:text-slate-300 font-sans flex items-center gap-1">
+          <div className="whitespace-nowrap text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-300 font-sans flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             <span>{t("portal_badge")}</span>
           </div>
@@ -49,15 +49,16 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
       </div>
 
       {/* Header Controls: Language Selector, Alerts Bell, SOS */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="ml-auto flex max-w-full shrink-0 flex-wrap items-center justify-end gap-1 sm:gap-2">
         {/* Multilingual Selector */}
-        <CitizenLanguageSelector variant="standard" />
+        <CitizenLanguageSelector variant="compact" />
 
         {/* Alerts Bell */}
         {unreadAlertCount > 0 && onOpenAlertsModal && (
           <button
             onClick={onOpenAlertsModal}
-            className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold transition-colors cursor-pointer"
+            aria-label={`${t("btn_alerts")} (${unreadAlertCount})`}
+            className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold transition-colors cursor-pointer"
             title="View Active Alert"
           >
             <IconAlertTriangle className="w-3.5 h-3.5 text-amber-400" />
@@ -73,11 +74,12 @@ export const CitizenHeader: React.FC<CitizenHeaderProps> = ({
         {/* SOS Button: Clear, Prominent, Safe (Opens NeedHelpModal) */}
         <button
           onClick={onOpenSOSModal}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 active:scale-95 text-white text-xs font-black shadow-md shadow-red-950/40 border border-red-400/40 transition-all cursor-pointer"
+          aria-label={t("btn_sos")}
+          className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 active:scale-95 text-white text-xs font-black shadow-md shadow-red-950/40 border border-red-400/40 transition-all cursor-pointer"
           title="Emergency Help & Hotlines"
         >
           <IconPhoneCall className="w-3.5 h-3.5" />
-          <span>{t("btn_sos")}</span>
+          <span className="hidden sm:inline">{t("btn_sos")}</span>
         </button>
 
         {/* Operations Centre (Secondary on Desktop, hidden on mobile) */}

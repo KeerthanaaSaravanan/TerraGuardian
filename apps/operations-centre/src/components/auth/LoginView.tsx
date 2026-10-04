@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth, COMMAND_DEMO_ACCOUNTS, isDemoAuthEnabled } from "../../context/AuthContext";
+import { useAuth, COMMAND_DEMO_ACCOUNTS } from "../../context/AuthContext";
 import { ThemeToggle, LanguageSelector } from "../common";
 import { useI18n } from "../../context/I18nContext";
 import {
@@ -23,17 +23,18 @@ export const LoginView: React.FC<LoginViewProps> = ({
 }) => {
   const { login, quickLoginAs, isLoading, loginError } = useAuth();
   const { t } = useI18n();
-  const demoAuthEnabled = isDemoAuthEnabled();
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState("operator");
   const [password, setPassword] = useState("");
   const [selectedDemoUser, setSelectedDemoUser] = useState<string | null>(null);
   const [localDismissError, setLocalDismissError] = useState(false);
+  const [localLoginError, setLocalLoginError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) return;
 
     setLocalDismissError(false);
+    setLocalLoginError(null);
     const success = await login({ username: username.trim(), password });
     if (success && onSuccess) {
       onSuccess();
@@ -45,10 +46,15 @@ export const LoginView: React.FC<LoginViewProps> = ({
     setPassword("");
     setSelectedDemoUser(demoUsername);
     setLocalDismissError(false);
+    setLocalLoginError(null);
 
     const success = await quickLoginAs(demoUsername);
     if (success && onSuccess) {
       onSuccess();
+    } else if (!success) {
+      setLocalLoginError(
+        "Demo sign-in is unavailable in this environment. Use authorized service credentials."
+      );
     }
   };
 
@@ -69,7 +75,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
   };
 
-  const displayedError = !localDismissError && loginError;
+  const displayedError = !localDismissError && (localLoginError || loginError);
 
   return (
     <div className="min-h-screen lg:h-screen w-full flex flex-col bg-slate-100 dark:bg-neutral-950 text-slate-900 dark:text-neutral-100 transition-colors overflow-y-auto lg:overflow-hidden font-sans">
@@ -114,9 +120,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       {/* Main Single-Viewport Layout */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full">
-        <div className={`w-full grid grid-cols-1 gap-6 items-stretch ${demoAuthEnabled ? "lg:grid-cols-12" : "lg:max-w-xl lg:mx-auto"}`}>
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Left Column: Official Authentication Form (5 cols) */}
-          <div className={`${demoAuthEnabled ? "lg:col-span-5" : ""} bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between`}>
+          <div className="lg:col-span-5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
             <div className="flex flex-col gap-4">
               <div>
                 <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-[11px] font-mono font-bold uppercase tracking-wider mb-1">
@@ -140,7 +146,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                       <div className="font-bold uppercase tracking-wide text-[10px] text-rose-700 dark:text-rose-400">
                         AUTHENTICATION FAILED
                       </div>
-                      <div className="mt-0.5">{loginError}</div>
+                      <div className="mt-0.5">{displayedError}</div>
                     </div>
                   </div>
                   <button
@@ -224,8 +230,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             </div>
           </div>
 
-          {/* Local / non-production role presets are restored for faster local sign-in. */}
-          {demoAuthEnabled && <div className="lg:col-span-7 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+          <div className="lg:col-span-7 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -322,7 +327,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 )}
               </div>
             </div>
-          </div>}
+          </div>
         </div>
       </main>
     </div>

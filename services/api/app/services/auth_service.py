@@ -153,6 +153,60 @@ DEMO_USER_IDENTIFIERS = frozenset(
     for suffix in ("", "@terraguardian.gov.in")
 )
 
+DEMO_PRESET_ACCOUNTS: dict[str, dict[str, str]] = {
+    "operator": {
+        "username": "operator",
+        "email": "operator@terraguardian.gov.in",
+        "role": ActorRole.OPERATOR.value,
+        "full_name": "Operations Duty Officer",
+        "agency": "State Disaster Operations Centre",
+        "badge_number": "SDOC-WK-102",
+        "password_setting": "demo_operator_password",
+    },
+    "assessment": {
+        "username": "assessment",
+        "email": "assessment@terraguardian.gov.in",
+        "role": ActorRole.ASSESSMENT_OFFICER.value,
+        "full_name": "Dr. T. Norbu (Geotechnical Assessment Officer)",
+        "agency": "State Hazard Assessment Cell / GSI NER",
+        "badge_number": "GSI-NER-88",
+        "password_setting": "demo_assessment_password",
+    },
+    "patrol": {
+        "username": "patrol",
+        "email": "patrol@terraguardian.gov.in",
+        "role": ActorRole.FIELD_RESPONDER.value,
+        "full_name": "ASI D. Sonam",
+        "agency": "West Kameng Traffic Police",
+        "badge_number": "WKTP-38",
+        "password_setting": "demo_patrol_password",
+    },
+    "magistrate": {
+        "username": "magistrate",
+        "email": "magistrate@terraguardian.gov.in",
+        "role": ActorRole.AUTHORIZATION_OFFICER.value,
+        "full_name": "P. Tsering, IAS (District Magistrate)",
+        "agency": "District Disaster Management Authority",
+        "badge_number": "DM-WK-01",
+        "password_setting": "demo_magistrate_password",
+    },
+    "reviewer": {
+        "username": "reviewer",
+        "email": "reviewer@terraguardian.gov.in",
+        "role": ActorRole.REVIEWER.value,
+        "full_name": "K. Sharma (Independent Statutory Reviewer)",
+        "agency": "NDMA State Oversight Division",
+        "badge_number": "NDMA-REV-14",
+        "password_setting": "demo_reviewer_password",
+    },
+}
+
+DEMO_PRESET_IDENTIFIERS = frozenset(
+    f"{account['username']}{suffix}"
+    for account in DEMO_PRESET_ACCOUNTS.values()
+    for suffix in ("", "@terraguardian.gov.in")
+)
+
 if settings.environment.strip().lower() == "production":
     DEMO_USERS: list[dict[str, Any]] = []
 else:
@@ -182,13 +236,74 @@ class AuthService:
     async def authenticate_user(self, identifier: str, plain_password: str) -> Optional[UserModel]:
         """Authenticate user by username/email and password."""
         if settings.environment.strip().lower() == "production":
-            if identifier.strip().lower() in DEMO_USER_IDENTIFIERS:
+            normalized_identifier = identifier.strip().lower()
+            if normalized_identifier in DEMO_USER_IDENTIFIERS and (
+                not settings.demo_auth_enabled or normalized_identifier not in DEMO_PRESET_IDENTIFIERS
+            ):
                 return None
 
         user = await self.get_by_username_or_email(identifier)
         if not user or not user.is_active:
             return None
+        if settings.environment.strip().lower() == "production" and identifier.strip().lower() in DEMO_PRESET_IDENTIFIERS:
+            preset = next(
+                account
+                for account in DEMO_PRESET_ACCOUNTS.values()
+                if identifier.strip().lower() in (account["username"], account["email"])
+            )
+            if user.role != preset["role"]:
+                return None
         if not verify_password(plain_password, user.password_hash):
+            return None
+        return user
+
+    async def authenticate_demo_preset(self, account_id: str) -> Optional[UserModel]:
+        """Verify a fixed demo identity using server-held credentials and its persisted role."""
+        account = DEMO_PRESET_ACCOUNTS.get(account_id)
+        if not account:
+            return None
+
+        is_production = settings.environment.strip().lower() == "production"
+        if is_production:
+            if not settings.demo_auth_enabled:
+                return None
+            configured_password = getattr(settings, account["password_setting"])
+            password = configured_password.get_secret_value() if configured_password else None
+        else:
+            local_account = next(
+                (candidate for candidate in DEMO_USERS if candidate["username"] == account["username"]),
+                None,
+            )
+            password = local_account["password"] if local_account else None
+
+        if not password:
+            return None
+
+        user = await self.get_by_username_or_email(account["username"])
+        if user is None and is_production:
+            user = UserModel(
+                id=uuid.uuid4(),
+                username=account["username"],
+                email=account["email"],
+                password_hash=hash_password(password),
+                full_name=account["full_name"],
+                role=account["role"],
+                agency=account["agency"],
+                badge_number=account["badge_number"],
+                is_active=True,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+            self.session.add(user)
+            await self.session.flush()
+        elif user is None:
+            return None
+
+        if (
+            not user.is_active
+            or user.role != account["role"]
+            or not verify_password(password, user.password_hash)
+        ):
             return None
         return user
 

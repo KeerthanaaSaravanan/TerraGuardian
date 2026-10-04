@@ -1,11 +1,51 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { AuthProvider, useAuth } from "../context/AuthContext";
+import { apiClient, setAuthToken } from "../services/apiClient";
 import { LoginView } from "../components/auth/LoginView";
 import { GoldenDemoView } from "../components/views/GoldenDemoView";
 import { ThemeProvider } from "../context/ThemeContext";
 import { DemoScenarioProvider } from "../context/DemoScenarioContext";
+import { UserProfile } from "../types/incident";
+
+vi.mock("../services/apiClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../services/apiClient")>();
+  return {
+    ...actual,
+    apiClient: {
+      ...actual.apiClient,
+      login: vi.fn(),
+      getCurrentUser: vi.fn(),
+    },
+  };
+});
+
+beforeEach(() => {
+  localStorage.clear();
+  setAuthToken(null);
+  vi.clearAllMocks();
+  vi.mocked(apiClient.getCurrentUser).mockRejectedValue(new Error("No stored session"));
+  vi.mocked(apiClient.login).mockImplementation(async (payload) => {
+    const isCitizen = payload.username === "citizen";
+    const user: UserProfile = {
+      id: `server-user-${payload.username}`,
+      username: payload.username,
+      email: `${payload.username}@terraguardian.gov.in`,
+      full_name: payload.username,
+      role: isCitizen ? "CITIZEN" : "OPERATOR",
+      agency: "Test",
+      badge_number: "TEST",
+      is_active: true,
+      permissions: [],
+    };
+    return {
+      access_token: "server-issued-test-token",
+      token_type: "bearer",
+      user,
+    };
+  });
+});
 
 // Simple consumer component to inspect AuthContext
 const AuthStatusDisplay: React.FC = () => {
@@ -24,7 +64,6 @@ const AuthStatusDisplay: React.FC = () => {
 
 describe("Authentication & RBAC Context", () => {
   it("defaults to anonymous/unauthenticated when local storage is empty", () => {
-    localStorage.clear();
     render(
       <AuthProvider>
         <AuthStatusDisplay />
@@ -36,7 +75,6 @@ describe("Authentication & RBAC Context", () => {
   });
 
   it("authenticates operator with authority privileges", async () => {
-    localStorage.clear();
     render(
       <AuthProvider>
         <AuthStatusDisplay />
@@ -53,7 +91,6 @@ describe("Authentication & RBAC Context", () => {
   });
 
   it("authenticates citizen with restricted public privileges", async () => {
-    localStorage.clear();
     render(
       <AuthProvider>
         <AuthStatusDisplay />

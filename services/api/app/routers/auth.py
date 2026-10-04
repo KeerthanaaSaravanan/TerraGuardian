@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
@@ -25,6 +25,11 @@ class LoginRequest(BaseModel):
     """Payload to authenticate user and receive bearer token."""
     username: str
     password: str
+
+
+class DemoLoginRequest(BaseModel):
+    """Select one fixed demonstration identity; credentials remain server-side."""
+    account: Literal["operator", "assessment", "patrol", "magistrate", "reviewer"]
 
 
 class UserResponse(BaseModel):
@@ -76,6 +81,34 @@ async def login(
         full_name=user.full_name,
     )
 
+    return TokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=UserResponse.model_validate(user),
+    )
+
+
+@router.post("/demo-login", response_model=TokenResponse)
+async def demo_login(
+    body: DemoLoginRequest,
+    session: AsyncSession = Depends(get_db_session),
+) -> TokenResponse:
+    """Authenticate one fixed evaluation identity using server-held credentials."""
+    auth_service = AuthService(session)
+    user = await auth_service.authenticate_demo_preset(body.account)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Demo authentication is unavailable or the configured account is invalid.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = create_access_token(
+        user_id=user.id,
+        username=user.username,
+        role=user.role,
+        full_name=user.full_name,
+    )
     return TokenResponse(
         access_token=token,
         token_type="bearer",

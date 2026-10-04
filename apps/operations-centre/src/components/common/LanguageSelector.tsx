@@ -63,10 +63,18 @@ const LanguageSelectorView: React.FC<LanguageSelectorViewProps> = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={title}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${buttonStyle}`}
+        className={`flex items-center ${
+          variant === "compact" ? "gap-1 px-1.5 sm:gap-1.5 sm:px-2.5" : "gap-1.5 px-2.5"
+        } py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${buttonStyle}`}
       >
         <IconGlobe className={`w-3.5 h-3.5 shrink-0 ${variant === "glass" ? "text-cyan-300" : "text-cyan-600 dark:text-cyan-400"}`} />
-        <span className="truncate max-w-[80px] sm:max-w-none">{currentLangMeta.nativeName}</span>
+        <span
+          className={`truncate max-w-[80px] sm:max-w-none ${
+            variant === "compact" ? "hidden sm:inline" : ""
+          }`}
+        >
+          {currentLangMeta.nativeName}
+        </span>
         <span className="text-[10px] opacity-70">▾</span>
       </button>
 
