@@ -1,5 +1,7 @@
 # SIH26001 Final Readiness Audit (TerraGuardian AI)
 
+> **Assessment scope:** This is a capability/maturity snapshot, not a Production certification. `IMPLEMENTED` and `CONTROLLED DEMO` do not mean live external feeds. See the root [README](../README.md) for current verification and deployment boundaries.
+
 Status legend: **IMPLEMENTED** (executable code + tests) · **CONTROLLED DEMO** (replay/seeded data, not live) · **ADAPTER READY** (schema/adapter only, no live feed) · **EXPERIMENTAL**.
 
 | # | Capability | Status | Notes |

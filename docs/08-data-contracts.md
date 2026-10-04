@@ -4,6 +4,8 @@
 **Governing Standard:** Section 8 & 9 of Engineering Constitution (`REALITY > CLAIMS`)  
 **Version:** `1.0.0`  
 
+> **Scope note:** This document defines intended data contracts. Its `MUST` requirements, example sources and immutability language are not evidence that the relevant external feeds, cryptographic controls, storage engines or pipelines are active. Current implementation boundaries are in the root [README](../README.md) and executable service code.
+
 ---
 
 ## 1. Principles

@@ -2,6 +2,8 @@
 
 This document is the governing engineering contract for the TerraGuardian AI platform. All contributors, modules, and AI-generated code must conform to these rules.
 
+> **Scope note:** The technology table and capability language below describe design constraints and target architecture, not proof of active deployment. For current runtime and maturity evidence, see the root [README](../README.md).
+
 ## 1. Product Identity
 
 - **Product**: TerraGuardian AI

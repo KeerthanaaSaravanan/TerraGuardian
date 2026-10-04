@@ -1,6 +1,8 @@
 # Product Scope & Target Architecture
 
-**Governing Baseline:** See [docs/00-product-north-star.md](file:///C:/Users/admin/TerraGuardian/TerraGuardian/docs/00-product-north-star.md) for the frozen product laws, semantic invariants, and full specification.
+**Governing Baseline:** See [docs/00-product-north-star.md](00-product-north-star.md) for the frozen product laws, semantic invariants, and full specification.
+
+> **Scope note:** This is a product scope/target description, not evidence that every named feed, model or integration is implemented or live. Current maturity is recorded in the root [README](../README.md).
 
 ## 1. Product Vision & Mission
 TerraGuardian is an AI-assisted landslide risk and operational intelligence system for the North Eastern Region of India that transforms multi-source hazard evidence into explainable risk, consequence-aware priorities, authorized response, verified outcomes, and continuous reassessment.

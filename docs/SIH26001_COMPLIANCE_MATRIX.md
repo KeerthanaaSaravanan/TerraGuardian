@@ -5,16 +5,18 @@
 **Governing Standard:** Operational Reality, Scientific Provenance & Zero-Fabrication Integrity Baseline  
 **Target Corridor:** NH-13 Trans-Arunachal Highway (Bhalukpong–Sessa–Tenga–Bomdila, KM-30 to KM-60)
 
+> **Historical status notice:** This matrix is a phase-era planning/implementation inventory, not a current release certification. Its counts and `IMPLEMENTED + VERIFIED` labels have not been re-audited as a current evidence ledger and must not be used to claim live external feeds, real-time regional coverage or Production readiness. Use the root [README](../README.md) for the current SIH traceability and maturity assessment; where this matrix differs, the README and executable evidence take precedence.
+
 ---
 
 ## 1. Compliance Status Summary
 
-| Status Category | Count | Definition |
-| :--- | :---: | :--- |
-| **IMPLEMENTED + VERIFIED** | 19 | Executable code with real scientific substrate or real datasets, automated test coverage, and active operational endpoints. |
-| **IMPLEMENTED + CONTROLLED_DEMO** | 4 | Fully functional operational workflow executed against deterministic geographically-grounded replay scenarios (e.g. NH-13 July 2024 monsoon surge). |
-| **ADAPTER_READY** | 2 | Production-grade adapter schema, physical bounds validation, and normalization completed; awaiting institutional live API key / bilateral MOU. |
-| **BLOCKED** | 0 | No requirements are blocked. |
+| Status Category | Meaning in this historical matrix |
+| :--- | :--- |
+| **IMPLEMENTED + VERIFIED** | Historical status label; not a current assertion about real data or deployment. |
+| **IMPLEMENTED + CONTROLLED_DEMO** | Demonstration/replay behavior; not live operational activity. |
+| **ADAPTER_READY** | Schema/payload handling only unless an actual source connection is separately verified. |
+| **BLOCKED** | Historical project status; not a current infrastructure readiness statement. |
 
 ---
 

@@ -4,6 +4,8 @@
 **Governing Standard:** Section 8 & 9 of Engineering Constitution  
 **Version:** `1.0.0`  
 
+> **Current status caveat:** This register records planned products and adapter boundaries, not proof of connected upstream feeds or Production operation. Use the root [README](../README.md) for the current maturity ledger. `ADAPTER_READY` means payload/schema handling only unless an actual source connection is separately verified.
+
 ---
 
 ## 1. Register Format & Classification Matrix
@@ -17,7 +19,7 @@ Every data source feeding TerraGuardian is audited against five architectural di
 - **Format:** Ingestion wire format (GeoJSON, GeoTIFF, NetCDF, JSON REST, MQTT).
 - **Access Protocol:** Public Open Access, Free Registration/API Key, or Authenticated Agency Token.
 - **Latency / Update Frequency:** Real-time stream, hourly, daily, 12-day orbital cycle, or static base layer.
-- **Connector Status:** `CONNECTED` (Active in prod), `ADAPTER_READY` (Schema validated, needs live credentials), or `PLANNED` (Phase 5 roadmap).
+- **Connector Status:** `IMPLEMENTED` (application/API path exists), `ADAPTER_READY` (schema/payload validation only), `PLANNED` (not implemented), or `NO_LIVE_FEED` (upstream source is not connected). These labels do not imply Production readiness.
 
 ---
 
@@ -101,7 +103,7 @@ Every data source feeding TerraGuardian is audited against five architectural di
 - **Format:** Pydantic JSON REST payload (`SafeCitizenReport`).
 - **Access Protocol:** Authenticated mobile PWA endpoint (`/api/v1/public/report`).
 - **Update Frequency:** Real-time asynchronous push.
-- **Connector Status:** `CONNECTED` (Active, but requires UI filter remediation under TG-001).
+- **Connector Status:** `IMPLEMENTED` for report submission/review API paths; Preview report submission was browser/API verified on 2026-10-04. No live government integration or durable Production storage is implied.
 
 ---
 
@@ -142,5 +144,5 @@ Every data source feeding TerraGuardian is audited against five architectural di
 | **NASA COOLR Landslides** | Tier 2 | CSV/GeoJSON | Open | Historical | Not Ingested | Ingest ~500+ historical NER events |
 | **IMD Daily Rainfall** | Tier 1 | NetCDF/JSON | Open/Reg | Daily | `ADAPTER_READY` | Ingest 2020-2026 daily gridded series |
 | **Sentinel-1 InSAR** | Tier 2 | COG/JSON | CDSE Auth | 12-day | `ADAPTER_READY` | Connect EGMS/ASF displacement layers |
-| **TerraGuardian Safe** | Tier 3 | JSON/Photo | API | Real-time | `CONNECTED` | Fix UI visibility & spatial indexing (TG-001) |
+| **TerraGuardian Safe** | Tier 3 | JSON/Photo | API | User-initiated | `IMPLEMENTED / PREVIEW VERIFIED` | Citizen reports remain UNVERIFIED; Production persistence and external feeds are not verified. |
 | **Seed Fixtures** | Tier 4 | SQLite | Local | Static | `ACTIVE` | Retag as `FIXTURE` (Fix TG-006) |

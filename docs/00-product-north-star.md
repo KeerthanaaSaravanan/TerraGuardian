@@ -4,6 +4,8 @@
 **Phase:** Phase 0 Baseline  
 **Governing Standard:** SIH26001 + TerraGuardian Operational Differentiation + Research Contribution
 
+> **Scope note:** This document freezes product intent, hierarchy and semantic rules. It is not an implementation or deployment maturity report. Use the root [README](../README.md) for the current evidence-qualified capability and verification ledger; executable code and runtime evidence take precedence over this specification.
+
 ---
 
 ## 0.1 Mission
@@ -250,7 +252,7 @@ Post-intervention observation maintenance across competing hypotheses:
 
 ---
 
-## 0.13 Unique UI Concept
+## 0.13 UI Concept
 The UI visually communicates:
 $$\text{WHAT WE KNOW} \to \text{WHY WE BELIEVE IT} \to \text{WHAT IT THREATENS} \to \text{WHAT SHOULD HAPPEN} \to \text{WHO AUTHORIZED IT} \to \text{WHAT ACTUALLY HAPPENED} \to \text{WHAT WE BELIEVE NOW}$$
 

@@ -1,24 +1,33 @@
-# TerraGuardian AI — Database & Spatial Storage
+# Database and Persistence
 
-## Overview
+## What
 
-TerraGuardian uses PostgreSQL 16 with the PostGIS 3.4 spatial extension as its primary operational datastore.
+The API uses SQLAlchemy async sessions for incidents, evidence, actions, citizen reports and audit events. Persistence is configured through `DATABASE_URL` in `services/api/app/config.py`.
 
-## Principles
+## Responsibility
 
-1. **Spatial Data Integrity**: All geographic points, polygons, and tracks MUST use PostGIS types (`GEOMETRY(Point, 4326)`, `GEOMETRY(Polygon, 4326)`, etc.). Simple (latitude, longitude) floating point pairs are only used at boundary contracts (e.g., API schemas) and are immediately transformed into spatial types for storage and spatial querying.
-2. **Versioned Migrations**: All schema modifications are tracked and versioned using Alembic (`services/api/alembic/`). No manual schema modifications in production or staging.
-3. **Domain Entity Decoupling**: SQLAlchemy ORM models map relational and spatial tables. Pydantic v2 models in `services/api/app/domain/` represent the business domain and remain decoupled from ORM-specific details.
-4. **Auditability**: Key incident events, status transitions, and authoritative human approvals must be written to append-only audit tables.
+`services/api/app/db/models.py` defines ORM tables; `services/api/app/db/session.py` creates the engine and sessions and initializes tables. The spatial API also serves GeoJSON and performs application-level spatial calculations.
 
-## Setup for Local Development
+## Interfaces
 
-When running locally with Docker:
-```bash
-docker compose -f docker/docker-compose.yml up -d postgres
-```
+- Local tests and the default local configuration use SQLite with `aiosqlite`.
+- A PostgreSQL URL can be normalized for `asyncpg`.
+- Current Production configuration validation requires PostgreSQL, a non-default secret and S3-compatible storage settings.
 
-Database connection string format:
-```
-postgresql+asyncpg://<username>:<password>@<host>:<port>/<dbname>
-```
+## Current implementation
+
+PostgreSQL/PostGIS is not established as the active datastore by this repository's configuration or the verified Preview. The Preview uses SQLite at Vercel `/tmp`; its state is ephemeral and may differ across serverless function instances. An ORM dependency or spatial model does not prove that PostGIS is active. Audit events are relational application records, not cryptographically immutable storage.
+
+The current session module calls SQLAlchemy `metadata.create_all`. Do not assume a versioned Alembic migration workflow is configured unless an actual migration directory and command are added and verified.
+
+## Verification
+
+Run backend tests with `python -m pytest tests/unit -q`. These tests use test/local database fixtures; they do not certify a managed database or Production persistence. The Preview `/api/v1/health` returned database `ok` with `environment=staging` on 2026-10-04.
+
+## Boundaries and local development
+
+Use SQLite for local tests and demos only. Do not use `/tmp` SQLite or local filesystem uploads as durable remote storage. For a local PostgreSQL container, inspect `docker/docker-compose.yml`; validate database provisioning and migrations before claiming PostgreSQL/PostGIS operation. Set real secrets through the deployment provider, never from this documentation.
+
+## Local development
+
+The default local API database is SQLite. Install backend dependencies with `python -m pip install -r services/api/requirements.txt`, then start the API from the repository root with `python -m uvicorn app.main:app --app-dir services/api --host 127.0.0.1 --port 8000 --reload`. Docker PostgreSQL is an optional local setup and is not required for the unit tests.

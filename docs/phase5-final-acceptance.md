@@ -4,6 +4,8 @@
 **Status:** PHASE 5 COMPLETE — PROTOTYPE FROZEN  
 **Target Milestone:** SIH26001 National Disaster Operations & Scientific Intelligence Prototype  
 
+> **Historical report notice:** This document records a Phase 5 milestone snapshot dated 2026-09-29. Its test counts, integration descriptions and certification language are not current Production or live-source verification. Use the root [README](../README.md) for the latest evidence-qualified maturity and test results; treat any unqualified source-integration claim below as historical/controlled-demo context, not a live connection.
+
 ---
 
 ## 1. Executive Summary & Prototype Status
@@ -31,7 +33,7 @@ $$\text{AI ASSISTS REASONING} \quad \bullet \quad \text{RULES GOVERN STATE TRANS
    - 6 REAL_HISTORICAL, 12 CONTROLLED_DEMO, 0 RECENT_REPORTED, 0 LIVE, 0 REPLAY, 18 NO_LIVE_FEED.
 5. **Comprehensive Verification:**
    - 22/22 (100%) targeted Phase 5 operational intelligence unit tests passing.
-   - 307/307 (100%) full regression unit tests passing.
+   - 307/307 full regression unit tests reported at the time of this historical snapshot; this is not the current test count. See the root README for the fresh 2026-10-04 result.
    - Production Vite builds of both frontend applications (`operations-centre` and `terra-guardian-safe`) compile cleanly with zero errors.
 
 ---
