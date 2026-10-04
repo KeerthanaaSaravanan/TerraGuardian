@@ -188,7 +188,7 @@ export const OperationalCopilot: React.FC<OperationalCopilotProps> = ({
 
   return (
     <div
-      className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-slate-900/98 backdrop-blur-xl border-l border-slate-800 shadow-2xl z-50 flex flex-col transition-all duration-300"
+      className="fixed top-[72px] bottom-0 right-0 w-full sm:w-[min(420px,36vw)] bg-slate-900/98 backdrop-blur-xl border-l border-slate-800 shadow-2xl z-[60] flex flex-col transition-all duration-300"
       role="dialog"
       aria-label="Operational Copilot"
     >

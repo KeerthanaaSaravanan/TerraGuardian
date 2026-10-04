@@ -147,72 +147,16 @@ def decode_access_token(token: str) -> dict[str, Any]:
 
 # ── AuthService ──
 
-# Deterministic demo user definitions (LOCAL / DEMO ONLY)
-DEMO_USERS = [
-    {
-        "username": "citizen",
-        "email": "citizen@terraguardian.gov.in",
-        "password": "Citizen#2026",
-        "full_name": "Citizen Observer (West Kameng)",
-        "role": ActorRole.CITIZEN.value,
-        "agency": "Citizen Community Watch",
-        "badge_number": None,
-    },
-    {
-        "username": "operator",
-        "email": "operator@terraguardian.gov.in",
-        "password": "Terra#Op2026",
-        "full_name": "Operations Duty Officer",
-        "role": ActorRole.OPERATOR.value,
-        "agency": "State Disaster Operations Centre",
-        "badge_number": "SDOC-WK-102",
-    },
-    {
-        "username": "assessment",
-        "email": "assessment@terraguardian.gov.in",
-        "password": "Terra#Assess2026",
-        "full_name": "Dr. T. Norbu (Geotechnical Assessment Officer)",
-        "role": ActorRole.ASSESSMENT_OFFICER.value,
-        "agency": "State Hazard Assessment Cell / GSI NER",
-        "badge_number": "GSI-NER-88",
-    },
-    {
-        "username": "patrol",
-        "email": "patrol@terraguardian.gov.in",
-        "password": "Patrol#2026",
-        "full_name": "ASI D. Sonam",
-        "role": ActorRole.FIELD_RESPONDER.value,
-        "agency": "West Kameng Traffic Police",
-        "badge_number": "WKTP-38",
-    },
-    {
-        "username": "magistrate",
-        "email": "magistrate@terraguardian.gov.in",
-        "password": "Terra#Admin2026",
-        "full_name": "P. Tsering, IAS (District Magistrate)",
-        "role": ActorRole.AUTHORIZATION_OFFICER.value,
-        "agency": "District Disaster Management Authority",
-        "badge_number": "DM-WK-01",
-    },
-    {
-        "username": "reviewer",
-        "email": "reviewer@terraguardian.gov.in",
-        "password": "Terra#Review2026",
-        "full_name": "K. Sharma (Independent Statutory Reviewer)",
-        "role": ActorRole.REVIEWER.value,
-        "agency": "NDMA State Oversight Division",
-        "badge_number": "NDMA-REV-14",
-    },
-    {
-        "username": "admin",
-        "email": "admin@terraguardian.gov.in",
-        "password": "Terra#SuperAdmin2026",
-        "full_name": "System & Model Governance Administrator",
-        "role": ActorRole.ADMINISTRATOR.value,
-        "agency": "State IT & Disaster Systems Hub",
-        "badge_number": "SYS-ADM-01",
-    },
-]
+DEMO_USER_IDENTIFIERS = frozenset(
+    f"{name}{suffix}"
+    for name in ("citizen", "operator", "assessment", "patrol", "magistrate", "reviewer", "admin")
+    for suffix in ("", "@terraguardian.gov.in")
+)
+
+if settings.environment.strip().lower() == "production":
+    DEMO_USERS: list[dict[str, Any]] = []
+else:
+    from app.services.demo_accounts import DEMO_USERS
 
 
 class AuthService:
@@ -237,6 +181,10 @@ class AuthService:
 
     async def authenticate_user(self, identifier: str, plain_password: str) -> Optional[UserModel]:
         """Authenticate user by username/email and password."""
+        if settings.environment.strip().lower() == "production":
+            if identifier.strip().lower() in DEMO_USER_IDENTIFIERS:
+                return None
+
         user = await self.get_by_username_or_email(identifier)
         if not user or not user.is_active:
             return None
@@ -246,6 +194,9 @@ class AuthService:
 
     async def seed_demo_users(self) -> list[UserModel]:
         """Seed deterministic local demo user accounts idempotently, reconciling hashes and roles."""
+        if settings.environment.strip().lower() == "production":
+            raise RuntimeError("Demo user seeding is strictly prohibited in production environments.")
+
         created_users: list[UserModel] = []
         for u_data in DEMO_USERS:
             existing = await self.get_by_username_or_email(u_data["username"])

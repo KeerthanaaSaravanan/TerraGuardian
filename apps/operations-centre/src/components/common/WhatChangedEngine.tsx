@@ -49,6 +49,7 @@ export const WhatChangedEngine: React.FC<WhatChangedEngineProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterSeverity, setFilterSeverity] = useState<string>("ALL");
+  const previewDemoEnabled = import.meta.env.VITE_DEMO_AUTH_ENABLED === "true";
 
   const fetchReport = async () => {
     if (!incidentId) return;
@@ -59,7 +60,45 @@ export const WhatChangedEngine: React.FC<WhatChangedEngineProps> = ({
       setData(res);
     } catch (err: any) {
       console.warn("Failed to load What Changed report:", err);
-      setError(err?.message || "Unable to fetch What Changed comparison");
+      if (previewDemoEnabled && err?.status === 404) {
+        const observedAt = new Date().toISOString();
+        setData({
+          incident_id: incidentId,
+          current_version: 2,
+          previous_version: 1,
+          evaluated_at: observedAt,
+          total_changes: 2,
+          summary_narrative: "CONTROLLED_DEMO / REPLAY comparison. Illustrative scenario values only; no live feed is connected.",
+          provenance: "CONTROLLED_DEMO_REPLAY_FALLBACK",
+          changes: [
+            {
+              change_type: "REPLAY_RAINFALL_SCENARIO",
+              previous_value: "42.0 mm (REPLAY)",
+              current_value: "74.0 mm (REPLAY)",
+              delta: "+32.0 mm",
+              observed_at: observedAt,
+              source: "CONTROLLED_DEMO / REPLAY",
+              evidence_reference: "TG-2048 scenario fixture",
+              severity: "CRITICAL",
+              explanation: "Illustrative rainfall progression for the deterministic demonstration scenario, not a live meteorological observation.",
+            },
+            {
+              change_type: "SYNTHETIC_RISK_SCENARIO",
+              previous_value: "64/100 (SYNTHETIC)",
+              current_value: "86/100 (SYNTHETIC)",
+              delta: "+22",
+              observed_at: observedAt,
+              source: "SYNTHETIC DEMONSTRATION",
+              evidence_reference: "TG-2048 scenario fixture",
+              severity: "ELEVATED",
+              explanation: "Illustrative synthetic score progression for demonstration only; it is not a validated production prediction.",
+            },
+          ],
+        });
+        setError(null);
+      } else {
+        setError(err?.message || "Unable to fetch What Changed comparison");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -105,9 +144,14 @@ export const WhatChangedEngine: React.FC<WhatChangedEngineProps> = ({
                   v{data.previous_version} → v{data.current_version}
                 </span>
               )}
+              {data?.provenance === "CONTROLLED_DEMO_REPLAY_FALLBACK" && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 font-bold">
+                  CONTROLLED_DEMO / REPLAY
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-neutral-400 font-mono mt-0.5">
-              Live dimensional delta tracking between incident assessment iterations
+              Assessment comparison; preview fallback uses labelled controlled replay data
             </p>
           </div>
         </div>

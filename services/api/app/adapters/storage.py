@@ -172,11 +172,8 @@ class ProductionObjectStorageProvider(BaseStorageProvider):
             os.getenv("STORAGE_PUBLIC_BASE_URL")
             or os.getenv("OBJECT_STORAGE_PUBLIC_URL")
         )
-        # Fallback local provider if object storage credentials are not provided
-        self._fallback_local = LocalStorageProvider()
-
     def is_configured(self) -> bool:
-        return bool(self.bucket and (self.access_key or self.endpoint_url or self.public_base_url))
+        return bool(self.bucket and self.access_key and self.secret_key)
 
     def save_image(
         self,
@@ -190,13 +187,7 @@ class ProductionObjectStorageProvider(BaseStorageProvider):
         key = f"citizen/{clean_filename}"
 
         if not self.is_configured():
-            logger.warning(
-                "ProductionObjectStorageProvider: S3/object storage credentials not set. "
-                "Persisting to local storage fallback."
-            )
-            return self._fallback_local.save_image(
-                image_bytes, clean_filename, image_hash, width, height, mime_type
-            )
+            raise RuntimeError("Persistent object storage is not configured; refusing ephemeral evidence storage.")
 
         # 1. Attempt boto3 if installed
         try:
@@ -221,34 +212,9 @@ class ProductionObjectStorageProvider(BaseStorageProvider):
                     "height": str(height),
                 },
             )
-        except ImportError:
-            # 2. Direct HTTP upload if custom endpoint/presigned URL configured
-            import httpx
-            if self.public_base_url and self.access_key:
-                upload_url = f"{self.endpoint_url or self.public_base_url}/{self.bucket}/{key}"
-                try:
-                    with httpx.Client(timeout=15.0) as client:
-                        resp = client.put(
-                            upload_url,
-                            content=image_bytes,
-                            headers={"Content-Type": mime_type},
-                        )
-                        resp.raise_for_status()
-                except Exception as ex:
-                    logger.error(f"Direct HTTP object upload failed: {ex}. Using local fallback.")
-                    return self._fallback_local.save_image(
-                        image_bytes, clean_filename, image_hash, width, height, mime_type
-                    )
-            else:
-                logger.info("boto3 not installed; saving image via local provider.")
-                return self._fallback_local.save_image(
-                    image_bytes, clean_filename, image_hash, width, height, mime_type
-                )
         except Exception as e:
-            logger.error(f"S3 object upload failed: {e}. Falling back to local storage.")
-            return self._fallback_local.save_image(
-                image_bytes, clean_filename, image_hash, width, height, mime_type
-            )
+            logger.error("S3 evidence upload failed (%s)", type(e).__name__)
+            raise RuntimeError("Evidence could not be persisted to object storage.") from e
 
         if self.public_base_url:
             public_url = f"{self.public_base_url.rstrip('/')}/{key}"
@@ -270,7 +236,7 @@ class ProductionObjectStorageProvider(BaseStorageProvider):
 
     def get_image(self, file_key_or_url: str) -> Optional[bytes]:
         if not self.is_configured():
-            return self._fallback_local.get_image(file_key_or_url)
+            raise RuntimeError("Persistent object storage is not configured.")
         try:
             import boto3
             client_kwargs = {"region_name": self.region}
@@ -283,12 +249,13 @@ class ProductionObjectStorageProvider(BaseStorageProvider):
             key = file_key_or_url.split(f"{self.bucket}/")[-1] if self.bucket in file_key_or_url else file_key_or_url
             resp = s3.get_object(Bucket=self.bucket, Key=key)
             return resp["Body"].read()
-        except Exception:
-            return self._fallback_local.get_image(file_key_or_url)
+        except Exception as error:
+            logger.error("S3 evidence retrieval failed (%s)", type(error).__name__)
+            return None
 
     def delete_image(self, file_key_or_url: str) -> bool:
         if not self.is_configured():
-            return self._fallback_local.delete_image(file_key_or_url)
+            raise RuntimeError("Persistent object storage is not configured.")
         try:
             import boto3
             client_kwargs = {"region_name": self.region}
@@ -301,8 +268,9 @@ class ProductionObjectStorageProvider(BaseStorageProvider):
             key = file_key_or_url.split(f"{self.bucket}/")[-1] if self.bucket in file_key_or_url else file_key_or_url
             s3.delete_object(Bucket=self.bucket, Key=key)
             return True
-        except Exception:
-            return self._fallback_local.delete_image(file_key_or_url)
+        except Exception as error:
+            logger.error("S3 evidence deletion failed (%s)", type(error).__name__)
+            return False
 
 
 class EvidenceStorageProvider:

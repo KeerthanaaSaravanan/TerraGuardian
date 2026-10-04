@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,42 +11,42 @@ from app.db.session import init_db
 from app.routers import alerts, auth, citizen, copilot, gis, health, incidents, ingestion, notifications, replay, system
 import app.db.models  # noqa: F401
 
+logger = logging.getLogger(__name__)
 
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Ensure database schema is created and baseline layers exist on startup."""
+    """Create missing tables; only development may seed demo accounts and fixtures."""
     try:
         await init_db()
-        from app.db.session import get_session_factory
-        from app.routers.gis import seed_baseline_gis_data
-        from app.services.seed_service import SeedService
-        from app.services.auth_service import AuthService
-        factory = get_session_factory()
-        
-        # 1. Deterministic demo users seeding
-        async with factory() as session:
-            try:
-                auth_service = AuthService(session)
-                await auth_service.seed_demo_users()
-                await session.commit()
-            except Exception as e:
-                await session.rollback()
-                print(f"[STARTUP] Auth seeding error: {e}")
+        if settings.environment.strip().lower() != "production":
+            from app.db.session import get_session_factory
+            from app.routers.gis import seed_baseline_gis_data
+            from app.services.seed_service import SeedService
+            from app.services.auth_service import AuthService
+            factory = get_session_factory()
 
-        # 2. Baseline GIS data & incident scenario seeding
-        async with factory() as session:
-            try:
-                await seed_baseline_gis_data(session)
-                seed_service = SeedService(session)
-                await seed_service.seed_tg_2048(force_reset=False)
-                await session.commit()
-            except Exception as e:
-                await session.rollback()
-                print(f"[STARTUP] GIS/scenario seeding error: {e}")
+            async with factory() as session:
+                try:
+                    auth_service = AuthService(session)
+                    await auth_service.seed_demo_users()
+                    await session.commit()
+                except Exception:
+                    await session.rollback()
+                    logger.exception("Development demo-user seeding failed")
+
+            async with factory() as session:
+                try:
+                    await seed_baseline_gis_data(session)
+                    seed_service = SeedService(session)
+                    await seed_service.seed_tg_2048(force_reset=False)
+                    await session.commit()
+                except Exception:
+                    await session.rollback()
+                    logger.exception("Development GIS/scenario seeding failed")
     except Exception as e:
-        print(f"[STARTUP] Lifespan database initialization warning: {e}")
+        logger.exception("Database initialization failed: %s", e)
     yield
 
 

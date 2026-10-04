@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth, COMMAND_DEMO_ACCOUNTS } from "../../context/AuthContext";
+import { useAuth, COMMAND_DEMO_ACCOUNTS, isDemoAuthEnabled } from "../../context/AuthContext";
 import { ThemeToggle, LanguageSelector } from "../common";
 import { useI18n } from "../../context/I18nContext";
 import {
@@ -21,8 +21,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
   onSuccess,
   onNavigateCitizen,
 }) => {
-  const { login, isLoading, loginError } = useAuth();
+  const { login, quickLoginAs, isLoading, loginError } = useAuth();
   const { t } = useI18n();
+  const demoAuthEnabled = isDemoAuthEnabled();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [selectedDemoUser, setSelectedDemoUser] = useState<string | null>(null);
@@ -39,13 +40,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
   };
 
-  const handleSelectDemo = async (demoUsername: string, pass: string) => {
+  const handleSelectDemo = async (demoUsername: string) => {
     setUsername(demoUsername);
-    setPassword(pass);
+    setPassword("");
     setSelectedDemoUser(demoUsername);
     setLocalDismissError(false);
 
-    const success = await login({ username: demoUsername, password: pass });
+    const success = await quickLoginAs(demoUsername);
     if (success && onSuccess) {
       onSuccess();
     }
@@ -85,7 +86,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
-                {t("app_title") || "TerraGuardian AI"}
+                TerraGuardian
               </span>
               <span className="rounded bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 font-mono border border-emerald-300 dark:border-emerald-700/50">
                 {t("login_header_badge")}
@@ -113,9 +114,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       {/* Main Single-Viewport Layout */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className={`w-full grid grid-cols-1 gap-6 items-stretch ${demoAuthEnabled ? "lg:grid-cols-12" : "lg:max-w-xl lg:mx-auto"}`}>
           {/* Left Column: Official Authentication Form (5 cols) */}
-          <div className="lg:col-span-5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+          <div className={`${demoAuthEnabled ? "lg:col-span-5" : ""} bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between`}>
             <div className="flex flex-col gap-4">
               <div>
                 <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-[11px] font-mono font-bold uppercase tracking-wider mb-1">
@@ -223,8 +224,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
             </div>
           </div>
 
-          {/* Right Column: Demo Role Presets (7 cols) */}
-          <div className="lg:col-span-7 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+          {/* Local / non-production role presets are restored for faster local sign-in. */}
+          {demoAuthEnabled && <div className="lg:col-span-7 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -273,7 +274,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
                       <button
                         type="button"
-                        onClick={() => handleSelectDemo(acc.username, acc.passwordHint)}
+                        onClick={() => handleSelectDemo(acc.username)}
                         disabled={isLoading}
                         className="shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-neutral-800 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white font-mono text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-xs"
                       >
@@ -321,7 +322,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 )}
               </div>
             </div>
-          </div>
+          </div>}
         </div>
       </main>
     </div>

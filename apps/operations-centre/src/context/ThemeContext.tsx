@@ -12,21 +12,20 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem("terraguardian-theme");
+    if (typeof window === "undefined") return "dark";
+    const saved = window.localStorage.getItem("terraguardian-theme");
     if (saved === "light" || saved === "dark") return saved;
-    return "dark"; // Default operational command-center baseline
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
   });
 
   useEffect(() => {
-    localStorage.setItem("terraguardian-theme", theme);
-    const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-      root.classList.remove("light");
-    } else {
-      root.classList.add("light");
-      root.classList.remove("dark");
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("terraguardian-theme", theme);
     }
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    root.classList.toggle("light", theme === "light");
+    root.setAttribute("data-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {

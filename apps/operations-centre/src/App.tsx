@@ -53,7 +53,8 @@ function parseInitialRoute(): AppRoute {
 const OperatorWorkflow: React.FC<{
   onSwitchToPublic: () => void;
   onExitToPortal: () => void;
-}> = ({ onSwitchToPublic, onExitToPortal }) => {
+  onGoToLogin: () => void;
+}> = ({ onSwitchToPublic, onExitToPortal, onGoToLogin }) => {
   const {
     currentStep,
     setStep,
@@ -88,7 +89,7 @@ const OperatorWorkflow: React.FC<{
   };
 
   return (
-    <div className="flex h-screen w-full max-w-full bg-slate-100 dark:bg-neutral-950 text-slate-900 dark:text-neutral-100 overflow-hidden font-sans">
+    <div className="relative flex h-screen w-full max-w-full bg-slate-100 dark:bg-neutral-950 text-slate-900 dark:text-neutral-100 overflow-hidden font-sans">
       {/* Government-Grade Command Sidebar */}
       <CommandSidebar
         onSwitchToPublic={onSwitchToPublic}
@@ -102,6 +103,7 @@ const OperatorWorkflow: React.FC<{
           onToggleCopilot={() => setShowCopilot((prev) => !prev)}
           isCopilotOpen={showCopilot}
           onExitToPortal={onExitToPortal}
+          onGoToLogin={onGoToLogin}
         />
 
         <main className="flex-1 pb-10 min-w-0 w-full overflow-x-hidden">
@@ -248,7 +250,7 @@ const OperatorWorkflow: React.FC<{
 };
 
 const AppCore: React.FC = () => {
-  const { isAuthorityUser } = useAuth();
+  const { isAuthorityUser, logout } = useAuth();
   const { setStep } = useDemoScenario();
   const { currentPublicStep, setPublicStep } = usePublicReport();
 
@@ -363,6 +365,10 @@ const AppCore: React.FC = () => {
         isAuthorityUser ? (
           <OperatorWorkflow
             onSwitchToPublic={() => navigate("/citizen")}
+            onGoToLogin={() => {
+              logout();
+              navigate("/operations");
+            }}
             onExitToPortal={() => {
               if (typeof window !== "undefined") {
                 window.history.pushState({}, "", "/");

@@ -24,7 +24,7 @@ const HAZARD_TYPES = [
   { id: "OTHER", labelKey: "hazard_type_other" },
 ];
 
-export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, onClose }) => {
+export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({ isOpen, onClose, onStartGuidedFlow }) => {
   const { location, requestGps } = useLocationService();
   const { t } = useCitizenI18n();
 

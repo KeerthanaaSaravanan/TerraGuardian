@@ -340,7 +340,11 @@ export const DemoScenarioProvider: React.FC<{ children: ReactNode }> = ({ childr
           twin = await apiClient.getIncidentByCode("TG-2048");
         } catch (err) {
           if (err instanceof ApiError && err.status === 404) {
-            twin = await apiClient.seedTG2048();
+            if (import.meta.env.DEV) {
+              twin = await apiClient.seedTG2048();
+            } else {
+              throw new Error("The production Incident Twin has not been provisioned.");
+            }
           } else {
             throw err;
           }

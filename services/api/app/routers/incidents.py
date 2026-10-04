@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db.models import IncidentModel
 from app.db.session import get_db_session
 from app.domain.enums import (
@@ -1401,6 +1402,11 @@ async def seed_tg2048_endpoint(
     session: AsyncSession = Depends(get_db_session),
 ) -> IncidentResponse:
     """Deterministic seeder endpoint for incident TG-2048."""
+    if settings.environment.strip().lower() == "production":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Controlled demonstration incidents cannot be seeded in production.",
+        )
     seed_service = SeedService(session)
     incident = await seed_service.seed_tg_2048(force_reset=force_reset)
     return IncidentResponse.model_validate(incident)

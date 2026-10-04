@@ -209,24 +209,9 @@ export const apiClient = {
 
 
 
-  /** Ensure an active authenticated session exists, logging in with default credentials if needed */
+  /** Return the existing authenticated token without attempting implicit sign-in. */
   async ensureAuthenticatedSession(): Promise<string | null> {
-    if (currentAuthToken) return currentAuthToken;
-    try {
-      try {
-        const auth = await this.login({ username: "operator", password: "Terra#Op2026" });
-        setAuthToken(auth.access_token);
-        return auth.access_token;
-      } catch {
-        await this.seedDemoUsers();
-        const auth = await this.login({ username: "operator", password: "Terra#Op2026" });
-        setAuthToken(auth.access_token);
-        return auth.access_token;
-      }
-    } catch (err) {
-      console.warn("Unable to establish automated authenticated session:", err);
-      return null;
-    }
+    return currentAuthToken;
   },
 
   /** Seed or reset deterministic incident TG-2048 */

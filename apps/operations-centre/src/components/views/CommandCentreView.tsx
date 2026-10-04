@@ -29,6 +29,7 @@ export const CommandCentreView: React.FC = () => {
     whatChanged,
     assessmentVersion,
     setActiveNavTab,
+    setIncidentSubTab,
     backendIncidentId,
   } = useDemoScenario();
 
@@ -113,7 +114,8 @@ export const CommandCentreView: React.FC = () => {
         </div>
         <button
           onClick={() => {
-            openIncident("TG-2048", "EVIDENCE");
+            setIncidentSubTab("EVIDENCE");
+            openIncident("TG-2048", "OPERATIONS");
           }}
           className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
         >

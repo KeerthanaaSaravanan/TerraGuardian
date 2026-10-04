@@ -60,7 +60,7 @@ export const TacticalMapView: React.FC = () => {
   const [activeLens, setActiveLens] = useState<"RISK" | "CONFIDENCE" | "COVERAGE" | "CONSEQUENCE" | "PRIORITY">("RISK");
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6 w-full max-w-[1700px] mx-auto min-h-[calc(100vh-140px)]">
+    <div className="flex flex-col gap-3 p-3 lg:p-4 w-full max-w-[1700px] mx-auto min-h-[calc(100vh-140px)]">
       {/* Top Advisory Banner */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 p-4 rounded-xl shadow-sm">
         <div className="flex items-center gap-3">
@@ -244,14 +244,14 @@ export const TacticalMapView: React.FC = () => {
       </div>
 
       {/* Main Map + GIS Intelligence Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 flex-1 min-h-[640px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-[360px]">
         {/* Left Column: Full Interactive Leaflet Map (8 cols) */}
-        <div className="xl:col-span-8 flex flex-col gap-3 min-w-0 h-[640px] xl:h-[720px]">
+        <div className="lg:col-span-8 flex flex-col gap-3 min-w-0 min-h-[360px] h-[calc(100vh-420px)] max-h-[620px]">
           <InteractiveMap detailedView={false} className="flex-1 w-full h-full shadow-md" />
         </div>
 
         {/* Right Column: Spatial Intelligence Tools & Association Engine (4 cols) */}
-        <div className="xl:col-span-4 flex flex-col gap-4 min-w-0">
+        <div className="lg:col-span-4 flex flex-col gap-4 min-w-0">
           {/* Spatial Association Engine Query Card */}
           <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 p-4 rounded-xl shadow-sm flex flex-col gap-3">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-2.5">

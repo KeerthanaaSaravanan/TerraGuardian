@@ -1,49 +1,70 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useDemoScenario } from "../context/DemoScenarioContext";
-import { useAuth } from "../context/AuthContext";
+import { COMMAND_DEMO_ACCOUNTS, useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 import { getApiBaseDisplayUrl } from "../services/apiClient";
-import { ThemeToggle, LanguageSelector } from "./common";
-import { IconRotateCcw, IconShieldCheck, IconAlertTriangle, IconSparkles } from "./icons";
+import { ThemeToggle } from "./common";
+import { IconAlertTriangle, IconRadio, IconChevronRight } from "./icons";
 
 interface CommandHeaderProps {
   onToggleCopilot?: () => void;
   isCopilotOpen?: boolean;
   onExitToPortal?: () => void;
+  onGoToLogin?: () => void;
 }
 
 export const CommandHeader: React.FC<CommandHeaderProps> = ({
   onToggleCopilot,
   isCopilotOpen = false,
   onExitToPortal,
+  onGoToLogin,
 }) => {
   const { t } = useI18n();
   const {
-    resetDemo,
     incidentCode,
-    incidentLocation,
     incidentStatus,
     hazardState,
-    riskLevel,
     backendStatus,
+    setActiveNavTab,
   } = useDemoScenario();
 
-  const { user, logout, isAuthorityUser } = useAuth();
+  const { user, logout } = useAuth();
+  const [now, setNow] = useState(() => new Date());
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const dateLabel = new Intl.DateTimeFormat("en-IN", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    timeZone: "Asia/Kolkata",
+  }).format(now);
+  const timeLabel = new Intl.DateTimeFormat("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Kolkata",
+  }).format(now);
+  const initials = (user?.full_name || user?.username || "TG")
+    .split(/\s+/)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
-    <header className="flex flex-col border-b border-slate-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md sticky top-0 z-50 transition-colors w-full min-w-0">
-      {/* Truthful Offline Warning Banner if backend fails */}
+    <header className="flex flex-col border-b border-slate-200 dark:border-cyan-950/70 bg-white/95 dark:bg-[#071421]/95 backdrop-blur-md sticky top-0 z-50 transition-colors w-full min-w-0">
       {backendStatus === "DISCONNECTED" && (
         <div className="bg-red-600 text-white px-4 py-1.5 text-xs font-mono flex items-center justify-between shadow-md border-b border-red-700 animate-pulse">
           <div className="flex items-center gap-2">
             <IconAlertTriangle className="w-4 h-4 shrink-0" />
-            <span className="font-semibold">
-              Backend Disconnected ({getApiBaseDisplayUrl()}). Operating in degraded offline state.
-            </span>
+            <span className="font-semibold">Backend disconnected on {getApiBaseDisplayUrl()}. Operating in degraded mode.</span>
           </div>
-          <span className="text-[10px] uppercase font-bold tracking-wider bg-red-800 px-2 py-0.5 rounded">
-            Degraded Offline
-          </span>
+          <span className="text-[10px] uppercase font-bold tracking-wider bg-red-800 px-2 py-0.5 rounded">DEGRADED</span>
         </div>
       )}
 
@@ -51,175 +72,119 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
         <div className="bg-amber-600 text-white px-4 py-1.5 text-xs font-mono flex items-center justify-between shadow-md border-b border-amber-700">
           <div className="flex items-center gap-2">
             <IconAlertTriangle className="w-4 h-4 shrink-0" />
-            <span className="font-semibold">
-              Backend Degraded. FastAPI server reachable, but database connectivity is degraded.
-            </span>
+            <span className="font-semibold">Backend available but database latency is elevated.</span>
           </div>
-          <span className="text-[10px] uppercase font-bold tracking-wider bg-amber-800 px-2 py-0.5 rounded">
-            Database Degraded
-          </span>
+          <span className="text-[10px] uppercase font-bold tracking-wider bg-amber-800 px-2 py-0.5 rounded">DEGRADED</span>
         </div>
       )}
 
-      {/* 3-Zone Responsive Command Bar */}
-      <div className="flex items-center justify-between px-3 sm:px-4 lg:px-6 py-2.5 w-full min-w-0 gap-3">
-        {/* LEFT ZONE: Brand & Platform Identity */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-xs p-1 overflow-hidden">
-            <img src="/logo-shield.png" alt="TerraGuardian Logo" className="h-full w-full object-contain" />
+      <div className="relative flex items-center justify-between px-3 sm:px-4 lg:px-5 py-2 w-full min-w-0 gap-2.5 min-h-[68px]">
+        <div className="flex items-center gap-2.5 shrink-0 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-xs p-1 overflow-hidden dark:border-cyan-900/60 dark:bg-[#102437]">
+            <img src="/logo.png" alt="TerraGuardian AI Logo" className="h-full w-full object-contain" />
           </div>
-          <div className="flex flex-col justify-center">
-            <span className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white leading-tight font-sans">
+          <div className="min-w-0">
+            <div className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white leading-tight font-sans truncate">
               {t("brand_title", undefined, "TERRAGUARDIAN AI")}
-            </span>
-            <span className="text-[9px] sm:text-[10px] uppercase font-mono font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">
-              {t("brand_subtitle", undefined, "DISASTER INTELLIGENCE PLATFORM")}
-            </span>
-          </div>
-        </div>
-
-        {/* CENTER ZONE: Active Operational Context Pill */}
-        <div className="hidden md:flex items-center justify-center min-w-0 flex-1 px-2">
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 px-3 py-1.5 rounded-full font-mono text-xs shadow-2xs max-w-xl truncate">
-            <span className="flex items-center gap-1.5 shrink-0 font-bold text-slate-900 dark:text-white">
-              <span className={`w-2 h-2 rounded-full shrink-0 ${backendStatus === "CONNECTED" ? "bg-red-500 animate-pulse" : "bg-amber-500"}`} />
-              {incidentCode || "TG-2048"}
-            </span>
-            <span className="text-slate-300 dark:text-neutral-700 shrink-0">•</span>
-            <span className="text-slate-600 dark:text-neutral-300 font-semibold truncate shrink">
-              KM-42 • WEST KAMENG
-            </span>
-            <span className="text-slate-300 dark:text-neutral-700 shrink-0">•</span>
-            <span className={`font-bold shrink-0 ${
-              backendStatus === "CONNECTED" 
-                ? "text-emerald-700 dark:text-emerald-400" 
-                : backendStatus === "DEGRADED"
-                ? "text-amber-700 dark:text-amber-400"
-                : "text-amber-600 dark:text-amber-400"
-            }`}>
-              {backendStatus === "CONNECTED"
-                ? `MONITORING (${hazardState || "ACTIVE"})`
-                : backendStatus === "DEGRADED"
-                ? `DEGRADED (${hazardState || "ACTIVE"})`
-                : backendStatus === "CONNECTING"
-                ? t("backend_connecting", undefined, "CONNECTING...")
-                : `CONTROLLED DEMO (${hazardState || "ACTIVE"})`}
-            </span>
-          </div>
-        </div>
-
-        {/* RIGHT ZONE: Health, User Role & Actions */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-          {/* System Health Indicators */}
-          <div className="hidden lg:flex items-center gap-1.5 font-mono text-xs shrink-0">
-            <span className={`px-2 py-0.5 rounded-md font-bold flex items-center gap-1.5 text-[11px] ${
-              backendStatus === "CONNECTED"
-                ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
-                : backendStatus === "DEGRADED"
-                ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                : "bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border border-slate-300 dark:border-neutral-700"
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                backendStatus === "CONNECTED"
-                  ? "bg-emerald-500"
-                  : backendStatus === "DEGRADED"
-                  ? "bg-amber-500"
-                  : "bg-slate-400"
-              }`} />
-              {backendStatus === "CONNECTED" ? t("backend_operational", undefined, "OPERATIONAL") : backendStatus === "DEGRADED" ? t("backend_degraded", undefined, "DEGRADED") : t("backend_offline_demo", undefined, "OFFLINE DEMO")}
-            </span>
-
-            {/* Dynamic Real Backend Connection Badge */}
-            {backendStatus === "CONNECTED" ? (
-              <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 font-semibold flex items-center gap-1.5 text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                {t("backend_connected", undefined, "API CONNECTED")}
-              </span>
-            ) : backendStatus === "CONNECTING" ? (
-              <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1.5 text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                {t("backend_connecting", undefined, "CONNECTING...")}
-              </span>
-            ) : backendStatus === "DEGRADED" ? (
-              <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 border border-amber-400 text-amber-800 dark:text-amber-300 font-bold flex items-center gap-1.5 text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                {t("backend_degraded", undefined, "DATABASE DEGRADED")}
-              </span>
-            ) : (
-              <span className="px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-950 border border-red-400 text-red-800 dark:text-red-300 font-bold flex items-center gap-1.5 text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping shrink-0" />
-                {t("backend_disconnected", undefined, "DISCONNECTED")}
-              </span>
-            )}
-          </div>
-
-
-          {/* User Session & Role */}
-          {user && (
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-mono shrink-0">
-              <span className={`w-2 h-2 rounded-full shrink-0 ${isAuthorityUser ? "bg-purple-500" : "bg-emerald-500"}`} />
-              <span className="font-semibold text-slate-800 dark:text-neutral-200 max-w-[80px] sm:max-w-[120px] truncate" title={user.full_name}>
-                {user.full_name}
-              </span>
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border shrink-0 ${
-                isAuthorityUser 
-                  ? "bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800" 
-                  : "bg-slate-200 dark:bg-neutral-700 text-slate-800 dark:text-neutral-200 border-slate-300 dark:border-neutral-600"
-              }`}>
-                {user.role}
-              </span>
             </div>
-          )}
+            <div className="text-[9px] sm:text-[10px] uppercase font-mono font-semibold tracking-wider text-emerald-600 dark:text-emerald-400 truncate">
+              {incidentCode || "TG-2048"} • {incidentStatus || "MONITORING"}
+            </div>
+          </div>
+        </div>
 
-          {/* Operational Copilot Trigger Button */}
-          {onToggleCopilot && (
-            <button
-              onClick={onToggleCopilot}
-              title="Toggle Operational Copilot (Command & Dialogue Layer)"
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all shadow-xs shrink-0 cursor-pointer ${
-                isCopilotOpen
-                  ? "bg-indigo-600 text-white border border-indigo-400"
-                  : "bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700"
-              }`}
-            >
-              <IconSparkles className="w-3.5 h-3.5 animate-pulse" />
-              <span>{t("ops_btn_copilot", undefined, "Copilot")}</span>
-            </button>
-          )}
-
-          {/* Reset Baseline Action */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="hidden md:flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#102437] px-2.5 py-1.5">
+            <span className={`h-2 w-2 rounded-full ${backendStatus === "CONNECTED" ? "bg-emerald-500 animate-pulse" : backendStatus === "DEGRADED" ? "bg-amber-500" : "bg-slate-400"}`} />
+            <span className={`text-[9px] font-mono font-bold tracking-wider ${backendStatus === "CONNECTED" ? "text-emerald-700 dark:text-emerald-300" : "text-slate-600 dark:text-slate-300"}`}>
+              {backendStatus === "CONNECTED" ? "LIVE" : backendStatus === "DEGRADED" ? "DEGRADED" : "CONNECTING"}
+            </span>
+            <span className="h-5 w-px bg-slate-200 dark:bg-slate-700" />
+            <span className="leading-tight">
+              <span className="block whitespace-nowrap text-[10px] font-semibold text-slate-700 dark:text-slate-200">{dateLabel}</span>
+              <span className="block whitespace-nowrap text-[9px] font-mono text-slate-500 dark:text-slate-400">{timeLabel} IST</span>
+            </span>
+          </div>
           <button
-            onClick={resetDemo}
-            title="Reset Scenario to Initial Baseline"
-            className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 text-xs font-mono transition-colors border border-slate-300 dark:border-neutral-700 shrink-0 cursor-pointer"
+            onClick={() => setActiveNavTab("ALERTS")}
+            title="Open alerts"
+            aria-label="Open alerts"
+            className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#102437] text-slate-600 dark:text-slate-200 hover:border-rose-400 hover:text-rose-500 transition-colors cursor-pointer"
           >
-            <IconRotateCcw className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden xl:inline">{t("ops_btn_reset", undefined, "Reset")}</span>
+            <IconAlertTriangle className="w-4 h-4" />
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">4</span>
           </button>
-
-          <LanguageSelector variant="standard" />
-
-          {onExitToPortal && (
-            <button
-              onClick={onExitToPortal}
-              title="Exit Operations Centre and Return to Main Portal"
-              className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 text-xs font-mono font-semibold transition-colors border border-slate-300 dark:border-neutral-700 shrink-0 cursor-pointer"
-            >
-              <span>{t("ops_btn_exit", undefined, "Exit to Portal")}</span>
-            </button>
-          )}
-
+          <button
+            onClick={() => setActiveNavTab("QUEUE")}
+            title="Open priority queue"
+            aria-label="Open priority queue"
+            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#102437] text-slate-600 dark:text-slate-200 hover:border-cyan-400 hover:text-cyan-500 transition-colors cursor-pointer"
+          >
+            <IconRadio className="w-4 h-4" />
+          </button>
           <ThemeToggle />
 
-          {/* Standalone Sign Out Button */}
           {user && (
-            <button
-              onClick={logout}
-              title="Sign out of Operations Session"
-              className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 text-xs font-mono font-bold border border-red-300 dark:border-red-800 transition-colors shrink-0 cursor-pointer flex items-center gap-1"
-            >
-              <span>{t("ops_btn_signout", undefined, "Sign Out")}</span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsProfileOpen((open) => !open);
+                }}
+                aria-expanded={isProfileOpen}
+                aria-haspopup="menu"
+                className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#102437] px-2 py-1.5 hover:border-cyan-500/60 transition-colors cursor-pointer max-w-[210px]"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-white dark:bg-cyan-900 dark:text-cyan-100">{initials}</span>
+                <span className="hidden sm:block min-w-0 text-left">
+                  <span className="block truncate text-[11px] font-bold text-slate-900 dark:text-white">{user.full_name || user.username}</span>
+                  <span className="block truncate text-[9px] text-slate-500 dark:text-slate-400">{user.role.replaceAll("_", " ")} · {user.agency || "Operations"}</span>
+                </span>
+                <IconChevronRight className="hidden sm:block h-3.5 w-3.5 rotate-90 text-slate-500 dark:text-slate-400" />
+              </button>
+
+              {isProfileOpen && (
+                <div role="menu" aria-label="Choose an operations role" className="absolute right-0 top-full mt-2 w-[min(320px,calc(100vw-24px))] rounded-xl border border-slate-200 dark:border-cyan-900/70 bg-white dark:bg-[#0b1b2a] p-2 shadow-2xl shadow-slate-950/20 z-[70]">
+                  <div className="border-b border-slate-100 dark:border-slate-800 px-2 pb-2 mb-1.5">
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">Choose role</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">Continue to secure sign-in</div>
+                    </div>
+                  </div>
+                  <div className="max-h-[min(55vh,360px)] overflow-y-auto space-y-1">
+                    {COMMAND_DEMO_ACCOUNTS.map((account) => {
+                      return (
+                        <button
+                          key={account.username}
+                          role="menuitem"
+                          onClick={() => {
+                            setIsProfileOpen(false);
+                            onGoToLogin?.();
+                          }}
+                          className="w-full rounded-lg border border-transparent px-2.5 py-2 text-left transition-colors cursor-pointer hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/70"
+                        >
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="min-w-0">
+                              <span className="block truncate text-[11px] font-bold text-slate-900 dark:text-slate-100">{account.roleLabel}</span>
+                              <span className="block truncate text-[9px] text-slate-500 dark:text-slate-400">{account.role.replaceAll("_", " ")} · {account.agency}</span>
+                            </span>
+                            <span className="shrink-0 text-[9px] font-mono font-bold text-cyan-700 dark:text-cyan-300">SIGN IN</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      logout();
+                    }}
+                    className="mt-2 w-full rounded-lg border border-rose-200 dark:border-rose-900/60 px-2.5 py-2 text-left text-[10px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                  >
+                    {t("ops_btn_signout", undefined, "Sign Out")}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

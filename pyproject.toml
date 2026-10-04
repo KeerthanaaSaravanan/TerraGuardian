@@ -25,6 +25,7 @@ dependencies = [
     "tifffile>=2024.0.0",
     "passlib[bcrypt]>=1.7.4",
     "pyjwt>=2.8.0",
+    "boto3>=1.35.0",
 ]
 
 [tool.vercel]

@@ -345,7 +345,7 @@ export const IncidentWorkspaceView: React.FC = () => {
       </div>
 
       {/* Render Content Based on Sub-Tab */}
-      {incidentSubTab === "EVIDENCE" && <EvidenceReconciliationView />}
+      {incidentSubTab === "EVIDENCE" && <EvidenceReconciliationView initialFilter="CITIZEN" />}
 
       {incidentSubTab === "EXPOSURE" && <ExposureWorkspaceView />}
 

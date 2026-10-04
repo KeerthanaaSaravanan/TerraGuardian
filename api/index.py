@@ -20,8 +20,6 @@ for p in [str(services_api_dir), str(root_dir)]:
 
 # Serverless environment fallbacks
 if os.environ.get("VERCEL"):
-    if not os.environ.get("DATABASE_URL"):
-        os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:////tmp/terraguardian.db")
     if not os.environ.get("ENVIRONMENT"):
         os.environ.setdefault("ENVIRONMENT", "production")
 

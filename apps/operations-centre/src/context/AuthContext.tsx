@@ -5,7 +5,6 @@ import { apiClient, setAuthToken, getAuthToken, ApiError } from "../services/api
 export interface DemoAccount {
   username: string;
   role: ActorRole;
-  passwordHint: string;
   roleLabel: string;
   fullName: string;
   agency: string;
@@ -27,7 +26,6 @@ export const COMMAND_DEMO_ACCOUNTS: DemoAccount[] = [
   {
     username: "operator",
     role: "OPERATOR",
-    passwordHint: "Terra#Op2026",
     roleLabel: "Operations Duty Officer",
     fullName: "Operations Duty Officer",
     agency: "State Disaster Operations Centre",
@@ -37,7 +35,6 @@ export const COMMAND_DEMO_ACCOUNTS: DemoAccount[] = [
   {
     username: "assessment",
     role: "ASSESSMENT_OFFICER",
-    passwordHint: "Terra#Assess2026",
     roleLabel: "Hazard Assessment Officer",
     fullName: "Dr. T. Norbu (Geotechnical Assessment Officer)",
     agency: "State Hazard Assessment Cell / GSI NER",
@@ -47,7 +44,6 @@ export const COMMAND_DEMO_ACCOUNTS: DemoAccount[] = [
   {
     username: "patrol",
     role: "FIELD_RESPONDER",
-    passwordHint: "Patrol#2026",
     roleLabel: "Field Response / Patrol",
     fullName: "ASI D. Sonam",
     agency: "West Kameng Traffic Police",
@@ -57,7 +53,6 @@ export const COMMAND_DEMO_ACCOUNTS: DemoAccount[] = [
   {
     username: "magistrate",
     role: "AUTHORIZATION_OFFICER",
-    passwordHint: "Terra#Admin2026",
     roleLabel: "Statutory Authorization Authority",
     fullName: "P. Tsering, IAS (District Magistrate)",
     agency: "District Disaster Management Authority",
@@ -67,7 +62,6 @@ export const COMMAND_DEMO_ACCOUNTS: DemoAccount[] = [
   {
     username: "reviewer",
     role: "REVIEWER",
-    passwordHint: "Terra#Review2026",
     roleLabel: "Incident Review & Governance",
     fullName: "K. Sharma (Independent Statutory Reviewer)",
     agency: "NDMA State Oversight Division",
@@ -79,30 +73,59 @@ export const COMMAND_DEMO_ACCOUNTS: DemoAccount[] = [
 // Re-export as DEMO_ACCOUNTS for backward compatibility
 export const DEMO_ACCOUNTS: DemoAccount[] = COMMAND_DEMO_ACCOUNTS;
 
-// Comprehensive account register for offline fallback and programmatic API access
-export const ALL_SUPPORTED_ACCOUNTS: DemoAccount[] = [
-  ...COMMAND_DEMO_ACCOUNTS,
-  {
-    username: "admin",
-    role: "ADMINISTRATOR",
-    passwordHint: "Terra#SuperAdmin2026",
-    roleLabel: "System & Governance Administrator",
-    fullName: "System & Model Governance Administrator",
-    agency: "State IT & Disaster Systems Hub",
-    badgeNumber: "SYS-ADM-01",
-    description: "Infrastructure & model registry administration",
-  },
-  {
-    username: "citizen",
-    role: "CITIZEN",
-    passwordHint: "Citizen#2026",
-    roleLabel: "Public Citizen Observer",
-    fullName: "Citizen Observer (West Kameng)",
-    agency: "Citizen Community Watch",
-    badgeNumber: "CIT-WK-09",
-    description: "Public tier: localized hazard reporting via TerraGuardian Safe",
-  },
-];
+const isLocalDemoMode = () => {
+  return import.meta.env.DEV;
+};
+
+const isHostedDemoMode = () => import.meta.env.VITE_DEMO_AUTH_ENABLED === "true";
+
+export const isDemoAuthEnabled = () => isLocalDemoMode() || isHostedDemoMode();
+
+const LOCAL_DEMO_PASSWORDS: Record<string, string> = import.meta.env.DEV
+  ? {
+      operator: "Terra#Op2026",
+      assessment: "Terra#Assess2026",
+      patrol: "Patrol#2026",
+      magistrate: "Terra#Admin2026",
+      reviewer: "Terra#Review2026",
+      admin: "Terra#SuperAdmin2026",
+      citizen: "Citizen#2026",
+    }
+  : import.meta.env.VITE_DEMO_AUTH_ENABLED === "true"
+    ? {
+        operator: "Terra#Op2026",
+        assessment: "Terra#Assess2026",
+        patrol: "Patrol#2026",
+        magistrate: "Terra#Admin2026",
+        reviewer: "Terra#Review2026",
+      }
+    : {};
+
+const ALL_SUPPORTED_ACCOUNTS: DemoAccount[] = import.meta.env.DEV
+  ? [
+      ...COMMAND_DEMO_ACCOUNTS,
+      {
+        username: "admin",
+        role: "ADMINISTRATOR",
+        roleLabel: "System & Governance Administrator",
+        fullName: "System & Model Governance Administrator",
+        agency: "State IT & Disaster Systems Hub",
+        badgeNumber: "SYS-ADM-01",
+        description: "Infrastructure & model registry administration",
+      },
+      {
+        username: "citizen",
+        role: "CITIZEN",
+        roleLabel: "Public Citizen Observer",
+        fullName: "Citizen Observer (West Kameng)",
+        agency: "Citizen Community Watch",
+        badgeNumber: "CIT-WK-09",
+        description: "Public tier: localized hazard reporting via TerraGuardian Safe",
+      },
+    ]
+  : import.meta.env.VITE_DEMO_AUTH_ENABLED === "true"
+    ? COMMAND_DEMO_ACCOUNTS
+    : [];
 
 interface AuthContextType {
   currentUser: UserProfile | null;
@@ -207,13 +230,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return false;
       }
 
-      // 2. Offline / local fallback against seeded deterministic DEMO accounts
-      const match = ALL_SUPPORTED_ACCOUNTS.find(
-        (a) =>
-          ((a.username.toLowerCase() === safeUsername.toLowerCase() ||
-            `${a.username}@terraguardian.gov.in`.toLowerCase() === safeUsername.toLowerCase())) &&
-          safePassword === a.passwordHint
-      );
+      // Offline demo identities are allowed only for local, non-production contexts.
+      const match = isLocalDemoMode()
+        ? ALL_SUPPORTED_ACCOUNTS.find(
+            (account) =>
+              (account.username.toLowerCase() === safeUsername.toLowerCase() ||
+                `${account.username}@terraguardian.gov.in`.toLowerCase() === safeUsername.toLowerCase()) &&
+              safePassword === LOCAL_DEMO_PASSWORDS[account.username]
+          )
+        : undefined;
 
       if (match) {
         const grantedPerms = (PERMISSION_MATRIX[match.role] || []).map((p) => p.toString());
@@ -246,9 +271,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const quickLoginAs = async (username: string): Promise<boolean> => {
+    if (!isDemoAuthEnabled()) return false;
     const acc = ALL_SUPPORTED_ACCOUNTS.find((a) => a.username.toLowerCase() === username.toLowerCase());
     if (!acc) return false;
-    return login({ username: acc.username, password: acc.passwordHint });
+    const password = LOCAL_DEMO_PASSWORDS[acc.username];
+    if (!password) return false;
+    return login({ username: acc.username, password });
   };
 
   const logout = () => {

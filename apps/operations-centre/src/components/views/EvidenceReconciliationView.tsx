@@ -23,7 +23,9 @@ import type {
   CitizenReportItem,
 } from "../../types/incident";
 
-export const EvidenceReconciliationView: React.FC = () => {
+export const EvidenceReconciliationView: React.FC<{
+  initialFilter?: "ALL" | "CITIZEN" | "WEATHER" | "SATELLITE" | "TERRAIN" | "FIELD";
+}> = ({ initialFilter = "ALL" }) => {
   const {
     setStep,
     setIncidentSubTab,
@@ -41,7 +43,7 @@ export const EvidenceReconciliationView: React.FC = () => {
 
   const [isReconciling, setIsReconciling] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState<"ALL" | "CITIZEN" | "WEATHER" | "SATELLITE" | "TERRAIN" | "FIELD">("ALL");
+  const [selectedFilter, setSelectedFilter] = useState(initialFilter);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   // Live persistent citizen reports queue

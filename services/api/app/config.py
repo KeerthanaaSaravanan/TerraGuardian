@@ -1,6 +1,7 @@
 import os
 from typing import Optional, Union
-from pydantic import field_validator
+from urllib.parse import urlsplit
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -11,7 +12,10 @@ class Settings(BaseSettings):
     See .env.example for the full list.
     """
 
-    environment: str = "development"
+    environment: str = Field(
+        default="development",
+        validation_alias=AliasChoices("ENVIRONMENT", "TERRAGUARDIAN_ENV", "VERCEL_ENV"),
+    )
     log_level: str = "INFO"
 
     # API
@@ -53,11 +57,7 @@ class Settings(BaseSettings):
         if env_db and env_db.strip():
             return env_db.strip()
         if v and v.strip():
-            if os.environ.get("VERCEL") and "terraguardian.db" in v and not v.startswith("sqlite+aiosqlite:////tmp"):
-                return "sqlite+aiosqlite:////tmp/terraguardian.db"
             return v.strip()
-        if os.environ.get("VERCEL"):
-            return "sqlite+aiosqlite:////tmp/terraguardian.db"
         return "sqlite+aiosqlite:///./terraguardian.db"
 
     # Security
@@ -74,8 +74,35 @@ class Settings(BaseSettings):
     s3_secret_access_key: Optional[str] = None
     storage_public_base_url: Optional[str] = None
 
+    @model_validator(mode="after")
+    def validate_production_dependencies(self) -> "Settings":
+        if self.environment.strip().lower() != "production":
+            return self
+
+        self.cors_origins = [
+            origin
+            for origin in self.cors_origins
+            if urlsplit(origin).hostname not in {"localhost", "127.0.0.1", "::1"}
+        ]
+
+        if not self.database_url.startswith((
+            "postgresql+asyncpg://",
+            "postgresql://",
+            "postgres://",
+        )):
+            raise RuntimeError("Production requires DATABASE_URL for persistent PostgreSQL storage.")
+
+        if len(self.secret_key.strip()) < 32 or self.secret_key == "changeme-generate-a-real-key":
+            raise RuntimeError("Production requires a non-default SECRET_KEY of at least 32 characters.")
+
+        if self.storage_provider.strip().lower() not in {"s3", "cloud", "production", "object_storage"}:
+            raise RuntimeError("Production requires a durable S3-compatible STORAGE_PROVIDER.")
+        if not self.s3_bucket_name or not self.s3_access_key_id or not self.s3_secret_access_key:
+            raise RuntimeError("Production object storage requires S3_BUCKET_NAME and S3 credentials.")
+
+        return self
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()
-
