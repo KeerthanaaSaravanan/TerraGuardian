@@ -71,18 +71,29 @@ def get_engine() -> AsyncEngine:
                 kwargs["pool_pre_ping"] = True
                 kwargs["pool_recycle"] = 300
 
-            # Handle SSL requirement for cloud databases (Neon, Supabase, RDS)
-            if "sslmode" in db_url or "ssl=" in db_url:
-                import re
+            # Handle libpq-style query params from cloud databases (Neon, Supabase, RDS).
+            # asyncpg rejects libpq-only keywords (sslmode, channel_binding, ...), so strip
+            # them from the URL and translate the TLS intent into an asyncpg ssl context.
+            from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+            parts = urlsplit(db_url)
+            query = parse_qsl(parts.query, keep_blank_values=True)
+            libpq_only = {
+                "sslmode", "ssl", "channel_binding", "sslrootcert", "sslcert",
+                "sslkey", "gssencmode", "target_session_attrs", "options",
+            }
+            wants_tls = False
+            kept = []
+            for key, value in query:
+                lowered = key.lower()
+                if lowered in ("sslmode", "ssl"):
+                    wants_tls = wants_tls or value.lower() not in ("disable", "false", "0", "allow")
+                if lowered not in libpq_only:
+                    kept.append((key, value))
+            if len(kept) != len(query):
+                db_url = urlunsplit(parts._replace(query=urlencode(kept)))
+            if wants_tls:
                 import ssl
-                ctx = ssl.create_default_context()
-                ctx.check_hostname = False
-                ctx.verify_mode = ssl.CERT_NONE
-                connect_args["ssl"] = ctx
-                # Strip sslmode / ssl parameter from query string so asyncpg doesn't error
-                db_url = re.sub(r'([?&])sslmode=[^&]*(&|$)', r'\1', db_url)
-                db_url = re.sub(r'([?&])ssl=[^&]*(&|$)', r'\1', db_url)
-                db_url = db_url.replace("?&", "?").rstrip("?&")
+                connect_args["ssl"] = ssl.create_default_context()
 
         _engine = create_async_engine(
             db_url,
